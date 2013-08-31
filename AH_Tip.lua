@@ -1,11 +1,18 @@
-AH_Tip = {}
+AH_Tip = {
+	szItemTip = nil,
+	szBagItemTip = nil,
+	bShowTipEx = false,
+}
 
-local bHooked = false
+RegisterCustomData("AH_Tip.bShowTipEx")
+
+local ipairs = ipairs
+local pairs = pairs
+
 local bBagHooked = false
 local bTipHooked = false
-local szItemTip = nil
-local szBagItemTip = nil
 local bCompact = nil
+local tRecipeSkill = {{"烹饪", 4}, {"缝纫", 5}, {"铸造", 6}, {"医术", 7}}
 
 local function FormatTipEx(h, szText, szTip)
 	local i, j = h:GetItemCount(), 0
@@ -21,12 +28,16 @@ local function FormatTipEx(h, szText, szTip)
 	h:InsertItemFromString(j, false, szTip)
 end
 
+function AH_Tip.OnFrameCreate()
+	this:RegisterEvent("ON_SET_BAG_COMPACT_MODE")
+end
+
 function AH_Tip.OnFrameBreathe()
 	if not bTipHooked then
 		local frame = Station.Lookup("Topmost1/TipPanel_Normal")
 		if frame and frame:IsVisible() then
 			if DelayCall then
-				DelayCall(2, function() AH_Tip.InitHookTip(frame) end)
+				DelayCall(3, function() AH_Tip.InitHookTip(frame) end)
 			else
 				AH_Tip.InitHookTip(frame)
 			end
@@ -49,6 +60,12 @@ function AH_Tip.OnFrameBreathe()
 	end
 end
 
+function AH_Tip.OnEvent(szEvent)
+	if szEvent == "ON_SET_BAG_COMPACT_MODE" then
+		bBagHooked = false
+	end
+end
+
 --Hook TIP
 function AH_Tip.InitHookTip(frame)
 	local h = frame:Lookup("", "Handle_Message")
@@ -59,12 +76,12 @@ function AH_Tip.InitHookTip(frame)
 		h:AppendItemFromStringOrg(szText)
 		local hWnd = Station.GetMouseOverWindow()
 		if IsAuctionPanelOpened() and hWnd:GetName() == "Wnd_Result2" then
-			if szItemTip then
-				FormatTipEx(h, szText, szItemTip)
+			if AH_Tip.szItemTip then
+				FormatTipEx(h, szText, AH_Tip.szItemTip)
 			end
 		elseif IsBigBagPanelOpened() and hWnd:GetName() == "BigBagPanel" then
-			if szBagItemTip then
-				FormatTipEx(h, szText, szBagItemTip)
+			if AH_Tip.szBagItemTip then
+				FormatTipEx(h, szText, AH_Tip.szBagItemTip)
 			end
 		end
 	end
@@ -100,9 +117,9 @@ function AH_Tip.HookBagItemBox(box)
 		box.SetObjectMouseOver = function(h, bOver)
 			box:SetObjectMouseOverOrg(bOver)
 			if bOver == 1 then
-				szBagItemTip = AH_Tip.GetBagItemTip(this)
+				AH_Tip.szBagItemTip = AH_Tip.GetBagItemTip(this)
 			elseif bOver == 0 then
-				szBagItemTip = nil
+				AH_Tip.szBagItemTip = nil
 			end
 		end
 	end
@@ -158,31 +175,31 @@ end
 
 function AH_Tip.GetRecipeTip(player, item)
 	local szTip, bFlag = "", false
-	local szItemName = GetItemNameByItem(item)
-	local szOuter, szInner = GetFormatText("\n相关技艺配方<已学习>", 165), ""
-	for k, v in ipairs(tRecipeSkill) do
-		if player.IsProfessionLearnedByCraftID(v[2]) then
-			local tRecipe = AH_Tip.GetRecipeByItemName(v[2], szItemName)
-			if not IsTableEmpty(tRecipe) then
-				bFlag, szInner = true, szInner .. GetFormatText(FormatString("\n<D0>：\n", v[1]), 163) .. GetFormatText("      ")
-				local t1 = {}
-				for k2, v2 in ipairs(tRecipe) do
-					local recipe = GetRecipe(v2[1], v2[2])
-					if recipe then
-						local tItemInfo = GetItemInfo(recipe.dwCreateItemType1, recipe.dwCreateItemIndex1)
-						table.insert(t1, "<text>text=" .. EncodeComponentsString(GetItemNameByItemInfo(tItemInfo)) .. " font=162 " .. GetItemFontColorByQuality(tItemInfo.nQuality, true).."</text>")
+	if IsAltKeyDown() or IsShiftKeyDown() or AH_Tip.bShowTipEx then
+		local szItemName = GetItemNameByItem(item)
+		local szOuter, szInner = GetFormatText("\n相关技艺配方<已学习>", 165), ""
+		for k, v in ipairs(tRecipeSkill) do
+			if player.IsProfessionLearnedByCraftID(v[2]) then
+				local tRecipe = AH_Tip.GetRecipeByItemName(v[2], szItemName)
+				if not IsTableEmpty(tRecipe) then
+					bFlag, szInner = true, szInner .. GetFormatText(FormatString("\n<D0>：\n", v[1]), 163) .. GetFormatText("      ")
+					local t1 = {}
+					for k2, v2 in ipairs(tRecipe) do
+						local recipe = GetRecipe(v2[1], v2[2])
+						if recipe then
+							local tItemInfo = GetItemInfo(recipe.dwCreateItemType1, recipe.dwCreateItemIndex1)
+							table.insert(t1, "<text>text=" .. EncodeComponentsString(GetItemNameByItemInfo(tItemInfo)) .. " font=162 " .. GetItemFontColorByQuality(tItemInfo.nQuality, true).."</text>")
+						end
 					end
+					szInner = szInner .. table.concat(t1, GetFormatText("，", 162))
 				end
-				szInner = szInner .. table.concat(t1, GetFormatText("，", 162))
 			end
 		end
-	end
-	if bFlag and szInner ~= "" then szTip = szTip .. szOuter .. szInner end
-	if IsAltKeyDown() or IsShiftKeyDown() then
+		if bFlag and szInner ~= "" then szTip = szTip .. szOuter .. szInner end
 		szOuter, szInner = GetFormatText("\n相关技艺配方<未学习>", 166), ""
 		for k, v in ipairs(tRecipeSkill) do
 			if player.IsProfessionLearnedByCraftID(v[2]) then
-				local tRecipe = tRecipeALL[v[2]][szItemName]
+				local tRecipe = AH_Library.tMaterialALL[v[2]][szItemName]
 				if not IsTableEmpty(tRecipe) then
 					local temp = {}
 					for m, n in ipairs(tRecipe) do
@@ -209,3 +226,5 @@ function AH_Tip.GetRecipeTip(player, item)
 	end
 	return szTip
 end
+
+Wnd.OpenWindow("Interface\\AH\\AH_Tip.ini", "AH_Tip")

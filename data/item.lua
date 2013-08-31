@@ -1,5 +1,3 @@
-AH_Data = AH_Data or {}
-
 AH_Data.HotItem = {
 	["±¶ œ‰ ‘ø ≥◊"] = {
 		["±¶œ‰œµ¡–"] = {

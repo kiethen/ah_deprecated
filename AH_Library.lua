@@ -1,101 +1,6 @@
 
 local ipairs = ipairs
 local pairs = pairs
-
------------------------------------------------
--- 生活技艺数据生成函数
------------------------------------------------
-AH_Library = {
-	tRecipeALL = nil,
-	tMaterialALL = nil,
-	tMergeRecipe = {},
-}
-
--- 返回 {nRecipeID, szRecipeName} 数据的表
-function AH_Library.GetCraftRecipe(nCraftID)
-	local tRes = {}
-	local tCraft = g_tTable.UICraft:Search(nCraftID)
-	if tCraft.szPath ~= "" then
-		local tTable = KG_Table.Load(tCraft.szPath,
-		{
-			{f = "i", t = "dwID"},
-			{f = "s", t = "szName"},
-		},
-		FILE_OPEN_MODE.NORMAL)
-		if tTable then
-			local nRowCount = tTable:GetRowCount()
-			for nRow = 2, nRowCount do
-				local tRow = tTable:GetRow(nRow)
-				table.insert(tRes, {tRow.dwID, tRow.szName})
-			end
-		end
-	end
-	table.sort(tRes, function(a, b) return a[1] > b[1] end)
-	return tRes
-end
-
--- 返回 {szRecipeName, nCraftID, nRecipeID} 数据的表
-function AH_Library.GetAllRecipe()
-	local t = {}
-	for _, k in pairs({4, 5, 6, 7}) do
-		local tRes = AH_Library.GetCraftRecipe(k)
-		for _, v in ipairs(tRes) do
-			local recipe = GetRecipe(k, v[1])
-			if recipe then
-				if t[k] then
-					table.insert(t[k], {v[2], k, v[1]})
-				else
-					t[k] = {{v[2], k, v[1]}}
-				end
-			end
-		end
-	end
-	return t
-end
-
--- 返回以szItemName为索引的 {nCraftID, nRecipeID} 的表
-function AH_Library.GetAllMaterial()
-	local t = {}
-	for _, k in pairs({4, 5, 6, 7}) do
-		if not t[k] then t[k] = {} end
-		local tRes = AH_Library.GetCraftRecipe(k)
-		for _, v in ipairs(tRes) do
-			local recipe = GetRecipe(k, v[1])
-			if recipe and recipe.nCraftType ~= ALL_CRAFT_TYPE.ENCHANT then
-				for nIndex = 1, 6, 1 do
-					local nType  = recipe["dwRequireItemType" .. nIndex]
-					local nID	 = recipe["dwRequireItemIndex" .. nIndex]
-					local nNeed  = recipe["dwRequireItemCount" .. nIndex]
-					if nNeed > 0 then
-						local szName = GetItemInfo(nType, nID).szName
-						if not t[k][szName] then
-							t[k][szName] = {}
-						end
-						table.insert(t[k][szName], {k, v[1]})
-					end
-				end
-			end
-		end
-	end
-	return t
-end
-
-AH_Library.tRecipeALL = AH_Library.GetAllRecipe()
-AH_Library.tMaterialALL = AH_Library.GetAllMaterial()
-do
-	local mt = {}
-	mt.__add = function(t1, t2)
-		for _, v in ipairs(t2) do
-			table.insert(t1, v)
-		end
-		return t1
-	end
-	setmetatable(AH_Library.tMergeRecipe, mt)
-	for k, v in ipairs({4, 5, 6, 7}) do
-		AH_Library.tMergeRecipe = AH_Library.tMergeRecipe + AH_Library.tRecipeALL[v]
-	end
-end
-
 -----------------------------------------------
 -- 重构非白名单函数
 -----------------------------------------------
@@ -397,3 +302,101 @@ if not OpenInternetExplorer then
 		return webPage
 	end
 end
+
+-----------------------------------------------
+-- 生活技艺数据生成函数
+-----------------------------------------------
+AH_Library = {
+	tRecipeALL = nil,
+	tMaterialALL = nil,
+	tMergeRecipe = {},
+}
+
+-- 返回 {nRecipeID, szRecipeName} 数据的表
+function AH_Library.GetCraftRecipe(nCraftID)
+	local tRes = {}
+	local tCraft = g_tTable.UICraft:Search(nCraftID)
+	if tCraft.szPath ~= "" then
+		local tTable = KG_Table.Load(tCraft.szPath,
+		{
+			{f = "i", t = "dwID"},
+			{f = "s", t = "szName"},
+		},
+		FILE_OPEN_MODE.NORMAL)
+		if tTable then
+			local nRowCount = tTable:GetRowCount()
+			for nRow = 2, nRowCount do
+				local tRow = tTable:GetRow(nRow)
+				table.insert(tRes, {tRow.dwID, tRow.szName})
+			end
+		end
+	end
+	table.sort(tRes, function(a, b) return a[1] > b[1] end)
+	return tRes
+end
+
+-- 返回 {szRecipeName, nCraftID, nRecipeID} 数据的表
+function AH_Library.GetAllRecipe()
+	local t = {}
+	for _, k in pairs({4, 5, 6, 7}) do
+		local tRes = AH_Library.GetCraftRecipe(k)
+		for _, v in ipairs(tRes) do
+			local recipe = GetRecipe(k, v[1])
+			if recipe then
+				if t[k] then
+					table.insert(t[k], {v[2], k, v[1]})
+				else
+					t[k] = {{v[2], k, v[1]}}
+				end
+			end
+		end
+	end
+	return t
+end
+
+-- 返回以szItemName为索引的 {nCraftID, nRecipeID} 的表
+function AH_Library.GetAllMaterial()
+	local t = {}
+	for _, k in pairs({4, 5, 6, 7}) do
+		if not t[k] then t[k] = {} end
+		local tRes = AH_Library.GetCraftRecipe(k)
+		for _, v in ipairs(tRes) do
+			local recipe = GetRecipe(k, v[1])
+			if recipe and recipe.nCraftType ~= ALL_CRAFT_TYPE.ENCHANT then
+				for nIndex = 1, 6, 1 do
+					local nType  = recipe["dwRequireItemType" .. nIndex]
+					local nID	 = recipe["dwRequireItemIndex" .. nIndex]
+					local nNeed  = recipe["dwRequireItemCount" .. nIndex]
+					if nNeed > 0 then
+						local szName = GetItemInfo(nType, nID).szName
+						if not t[k][szName] then
+							t[k][szName] = {}
+						end
+						table.insert(t[k][szName], {k, v[1]})
+					end
+				end
+			end
+		end
+	end
+	return t
+end
+
+AH_Library.tRecipeALL = AH_Library.GetAllRecipe()
+AH_Library.tMaterialALL = AH_Library.GetAllMaterial()
+do
+	local mt = {}
+	mt.__add = function(t1, t2)
+		for _, v in ipairs(t2) do
+			table.insert(t1, v)
+		end
+		return t1
+	end
+	setmetatable(AH_Library.tMergeRecipe, mt)
+	for k, v in ipairs({4, 5, 6, 7}) do
+		AH_Library.tMergeRecipe = AH_Library.tMergeRecipe + AH_Library.tRecipeALL[v]
+	end
+end
+
+--[[RegisterEvent("CALL_LUA_ERROR", function()
+	OutputMessage("MSG_SYS", arg0)
+end)]]

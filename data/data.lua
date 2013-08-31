@@ -1,4 +1,4 @@
-AH_Data = AH_Data or {}
+AH_Data = {}
 
 AH_Data.EnchantData = {
 	[5] = {

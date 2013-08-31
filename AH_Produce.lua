@@ -783,7 +783,7 @@ function AH_Produce.OnFrameCreate()
 	this:RegisterEvent("OT_ACTION_PROGRESS_BREAK")
 	this:RegisterEvent("SYS_MSG")
 	this:RegisterEvent("BAG_ITEM_UPDATE")
-	InitFrameAutoPosInfo(this, 1, nil, nil, function() CloseAH_ProducePanel() end)
+	InitFrameAutoPosInfo(this, 1, nil, nil, function() AH_Produce.ClosePanel() end)
 end
 
 function AH_Produce.OnEvent(event)
@@ -916,6 +916,10 @@ function AH_Produce.OnItemLButtonClick()
 		end
 		AH_Produce:Selected(frame, this)
 		AH_Produce:UpdateContent(frame)
+		PlaySound(SOUND.UI_SOUND, g_sound.Button)
+		if IsAuctionPanelOpened() then
+			AH_Helper.UpdateList(this.szName)
+		end
 	elseif this.bEnchant then
 		if IsCtrlKeyDown() then
 			local nProID, nCraftID, nRecipeID = this:GetObjectData()
@@ -1026,8 +1030,10 @@ function AH_Produce.OpenPanel()
 	local frame = nil
 	if not AH_Produce.IsPanelOpened()  then
 		frame = Wnd.OpenWindow(szIniFile, "AH_Produce")
+		AH_Produce:Init(frame)
+	else
+		AH_Produce.ClosePanel()
 	end
-	AH_Produce:Init(frame)
 	PlaySound(SOUND.UI_SOUND,g_sound.OpenFrame)
 end
 
@@ -1040,9 +1046,11 @@ end
 
 RegisterEvent("LOGIN_GAME", function()
 	TraceButton_AppendAddonMenu({{
-		szOption = "快速制造",
+		szOption = "技艺助手",
 		fnAction = function()
-			 AH_Produce.OpenPanel()
+			AH_Produce.OpenPanel()
 		end,
 	}})
 end)
+
+

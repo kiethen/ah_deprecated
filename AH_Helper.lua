@@ -1,4 +1,7 @@
-local ipairs, pairs, tonumber = ipairs, pairs,  tonumber
+
+local ipairs = ipairs
+local pairs = pairs
+local tonumber = tonumber
 
 --------------------------------------------------------
 -- 插件配置
@@ -14,12 +17,12 @@ AH_Helper = {
 	nMaxHistory = 10,
 	nShowTipType = 1,
 
-	bFastBid = false,
-	bFastBuy = false,
-	bFastCancel = false,
+	bFastBid = true,
+	bFastBuy = true,
+	bFastCancel = true,
 	bNoAllPrompt = false,
 	bPricePercentage = false,
-	bLowestPrices = false,
+	bLowestPrices = true,
 	bFilterRecipe = false,
 	bFilterBook = false,
 	bAutoSearch = true,
@@ -33,23 +36,16 @@ AH_Helper = {
 	tItemPrice = {},
 
 	szDataPath = "\\Interface\\AH\\data\\data.AH",
-
-	szVersion = "2.0"		--用于版本检测
+	szVersion = "2.0.0",		--用于版本检测
 }
 
-local tRecipeSkill = {{"烹饪", 4}, {"缝纫", 5}, {"铸造", 6}, {"医术", 7}}
+
 --------------------------------------------------------
 -- 交易行数据缓存
 --------------------------------------------------------
 local tBidTime = {}
 local bFilterd = false
 local bHooked = false
-local bBagHooked = false
-local bTipHooked = false
-local szItemTip = nil
-local szBagItemTip = nil
-local bCompact = nil
-local tRecipeALL
 
 --------------------------------------------------------
 -- 用户数据存储
@@ -204,7 +200,7 @@ function AH_Helper.UpdateItemList(frame, szDataType, tItemInfo)
 		szItem = "Handle_AItemList"
 	end
 	if szItem == "Handle_ItemList" or "Handle_AItemList" then
-        INI_FILE_PATH = "interface/AH_Helper/AuctionItem.ini"
+        INI_FILE_PATH = "interface/AH/AH_AuctionItem.ini"
     end
 	hList:Clear()
 	for k, v in pairs(tItemInfo) do
@@ -214,14 +210,8 @@ function AH_Helper.UpdateItemList(frame, szDataType, tItemInfo)
 				--卖家屏蔽
 				if not AH_Helper.IsInBlackList(v["SellerName"]) then
 					--过滤已读秘籍
-					if AH_Helper.bFilterRecipe and v["Item"].nGenre == ITEM_GENRE.MATERIAL then
-						local bRead = nil
-						if v["Item"].nSub == 5 then
-							bRead = IsMystiqueRecipeRead(v["Item"])
-						elseif v["Item"].nSub == 4 then
-							bRead, _ = IsMystiqueSkillRead(v["Item"])
-						end
-						if not bRead then
+					if AH_Helper.bFilterRecipe and v["Item"].nGenre == ITEM_GENRE.MATERIAL and v["Item"].nSub == 5 then
+						if not IsMystiqueRecipeRead(v["Item"]) then
 							local hItem = hList:AppendItemFromIni(INI_FILE_PATH, szItem)
 							AuctionPanel.SetSaleInfo(hItem, szDataType, v)
 						else
@@ -682,7 +672,7 @@ function AH_Helper.OnItemMouseEnter()
 	local szName = this:GetName()
 	if szName == "Box_Box" then
 		if not this:IsEmpty() then
-			szItemTip = AH_Helper.GetItemTip(this)
+			AH_Tip.szItemTip = AH_Helper.GetItemTip(this)
 			local x, y = this:GetAbsPos()
 			local w, h = this:GetSize()
 			OutputItemTip(UI_OBJECT_ITEM_ONLY_ID, this.nItemID, nil, nil, {x, y, w, h})
@@ -710,7 +700,7 @@ function AH_Helper.OnItemMouseLeave()
 	local szName = this:GetName()
 	if szName == "Box_Box" then
 		HideTip()
-		szItemTip = nil
+		AH_Tip.szItemTip = nil
 	else
 		AH_Helper.OnItemMouseLeaveOrg()
 	end
@@ -748,7 +738,7 @@ function AH_Helper.AddWidget(frame)
 	local page  = frame:Lookup("PageSet_Totle/Page_Business")
 	local hWndSrch = page:Lookup("Wnd_Search")
 	if not hWndSrch:Lookup("Btn_History") then
-		local temp = Wnd.OpenWindow("interface\\AH_Helper\\btn.ini")
+		local temp = Wnd.OpenWindow("interface\\AH\\AH_Widget.ini")
 		if temp then
 			local hBtnHistory = temp:Lookup("Btn_History")
 			if hBtnHistory then
@@ -766,7 +756,7 @@ function AH_Helper.AddWidget(frame)
 					PopupMenu(menu)
 				end
 				hBtnHistory.OnRButtonClick = function ()
-					local menu = AH_Helper.GetHotItems()
+					local menu = AH_Helper.GetHotItem()
 					PopupMenu(menu)
 				end
 			end
@@ -774,8 +764,23 @@ function AH_Helper.AddWidget(frame)
 		Wnd.CloseWindow(temp)
 	end
 
+	if not hWndSrch:Lookup("Btn_Produce") then
+		local temp = Wnd.OpenWindow("interface\\AH\\AH_Widget.ini")
+		if temp then
+			local hBtnProduce = temp:Lookup("Btn_Produce")
+			if hBtnProduce then
+				hBtnProduce:ChangeRelation(hWndSrch, true, true)
+				hBtnProduce:SetRelPos(854, 0)
+				hBtnProduce.OnLButtonClick = function()
+					AH_Produce.OpenPanel()
+				end
+			end
+		end
+		Wnd.CloseWindow(temp)
+	end
+
 	if not frame:Lookup("Wnd_Side") then
-		local temp = Wnd.OpenWindow("interface\\AH_Helper\\btn.ini")
+		local temp = Wnd.OpenWindow("interface\\AH\\AH_Widget.ini")
 		if temp then
 			local hWndSide = temp:Lookup("Wnd_Side")
 			if hWndSide then
@@ -818,14 +823,16 @@ function AH_Helper.AddWidget(frame)
 				hWndSide:Lookup("Btn_Split").OnLButtonClick = function()
 					local x, y = this:GetAbsPos()
 					local w, h = this:GetSize()
-					AHSpliter.Open({x, y, w, h})
+					AH_Spliter.OnSplitBoxItem({x, y, w, h})
 				end
 				hWndSide:Lookup("Btn_Split").OnRButtonClick = function()
-					AHSpliter.StackItem()
+					AH_Spliter.StackItem()
 				end
 				hWndSide:Lookup("Btn_Option").OnLButtonClick = function()
 					local menu =
 					{
+						{szOption = "版本：v" .. AH_Helper.szVersion, fnDisable = function() return true end,},
+						{ bDevide = true },
 						{szOption = "过滤已读秘籍", bCheck = true, bChecked = AH_Helper.bFilterRecipe, fnAction = function() AH_Helper.bFilterRecipe = not AH_Helper.bFilterRecipe end, fnMouseEnter = function() AH_Helper.OutputTip("勾选此项后，将过滤掉已阅读的秘籍") end,},
 						{szOption = "过滤已读书籍",bCheck = true,bChecked = AH_Helper.bFilterBook,fnAction = function()AH_Helper.bFilterBook = not AH_Helper.bFilterBook end, fnMouseEnter = function() AH_Helper.OutputTip("勾选此项后，将过滤掉已阅读的书籍") end,},
 						{ bDevide = true },
@@ -868,12 +875,9 @@ function AH_Helper.AddWidget(frame)
 						{szOption = "启用快速取消", bCheck = true, bChecked = AH_Helper.bFastCancel, fnAction = function() AH_Helper.bFastCancel = not AH_Helper.bFastCancel end, fnMouseEnter = function() AH_Helper.OutputTip("按住ALT+CTRL，鼠标左键点击物品栏可以快速取消") end,},
 						{ bDevide = true },
 						{szOption = "启用自动搜索", bCheck = true, bChecked = AH_Helper.bAutoSearch, fnAction = function() AH_Helper.bAutoSearch = not AH_Helper.bAutoSearch end, fnMouseEnter = function() AH_Helper.OutputTip("按住CTRL，鼠标左键点击背包中的物品栏可以快速搜索该物品") end,},
-						--{szOption = "鼠标提示增强",
-						--	{szOption = "显示已学配方", bMCheck = true, bChecked = (AH_Helper.nShowTipType == 1), fnAction = function() AH_Helper.nShowTipType = 1 end,},
-						--	{szOption = "显示未学配方", bMCheck = true, bChecked = (AH_Helper.nShowTipType == 2), fnAction = function() AH_Helper.nShowTipType = 2 end,},
-						--}
+						{szOption = "材料配方提示", bCheck = true, bChecked = AH_Tip.bShowTipEx, fnAction = function() AH_Tip.bShowTipEx = not AH_Tip.bShowTipEx end, fnMouseEnter = function() AH_Helper.OutputTip("按住ALT或SHIFT亦可以显示提示") end,},
 					}
-					PopupMenu(menu)--bShowTipEx
+					PopupMenu(menu)
 				end
 			end
 		end
@@ -1052,25 +1056,6 @@ function AH_Helper.AuctionAutoSell2(frame)
 	PlaySound(SOUND.UI_SOUND, g_sound.Trade)
 end
 
-function AH_Helper.ScanAuction()
-	local frame = Station.Lookup("Normal/AuctionPanel")
-	local page  = frame:Lookup("PageSet_Totle/Page_Business")
-	local hWndSrch = page:Lookup("Wnd_Search")
-	local hWndAuct = frame:Lookup("PageSet_Totle/Page_Auction/Wnd_Auction")
-	if page and page:IsVisible() and hWndSrch and hWndSrch:IsVisible() then
-		local btn  = hWndSrch:Lookup("Btn_Search")
-		bScanning = false
-		local thisSave = this
-		this = btn
-		if btn:IsEnabled() then
-			AuctionPanel.OnLButtonClick()
-		end
-		this = thisSave
-		bScanning = true
-		btn:Enable(false)
-	end
-end
-
 function AH_Helper.Message(szMsg)
 	OutputMessage("MSG_SYS", "<交易行助手>"..szMsg.."\n")
 end
@@ -1152,58 +1137,6 @@ function AH_Helper.AddHistory(szKeyName)
 	end
 end
 
-function AH_Helper.GetCraftRecipe(dwCraftID)
-	local nMax, tRes = 0, {}
-	local tCraft = g_tTable.UICraft:Search(dwCraftID)
-	if tCraft.szPath ~= "" then
-		local tTable = KG_Table.Load(tCraft.szPath,
-		{
-			{f = "i", t = "dwID"},
-			{f = "s", t = "szName"},
-		},
-		FILE_OPEN_MODE.NORMAL)
-		if tTable then
-			local nRowCount = tTable:GetRowCount()
-			for nRow = 2, nRowCount do
-				local tRow = tTable:GetRow(nRow)
-				table.insert(tRes, tRow.dwID)
-			end
-		end
-	else
-		Trace("KLUA[ERROR] ui\Script\table.lua dwCraftID = " .. dwCraftID .. " craft Path is nil!!\n")
-	end
-	table.sort(tRes, function(a, b) return a > b end)
-	return tRes
-end
-
---获取所有配方
-function AH_Helper.GetAllRecipe()
-	local t = {}
-	for _, k in pairs({4, 5, 6, 7}) do
-		if not t[k] then t[k] = {} end
-		local tRes = AH_Helper.GetCraftRecipe(k)
-		for _, v in ipairs(tRes) do
-			local recipe = GetRecipe(k, v)
-			if recipe and recipe.nCraftType ~= ALL_CRAFT_TYPE.ENCHANT then
-				for nIndex = 1, 6, 1 do
-					local nType  = recipe["dwRequireItemType"..nIndex]
-					local nID	 = recipe["dwRequireItemIndex"..nIndex]
-					local nNeed  = recipe["dwRequireItemCount"..nIndex]
-					if nNeed > 0 then
-						local szName = GetItemInfo(nType, nID).szName
-						if not t[k][szName] then t[k][szName] = {} end
-						table.insert(t[k][szName], {k, v})
-					end
-				end
-			end
-		end
-	end
-	return t
-end
-tRecipeALL = AH_Helper.GetAllRecipe()
-
-
-
 function AH_Helper.GetItemTip(hItem)
 	local player, szTip = GetClientPlayer(), ""
 	local item = GetItem(hItem.nItemID)
@@ -1217,18 +1150,16 @@ function AH_Helper.GetItemTip(hItem)
 
 		--配方
 		if item.nGenre == ITEM_GENRE.MATERIAL then
-			szTip = szTip .. AH_Helper.GetRecipeTip(player, item)
+			szTip = szTip .. AH_Tip.GetRecipeTip(player, item)
 		end
 
 		if AH_Helper.GetCheckPervalue() then
-			szTip = szTip .. GetFormatText("\n总价：", 163) .. GetMoneyTipText(hItem.tBidPrice, 106)
-			if MoneyOptCmp(hItem.tBuyPrice, PRICE_LIMITED) ~= 0 then
-				szTip = szTip .. GetFormatText("（") .. GetMoneyTipText(hItem.tBuyPrice, 106) .. GetFormatText("）")
+			if MoneyOptCmp(hItem.tBuyPrice, 0) == 1 then
+				szTip = szTip .. GetFormatText("\n一口价总价：", 163) .. GetMoneyTipText(hItem.tBuyPrice, 106)
 			end
 		else
-			szTip = szTip .. GetFormatText("\n单价：", 163) .. GetMoneyTipText(MoneyOptDiv(hItem.tBidPrice, hItem.nCount), 106)
-			if MoneyOptCmp(hItem.tBuyPrice, PRICE_LIMITED) ~= 0 then
-				szTip = szTip .. GetFormatText("(") .. GetMoneyTipText(MoneyOptDiv(hItem.tBuyPrice, hItem.nCount), 106) .. GetFormatText(")")
+			if MoneyOptCmp(hItem.tBuyPrice, 0) == 1 then
+				szTip = szTip .. GetFormatText("\n一口价单价：", 163) .. GetMoneyTipText(MoneyOptDiv(hItem.tBuyPrice, hItem.nCount), 106)
 			end
 		end
 	end
@@ -1259,10 +1190,9 @@ function AH_Helper.GetHistory()
 	return menu
 end
 
-function AH_Helper.GetHotItems()
-	if not AHItems then return end
+function AH_Helper.GetHotItem()
 	local menu = {}
-	for k1, v1 in pairs(AHItems) do
+	for k1, v1 in pairs(AH_Data.HotItem) do
 		local m_1 = { szOption = k1 }
 		for k2, v2 in pairs(v1) do
 			local m_2 = { szOption = k2 }
@@ -1367,33 +1297,33 @@ function AH_Helper.FuncHook()
 	AuctionPanel.ShowNotice = AH_Helper.ShowNotice
 end
 
-
-
 function AH_Helper.OnFrameCreate()
 	this:RegisterEvent("GAME_EXIT")
 	this:RegisterEvent("LOGIN_GAME")
 	this:RegisterEvent("PLAYER_EXIT_GAME")
-	this:RegisterEvent("ON_SET_BAG_COMPACT_MODE")
 	this:RegisterEvent("OPEN_AUCTION")
 end
 
 --[[function AH_Helper.CheckVersion()
 	local page = Station.Lookup("Lowest/AH_Helper/Page_IE")
 	if page then
-		page:Navigate("https://raw.github.com/jx3crazy/JX3AH/master/AH_Helper/version.txt")
+		page:Navigate("http://jx3server.duapp.com/update")
 	end
 end
 
 function AH_Helper.OnTitleChanged()
 	local szDoc = this:GetDocument()
-	if szDoc ~= "" then
-		if tonumber(szDoc) > tonumber(AH_Helper.szVersion) then
+	if szDoc ~= ""  then
+		szDoc = string.sub(szDoc:match("%b()"), 2, -2)
+		local a1, b1, c1 = szDoc:match("(%d+).(%d+).(%d+)")
+		local a2, b2, c2 = AH_Helper.szVersion:match("(%d+).(%d+).(%d+)")
+		if a1 >= a2 and b1 >= b2 and c1 > c2 then
 			local tVersionInfo = {
 				szName = "AH_HelperVersionInfo",
 				szMessage = "发现交易行助手新版本：" .. szDoc .. "，去下载页面？",
 				{
 					szOption = g_tStrings.STR_HOTKEY_SURE, fnAction = function()
-						OpenInternetExplorer("http://weibo.com/u/1830853034", true)
+						OpenInternetExplorer("http://jx3server.duapp.com/", true)
 					end
 				},
 				{
@@ -1406,9 +1336,7 @@ function AH_Helper.OnTitleChanged()
 end]]
 
 function AH_Helper.OnEvent(szEvent)
-	if szEvent == "ON_SET_BAG_COMPACT_MODE" then
-		bBagHooked = false
-	elseif szEvent == "LOGIN_GAME" then
+	if szEvent == "LOGIN_GAME" then
 		if IsFileExist(AH_Helper.szDataPath) then
 			AH_Helper.tItemPrice = LoadLUAData(AH_Helper.szDataPath)
 		end
@@ -1432,5 +1360,8 @@ function AH_Helper.OnEvent(szEvent)
 	end
 end
 
+Wnd.OpenWindow("Interface\\AH\\AH_Helper.ini", "AH_Helper")
 
-Wnd.OpenWindow("Interface\\AH_Helper\\AH_Helper.ini", "AH_Helper")
+Hotkey.AddBinding("AH_Produce_Open", "技艺助手", "交易行助手", function() AH_Produce.OpenPanel() end, nil)
+Hotkey.AddBinding("AH_Spliter_Open", "拆分物品", "", function() AH_Spliter.OnSplitBoxItem() end, nil)
+Hotkey.AddBinding("AH_Spliter_StackItem", "堆叠物品", "", function() AH_Spliter.StackItem() end, nil)

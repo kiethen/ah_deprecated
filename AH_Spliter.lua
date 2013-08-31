@@ -1,109 +1,12 @@
-AHSpliter = AHSpliter or {}
+AH_Spliter = {}
 
-function AHSpliter.OnFrameCreate()
-	this:RegisterEvent("UI_SCALED")
+local function PlayTipSound(szSound)
+	local szFile = "ui\\sound\\female\\"..szSound..".wav"
+	PlaySound(SOUND.UI_SOUND, szFile)
 end
 
-function AHSpliter.OnEvent(event)
-	if event == "UI_SCALED" then
-		if this.rect then
-			this:CorrectPos(this.rect[1], this.rect[2], this.rect[3], this.rect[4], ALW.CENTER)
-		else
-			this:SetPoint("CENTER", 0, 0, "CENTER", 0, 0)
-		end
-	end
-end
-
-function AHSpliter.IsOpened()
-	local frame = Station.Lookup("Topmost/AHSpliter")
-	if frame and frame:IsVisible() then
-		return true
-	end
-	return false
-end
-
-function AHSpliter.Open(rect)
-	if AHSpliter.IsOpened() then
-		return
-	end
-	Wnd.OpenWindow("AHSpliter")
-	local frame = Station.Lookup("Topmost/AHSpliter")
-	if not frame then
-		frame = Wnd.OpenWindow("Interface\\AHHelper\\AHSpliter.ini", "AHSpliter")
-	end
-	frame:Show()
-	frame:BringToTop()
-
-	frame:Lookup("Edit_Group"):SetText("1")
-	frame:Lookup("Edit_Num"):SetText("1")
-
-	frame.rect = rect
-	if rect then
-		frame:CorrectPos(rect[1], rect[2], rect[3], rect[4], ALW.CENTER)
-	else
-		frame:SetPoint("CENTER", 0, 0, "CENTER", 0, 0)
-	end
-	PlaySound(SOUND.UI_SOUND, g_sound.OpenFrame)
-end
-
-
-function AHSpliter.Close()
-	if not AHSpliter.IsOpened() then
-		return
-	end
-	Wnd.CloseWindow("AHSpliter")
-	PlaySound(SOUND.UI_SOUND, g_sound.CloseFrame)
-end
-
-function AHSpliter.OnLButtonClick()
-	local szName = this:GetName()
-	if szName == "Btn_Split" then
-		AHSpliter.Split(this:GetParent())
-    	return
-    elseif szName == "Btn_Close" then
-    	AHSpliter.Close()
-		AHSpliter.ClearBox(this:GetParent():Lookup("", ""):Lookup("Box_Item"))
-    	return
-	end
-end
-
-function AHSpliter.OnSetFocus()
-  	local szName = this:GetName()
-  	if szName == "Edit_Group" then
-		local szText = this:GetText()
-		if szText == "1" then
-			this:SetText("")
-		else
-			this:SelectAll()
-		end
-	elseif szName == "Edit_Num" then
-		local szText = this:GetText()
-		if szText == "1" then
-			this:SetText("")
-		else
-			this:SelectAll()
-		end
-  	end
-end
-
-function AHSpliter.OnKillFocus()
-	local szName = this:GetName()
-	if szName == "Edit_Group" then
-		local szText = this:GetText()
-		if not szText or szText == "" then
-			this:SetText("1")
-		end
-	elseif szName == "Edit_Num" then
-		local szText = this:GetText()
-		if not szText or szText == "" then
-			this:SetText("1")
-		end
-  	end
-end
-
-
-function AHSpliter.StackItem()
-	AHHelper.Message("开始堆叠物品")
+function AH_Spliter.StackItem()
+	OutputMessage("MSG_SYS", "开始堆叠物品\n")
 	local player = GetClientPlayer()
 	local tBoxTable = {}
 	for i = 1, 6 do
@@ -142,13 +45,17 @@ function AHSpliter.StackItem()
 			end
 		end
 	end
-	AHHelper.Message("堆叠物品结束")
+	OutputMessage("MSG_SYS", "堆叠物品结束\n")
 end
 
-function AHSpliter.Split(frame)
+function AH_Spliter.SplitItem(frame)
 	local hGroup = frame:Lookup("Edit_Group")
     local hNum = frame:Lookup("Edit_Num")
     local hBox = frame:Lookup("", "Box_Item")
+
+	if hBox:IsEmpty() then
+		return
+	end
 
 	local nGroup = tonumber(hGroup:GetText())
 	local nNum = tonumber(hNum:GetText())
@@ -156,31 +63,30 @@ function AHSpliter.Split(frame)
 	local player = GetClientPlayer()
 
 	if not GetPlayerItem(player, hBox.dwBox, hBox.dwX) then
-		AHHelper.Message("找不到物品")
+		OutputMessage("MSG_SYS", "找不到物品\n")
 		return
 	end
 
 	if hBox.nCount < nGroup * nNum or nGroup * nNum == 0 then
-       AHHelper.Message("请输入正确的组数或个数")
+		OutputMessage("MSG_SYS", "请输入正确的组数或个数\n")
         return
     end
 
-	local tFreeBoxList = AHSpliter.GetPlayerBagFreeBoxList()
+	local tFreeBoxList = AH_Spliter.GetPlayerBagFreeBoxList()
 	if #tFreeBoxList < nGroup then
-		AHHelper.Message("背包空间不足\n")
+		OutputMessage("MSG_SYS", "背包空间不足\n")
 		return
 	end
 
-	AHHelper.Message("开始拆分物品")
+	OutputMessage("MSG_SYS", "开始拆分物品\n")
 	for i = 1, nGroup do
 		local dwBox, dwX = tFreeBoxList[i][1], tFreeBoxList[i][2]
 		player.ExchangeItem(hBox.dwBox, hBox.dwX, dwBox, dwX, nNum)
 	end
-	AHHelper.Message("拆分物品结束")
-	Wnd.CloseWindow("AHSpliter")
+	OutputMessage("MSG_SYS", "拆分物品结束\n")
 end
 
-function AHSpliter.GetPlayerBagFreeBoxList()
+function AH_Spliter.GetPlayerBagFreeBoxList()
 	local player = GetClientPlayer()
 	local tBoxTable = {}
 	for nIndex = 6, 1, -1 do
@@ -199,7 +105,7 @@ function AHSpliter.GetPlayerBagFreeBoxList()
 	return tBoxTable
 end
 
-function AHSpliter.OnExchangeBoxItem(boxItem, boxDsc, nHandCount, bHand)
+function AH_Spliter.OnExchangeBoxItem(boxItem, boxDsc, nHandCount, bHand)
 	if not boxItem or not boxDsc then
 		return
 	end
@@ -210,7 +116,7 @@ function AHSpliter.OnExchangeBoxItem(boxItem, boxDsc, nHandCount, bHand)
 
 	if nSourceType ~= UI_OBJECT_ITEM or (not dwBox1 or dwBox1 < INVENTORY_INDEX.PACKAGE or dwBox1 > INVENTORY_INDEX.PACKAGE4) then
 		OutputMessage("MSG_ANNOUNCE_RED", g_tStrings.STR_ERROR_ITEM_CANNOT_SPLIT)
-		AHSpliter.PlayTipSound("002")
+		PlayTipSound("002")
 		return
 	end
 
@@ -228,7 +134,7 @@ function AHSpliter.OnExchangeBoxItem(boxItem, boxDsc, nHandCount, bHand)
 
 	if nCount < 2 then
 		OutputMessage("MSG_ANNOUNCE_RED", g_tStrings.STR_ERROR_ITEM_CANNOT_SPLIT)
-		AHSpliter.PlayTipSound("002")
+		PlayTipSound("002")
 		return
 	end
 
@@ -248,7 +154,106 @@ function AHSpliter.OnExchangeBoxItem(boxItem, boxDsc, nHandCount, bHand)
 	end
 end
 
-function AHSpliter.OnItemLButtonClick()
+function AH_Spliter.ClearBox(hBox)
+	hBox.dwBox = nil
+	hBox.dwX = nil
+	hBox.szName = nil
+	hBox:ClearObject()
+	hBox:SetOverText(0, "")
+end
+
+
+function AH_Spliter.OnFrameCreate()
+	this:RegisterEvent("UI_SCALED")
+end
+
+function AH_Spliter.OnEvent(event)
+	if event == "UI_SCALED" then
+		if this.rect then
+			this:CorrectPos(this.rect[1], this.rect[2], this.rect[3], this.rect[4], ALW.CENTER)
+		else
+			this:SetPoint("CENTER", 0, 0, "CENTER", 0, 0)
+		end
+	end
+end
+
+function AH_Spliter.IsPanelOpened()
+	local frame = Station.Lookup("Normal/AH_Spliter")
+	if frame and frame:IsVisible() then
+		return true
+	end
+	return false
+end
+
+function AH_Spliter.OnSplitBoxItem(rect)
+	local frame = nil
+	if not AH_Spliter.IsPanelOpened() then
+		frame = Wnd.OpenWindow("Interface\\AH\\AH_Spliter.ini", "AH_Spliter")
+	end
+	frame:Lookup("Edit_Group"):SetText("1")
+	frame:Lookup("Edit_Num"):SetText("1")
+	if rect then
+		frame:CorrectPos(rect[1], rect[2], rect[3], rect[4], ALW.CENTER)
+	else
+		frame:SetPoint("CENTER", 0, 0, "CENTER", 0, 0)
+	end
+	Station.SetActiveFrame(frame)
+	PlaySound(SOUND.UI_SOUND, g_sound.OpenFrame)
+end
+
+function AH_Spliter.ClosePanel()
+	if not AH_Spliter.IsPanelOpened() then
+		return
+	end
+	Wnd.CloseWindow("AH_Spliter")
+	PlaySound(SOUND.UI_SOUND, g_sound.CloseFrame)
+end
+
+function AH_Spliter.OnLButtonClick()
+	local szName = this:GetName()
+	if szName == "Btn_Split" then
+		AH_Spliter.SplitItem(this:GetParent())
+    elseif szName == "Btn_Close" then
+		AH_Spliter.ClearBox(this:GetParent():Lookup("", ""):Lookup("Box_Item"))
+	end
+	AH_Spliter.ClosePanel()
+end
+
+function AH_Spliter.OnSetFocus()
+  	local szName = this:GetName()
+  	if szName == "Edit_Group" then
+		local szText = this:GetText()
+		if szText == "1" then
+			this:SetText("")
+		else
+			this:SelectAll()
+		end
+	elseif szName == "Edit_Num" then
+		local szText = this:GetText()
+		if szText == "1" then
+			this:SetText("")
+		else
+			this:SelectAll()
+		end
+  	end
+end
+
+function AH_Spliter.OnKillFocus()
+	local szName = this:GetName()
+	if szName == "Edit_Group" then
+		local szText = this:GetText()
+		if not szText or szText == "" then
+			this:SetText("1")
+		end
+	elseif szName == "Edit_Num" then
+		local szText = this:GetText()
+		if not szText or szText == "" then
+			this:SetText("1")
+		end
+  	end
+end
+
+function AH_Spliter.OnItemLButtonClick()
 	local szName = this:GetName()
 	if szName == "Box_Item" then
 		if Hand_IsEmpty() then
@@ -257,34 +262,34 @@ function AHSpliter.OnItemLButtonClick()
 					OutputMessage("MSG_ANNOUNCE_RED", g_tStrings.SRT_ERROR_CANCEL_CURSOR_STATE)
 				else
 					Hand_Pick(this)
-					AHSpliter.ClearBox(this)
+					AH_Spliter.ClearBox(this)
 				end
 				HideTip()
 			end
 		else
 			local boxHand, nHandCount = Hand_Get()
-			AHSpliter.OnExchangeBoxItem(this, boxHand, nHandCount, true)
+			AH_Spliter.OnExchangeBoxItem(this, boxHand, nHandCount, true)
 		end
 	end
 end
 
-function AHSpliter.OnItemRButtonClick()
+function AH_Spliter.OnItemRButtonClick()
 	local szName = this:GetName()
 	if szName == "Box_Item" then
 		if not this:IsEmpty() then
-			AHSpliter.ClearBox(this)
+			AH_Spliter.ClearBox(this)
 		end
 	end
 end
 
-function AHSpliter.OnItemLButtonUp()
+function AH_Spliter.OnItemLButtonUp()
 	local szName = this:GetName()
 	if szName == "Box_Item" then
 		this:SetObjectPressed(0)
 	end
 end
 
-function AHSpliter.OnItemLButtonDown()
+function AH_Spliter.OnItemLButtonDown()
 	local szName = this:GetName()
 	if szName == "Box_Item" then
 		this:SetObjectStaring(false)
@@ -292,7 +297,7 @@ function AHSpliter.OnItemLButtonDown()
 	end
 end
 
-function AHSpliter.OnItemMouseEnter()
+function AH_Spliter.OnItemMouseEnter()
 	this:SetObjectMouseOver(1)
 	local szName = this:GetName()
 	local x, y = this:GetAbsPos()
@@ -308,7 +313,7 @@ function AHSpliter.OnItemMouseEnter()
 	end
 end
 
-function AHSpliter.OnItemMouseLeave()
+function AH_Spliter.OnItemMouseLeave()
 	this:SetObjectMouseOver(0)
 	local szName = this:GetName()
 	if szName == "Box_Item" then
@@ -316,15 +321,14 @@ function AHSpliter.OnItemMouseLeave()
 	end
 end
 
-function AHSpliter.OnItemLButtonDragEnd()
-	this.bIgnoreClick = true
+function AH_Spliter.OnItemLButtonDragEnd()
 	if not Hand_IsEmpty() then
 		local boxHand, nHandCount = Hand_Get()
-		AHSpliter.OnExchangeBoxItem(this, boxHand, nHandCount, true)
+		AH_Spliter.OnExchangeBoxItem(this, boxHand, nHandCount, true)
 	end
 end
 
-function AHSpliter.OnItemLButtonDrag()
+function AH_Spliter.OnItemLButtonDrag()
 	this:SetObjectPressed(0)
 	if Hand_IsEmpty() then
 		if not this:IsEmpty() then
@@ -332,25 +336,8 @@ function AHSpliter.OnItemLButtonDrag()
 				OutputMessage("MSG_ANNOUNCE_RED", g_tStrings.SRT_ERROR_CANCEL_CURSOR_STATE)
 			else
 				Hand_Pick(this)
-				AHSpliter.ClearBox(this)
+				AH_Spliter.ClearBox(this)
 			end
 		end
 	end
 end
-
-function AHSpliter.ClearBox(hBox)
-	hBox.dwBox = nil
-	hBox.dwX = nil
-	hBox.szName = nil
-	hBox:ClearObject()
-	hBox:SetOverText(0, "")
-end
-
-function AHSpliter.PlayTipSound(szSound)
-	local szFile = "ui\\sound\\female\\"..szSound..".wav"
-	PlaySound(SOUND.UI_SOUND, szFile)
-end
-
-Wnd.OpenWindow("Interface\\AHHelper\\AHSpliter.ini", "AHSpliter"):Hide()
-Hotkey.AddBinding("AHSpliter_Open", "拆分物品", "交易行助手", function() AHSpliter.Open() end, nil)
-Hotkey.AddBinding("AHSpliter_StackItem", "堆叠物品", "", function() AHSpliter.StackItem() end, nil)
