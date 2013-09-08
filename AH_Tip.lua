@@ -75,13 +75,15 @@ function AH_Tip.InitHookTip(frame)
 	h.AppendItemFromString = function(h, szText)
 		h:AppendItemFromStringOrg(szText)
 		local hWnd = Station.GetMouseOverWindow()
-		if IsAuctionPanelOpened() and hWnd:GetName() == "Wnd_Result2" then
-			if AH_Tip.szItemTip then
-				FormatTipEx(h, szText, AH_Tip.szItemTip)
-			end
-		elseif IsBigBagPanelOpened() and hWnd:GetName() == "BigBagPanel" then
-			if AH_Tip.szBagItemTip then
-				FormatTipEx(h, szText, AH_Tip.szBagItemTip)
+		if hWnd then
+			if IsAuctionPanelOpened() and hWnd:GetName() == "Wnd_Result2" then
+				if AH_Tip.szItemTip then
+					FormatTipEx(h, szText, AH_Tip.szItemTip)
+				end
+			elseif IsBigBagPanelOpened() and hWnd:GetName() == "BigBagPanel" then
+				if AH_Tip.szBagItemTip then
+					FormatTipEx(h, szText, AH_Tip.szBagItemTip)
+				end
 			end
 		end
 	end
@@ -144,7 +146,7 @@ function AH_Tip.GetBagItemTip(box)
 
 		local v = AH_Helper.tItemPrice[item.nUiId]
 		if v and v[1] then
-			if MoneyOptCmp(v[1], PRICE_LIMITED) ~= 0 then
+			if MoneyOptCmp(v[1], PRICE_LIMITED) ~= 0 and MoneyOptCmp(v[1], 0) == 1 then
 				szTip = szTip .. GetFormatText("\n最低一口价：", 163) .. GetMoneyTipText(v[1], 106)
 			end
 		end

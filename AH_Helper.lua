@@ -36,7 +36,7 @@ AH_Helper = {
 	tItemPrice = {},
 
 	szDataPath = "\\Interface\\AH\\data\\data.AH",
-	szVersion = "2.0.0",		--用于版本检测
+	szVersion = "2.0.1",		--用于版本检测
 }
 
 
@@ -1153,12 +1153,10 @@ function AH_Helper.GetItemTip(hItem)
 			szTip = szTip .. AH_Tip.GetRecipeTip(player, item)
 		end
 
-		if AH_Helper.GetCheckPervalue() then
-			if MoneyOptCmp(hItem.tBuyPrice, 0) == 1 then
+		if MoneyOptCmp(hItem.tBuyPrice, 0) == 1 and MoneyOptCmp(hItem.tBuyPrice, PRICE_LIMITED) ~= 0 then
+			if AH_Helper.GetCheckPervalue() then
 				szTip = szTip .. GetFormatText("\n一口价总价：", 163) .. GetMoneyTipText(hItem.tBuyPrice, 106)
-			end
-		else
-			if MoneyOptCmp(hItem.tBuyPrice, 0) == 1 then
+			else
 				szTip = szTip .. GetFormatText("\n一口价单价：", 163) .. GetMoneyTipText(MoneyOptDiv(hItem.tBuyPrice, hItem.nCount), 106)
 			end
 		end
