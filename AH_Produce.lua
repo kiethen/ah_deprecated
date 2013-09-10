@@ -1,3 +1,8 @@
+------------------------------------------------------
+-- #模块名：技艺助手模块
+-- #模块说明：增强交易行、生活技艺搜索以及制造功能
+------------------------------------------------------
+
 AH_Produce = {
 	nProfessionID = 0,
 
@@ -23,6 +28,75 @@ local tonumber = tonumber
 
 local szIniFile = "Interface/AH/AH_Produce.ini"
 local tRecipeSkill = {{"全部", 0}, {"烹饪", 4}, {"缝纫", 5}, {"铸造", 6}, {"医术", 7}}
+local EXPAND_ITEM_TYPE = {}
+
+-- 分类，为了生成有序的表得用这种结构
+local tSearchSort = {
+	[1] = {
+		szType = "附魔",
+		tSubSort = {
+			"力道","根骨","元气","身法","属性","体质",
+			"无双","御劲","化劲","仇恨","移动速度","治疗成效",
+			"外功攻击","外功命中","外功破防","外功会效",
+			"内功攻击","内功命中","内功破防","内功会效",
+		},
+	},
+	[2] = {
+		szType = "钥匙",
+		tSubSort = {
+			"青铜钥匙","锡制钥匙","精铁钥匙",
+		},
+	},
+	[3] = {
+		szType = "包包",
+		tSubSort = {
+			"挂件包·背部","挂件包·腰部","轻容百花包","蜀染布包","天工锦缎皮包",
+			"绫罗皮包","彩锦皮包","梨绒落绢包","碧床落花绒包",
+		},
+	},
+	[4] = {
+		szType = "挂件",
+		tSubSort = {
+			"哈哈哈"
+		},
+	},
+	[5] = {
+		szType = "药品增强",
+		tSubSort = {
+			"拆招","防御","威胁值","攻击力","外功攻击","外功命中","外功会心","外功会效",
+			"内功攻击","内功伤害","内功命中","内功会心","内功会效","疗伤成效",
+		},
+	},
+	[6] = {
+		szType = "药品辅助",
+		tSubSort = {
+			"力道","根骨","元气","身法","属性","体质","拆招",
+			"外功破防","外功会效","内功破防","内功会效","疗伤成效",
+		},
+	},
+	[7] = {
+		szType = "烹饪增强",
+		tSubSort = {
+			"命中","闪避","拆招","防御","威胁值","攻击力",
+			"外功攻击","外功破防","外功会效","内功攻击",
+			"内功伤害","内功破防","内功会效","疗伤成效",
+		},
+	},
+	[8] = {
+		szType = "烹饪辅助",
+		tSubSort = {
+			"力道","根骨","元气","身法","属性","体质",
+		},
+	},
+	[9] = {
+		szType = "精力体力",
+		tSubSort = {
+			"毛血旺","麻辣毛血旺","麻辣血肠","好逑汤","剁椒肉爪","佳·回元餐",
+			"蒜泥白肉","白肉血肠","冬瓜排骨汤","银丝卷","椒麻口条","佳·转神餐",
+			"枸杞瘦肉","血丸子","和合腰子",
+		},
+	},
+}
 
 ------------------------------------------------------------
 -- 功能函数
@@ -41,6 +115,9 @@ function AH_Produce:Init(frame)
 	self.nSubMakeCraftID  = 0
 	self.nSubMakeRecipeID = 0
 
+	EXPAND_ITEM_TYPE = {}
+
+	self:UpdateItemTypeList(frame)
 	self:UpdateList(frame)
 end
 
@@ -151,16 +228,19 @@ function AH_Produce:UpdateList(frame, szKey)
 					bExist = true
 					for _, v in ipairs(tRecipe) do
 						local recipe = GetRecipe(v[1], v[2])
-						local tInfo = GetItemInfo(recipe.dwCreateItemType1, recipe.dwCreateItemIndex1)
+						local nType = recipe.dwCreateItemType1
+						local nID	= recipe.dwCreateItemIndex1
+						local tInfo = GetItemInfo(nType, nID)
 						local hItem = hList:AppendItemFromIni(szIniFile, "TreeLeaf_Search")
 
 						hItem.szName = GetItemNameByItemInfo(tInfo)
 						hItem.bItem = true
+						hItem.nID	= nID
+						hItem.nType = nType
 						hItem.tInfo = tInfo
 						hItem.nCraftID = v[1]
 						hItem.nRecipeID = v[2]
 						hItem.nTotalCount = self:GetRecipeTotalCount(recipe)
-						hItem.nLevel = recipe.dwRequireProfessionLevel
 
 						local hText  = hItem:Lookup("Text_FoodNameS")
 						local hImage = hItem:Lookup("Image_FoodS")
@@ -170,7 +250,7 @@ function AH_Produce:UpdateList(frame, szKey)
 							szLearn = szLearn .. " [未学]"
 						end
 
-						szText = " [" .. string.format("%d", hItem.nLevel).."] " .. szText .. szLearn
+						szText = szText .. szLearn
 						if hItem.nTotalCount ~= 0 then
 							szText = szText .. " " .. hItem.nTotalCount
 						end
@@ -192,7 +272,9 @@ function AH_Produce:UpdateList(frame, szKey)
 			for k, v in pairs(tRecipe) do
 				local szRecipeName, nCraftID, nRecipeID = unpack(v)
 				local recipe = GetRecipe(nCraftID, nRecipeID)
-				local tInfo = GetItemInfo(recipe.dwCreateItemType1, recipe.dwCreateItemIndex1)
+				local nType = recipe.dwCreateItemType1
+				local nID	= recipe.dwCreateItemIndex1
+				local tInfo = GetItemInfo(nType, nID)
 				if self.bIsSearch then
 					local szDesc = self:GetDescByItemName(tInfo.szName, nProID)
 					local szSearch = szRecipeName .." " .. szDesc
@@ -202,11 +284,12 @@ function AH_Produce:UpdateList(frame, szKey)
 
 						hItem.szName = szRecipeName
 						hItem.bItem = true
+						hItem.nID	= nID
+						hItem.nType = nType
 						hItem.tInfo = tInfo
 						hItem.nCraftID = nCraftID
 						hItem.nRecipeID = nRecipeID
 						hItem.nTotalCount = self:GetRecipeTotalCount(recipe)
-						hItem.nLevel = recipe.dwRequireProfessionLevel
 
 						local hText  = hItem:Lookup("Text_FoodNameS")
 						local hImage = hItem:Lookup("Image_FoodS")
@@ -216,7 +299,7 @@ function AH_Produce:UpdateList(frame, szKey)
 							szLearn = szLearn .. " [未学]"
 						end
 
-						szText = " [" .. string.format("%d", hItem.nLevel).."] " .. szText .. szLearn
+						szText = szText .. szLearn
 						if hItem.nTotalCount ~= 0 then
 							szText = szText .. " " .. hItem.nTotalCount
 						end
@@ -441,7 +524,7 @@ function AH_Produce:UpdateInfo(frame)
 		if not player.IsRecipeLearned(hItem.nCraftID, hItem.nRecipeID) then
 			szLearn = szLearn .. " [未学]"
 		end
-		szText = " [" .. string.format("%d", hItem.nLevel).."] " .. szText .. szLearn
+		szText = szText .. szLearn
 		local recipe = GetRecipe(hItem.nCraftID, hItem.nRecipeID)
 		local nTotalCount = self:GetRecipeTotalCount(recipe)
 		if nTotalCount ~= 0 then
@@ -471,16 +554,25 @@ function AH_Produce:UpdateBgStatus(hItem)
 	if not hItem then
 		return
 	end
-	local img  = hItem:Lookup("Image_FoodS")
+	local img = nil
+	local szName = hItem:GetName()
+	--Output(szName)
+	if szName == "Handle_ListContent" then
+		img = hItem:Lookup("Image_SearchListCover")
+	elseif szName == "Handle_List01" then
+		img = hItem:Lookup("Image_SearchListCover01")
+	else
+		img  = hItem:Lookup("Image_FoodS")
+	end
 	if not img then
 		return
 	end
 	if hItem.bSel then
-		img:FromUITex("ui/Image/Common/TextShadow.UITex", 0)
+		--img:FromUITex("ui/Image/Common/TextShadow.UITex", 0)
 		img:Show()
 		img:SetAlpha(255)
 	elseif hItem.bOver then
-		img:FromUITex("ui/Image/Common/TextShadow.UITex", 0)
+		--img:FromUITex("ui/Image/Common/TextShadow.UITex", 0)
 		img:Show()
 		img:SetAlpha(128)
 	else
@@ -687,6 +779,84 @@ function AH_Produce:Selected(frame, hItem)
 		frame:Lookup("Wnd_Content"):Hide()
 		frame:Lookup("Btn_MakeAll"):Enable(false)
 		frame:Lookup("Btn_Make"):Enable(false)
+	end
+end
+
+-- 左侧分类
+function AH_Produce:UpdateItemTypeList(frame)
+	local hListLv1 = frame:Lookup("Wnd_Search", "")
+	hListLv1:Clear()
+	for _, v in ipairs(tSearchSort) do
+		local hListLv2 = hListLv1:AppendItemFromIni(szIniFile, "Handle_ListContent")
+		local imgBg1 = hListLv2:Lookup("Image_SearchListBg1")
+		local imgBg2 = hListLv2:Lookup("Image_SearchListBg2")
+		local imgCover = hListLv2:Lookup("Image_SearchListCover")
+		local imgMin = hListLv2:Lookup("Image_Minimize")
+
+		if EXPAND_ITEM_TYPE.szType == v.szType then
+			hListLv2.bSel = true
+			local hListLv3 = hListLv2:Lookup("Handle_Items")
+	    	local w, h = self:AddItemSubTypeList(hListLv3, v.tSubSort or {})
+	    	imgBg1:Hide()
+	    	imgBg2:Show()
+	    	imgCover:Show()
+	    	imgMin:SetFrame(8)
+
+	    	local wB, _ = imgBg2:GetSize()
+	    	imgBg2:SetSize(wB, h + 50)
+
+	    	local wL, _ = hListLv2:GetSize()
+	    	hListLv2:SetSize(wL, h + 50)
+	    else
+	    	imgBg1:Show()
+	    	imgBg2:Hide()
+	    	imgCover:Hide()
+	    	imgMin:SetFrame(12)
+	    	imgBg2:SetSize(0, 0)
+
+	    	local w, h = imgBg1:GetSize()
+	    	hListLv2:SetSize(w, h)
+	    end
+		hListLv2:Lookup("Text_ListTitle"):SetText(v.szType)
+	end
+	self:OnUpdateItemTypeList(hListLv1)
+end
+
+function AH_Produce:AddItemSubTypeList(hList, tSubType)
+	for _, v in ipairs(tSubType) do
+		local hItem = hList:AppendItemFromIni(szIniFile, "Handle_List01")
+		local imgCover =  hItem:Lookup("Image_SearchListCover01")
+		if EXPAND_ITEM_TYPE.szSubType == v then
+			hItem.bSel = true
+			imgCover:Show()
+		else
+			imgCover:Hide()
+		end
+		hItem:Lookup("Text_List01"):SetText(v)
+	end
+	hList:Show()
+	hList:FormatAllItemPos()
+	hList:SetSizeByAllItemSize()
+	return hList:GetSize()
+end
+
+function AH_Produce:OnUpdateItemTypeList(hList)
+	hList:FormatAllItemPos()
+	local hWnd = hList:GetParent()
+	local scroll = hWnd:Lookup("Scroll_Search")
+	local w, h = hList:GetSize()
+	local wAll, hAll = hList:GetAllItemSize()
+	local nStepCount = math.ceil((hAll - h) / 10)
+
+	scroll:SetStepCount(nStepCount)
+	if nStepCount > 0 then
+		scroll:Show()
+		hWnd:Lookup("Btn_SUp"):Show()
+		hWnd:Lookup("Btn_SDown"):Show()
+	else
+		scroll:Hide()
+		hWnd:Lookup("Btn_SUp"):Hide()
+		hWnd:Lookup("Btn_SDown"):Hide()
 	end
 end
 
@@ -908,7 +1078,7 @@ function AH_Produce.OnLButtonClick()
 end
 
 function AH_Produce.OnItemLButtonClick()
-	local frame = this:GetRoot()
+	local frame, szName = this:GetRoot(), this:GetName()
 	if this.bItem then
 		if IsCtrlKeyDown() then
 			EditBox_AppendLinkRecipe(this.nCraftID, this.nRecipeID)
@@ -930,6 +1100,19 @@ function AH_Produce.OnItemLButtonClick()
 			local _, dwVer, nTabType, nIndex = this:GetObjectData()
 			EditBox_AppendLinkItemInfo(dwVer, nTabType, nIndex)
 		end
+	elseif szName == "Handle_ListContent" then
+		local szType = this:Lookup("Text_ListTitle"):GetText()
+		if EXPAND_ITEM_TYPE.szType == szType then
+			EXPAND_ITEM_TYPE = {}
+		else
+			EXPAND_ITEM_TYPE.szType = szType
+		end
+		AH_Produce:UpdateItemTypeList(this:GetRoot())
+		PlaySound(SOUND.UI_SOUND,g_sound.Button)
+	elseif szName == "Handle_List01" then
+		local szSubType = this:Lookup("Text_List01"):GetText()
+		EXPAND_ITEM_TYPE.szSubType = szSubType
+		AH_Produce:UpdateItemTypeList(this:GetRoot())
 	end
 end
 
@@ -946,10 +1129,13 @@ function AH_Produce.OnItemRButtonClick()
 end
 
 function AH_Produce.OnItemMouseEnter()
-	local frame = this:GetRoot()
+	local frame, szName = this:GetRoot(), this:GetName()
 	if this.bItem then
 		this.bOver = true
 		AH_Produce:UpdateBgStatus(this)
+		local x, y = this:GetAbsPos()
+		local w, h = this:GetSize()
+		OutputItemTip(UI_OBJECT_ITEM_INFO, GLOBAL.CURRENT_ITEM_VERSION, this.nType, this.nID, {x, y, w, h})
 	elseif this.bEnchant then
 		local nProID, nCraftID, nRecipeID = this:GetObjectData()
 		local x, y = this:GetAbsPos()
@@ -960,18 +1146,25 @@ function AH_Produce.OnItemMouseEnter()
 		local x, y = this:GetAbsPos()
 		local w, h = this:GetSize()
 		OutputItemTip(UI_OBJECT_ITEM_INFO, dwVer, nTabType, nIndex, {x, y, w, h})
+	elseif szName == "Handle_ListContent" or szName == "Handle_List01" then
+		this.bOver = true
+		AH_Produce:UpdateBgStatus(this)
 	end
 end
 
 function AH_Produce.OnItemMouseLeave()
-	local frame = this:GetRoot()
+	local frame, szName = this:GetRoot(), this:GetName()
 	if this.bItem then
 		this.bOver = false
 		AH_Produce:UpdateBgStatus(this)
+		HideTip()
 	elseif this.bEnchant then
 		HideTip()
 	elseif this.bProduct then
 		HideTip()
+	elseif szName == "Handle_ListContent" or szName == "Handle_List01" then
+		this.bOver = false
+		AH_Produce:UpdateBgStatus(this)
 	end
 end
 
@@ -981,6 +1174,10 @@ function AH_Produce.OnLButtonHold()
 		this:GetRoot():Lookup("Wnd_List/Scroll_List"):ScrollPrev(1)
 	elseif szName == "Btn_ListDown" then
 		this:GetRoot():Lookup("Wnd_List/Scroll_List"):ScrollNext(1)
+	elseif szName == "Btn_SUp" then
+		this:GetRoot():Lookup("Wnd_Search/Scroll_Search"):ScrollPrev(1)
+	elseif szName == "Btn_SDown" then
+		this:GetRoot():Lookup("Wnd_Search/Scroll_Search"):ScrollNext(1)
     end
 end
 
@@ -993,6 +1190,8 @@ function AH_Produce.OnItemMouseWheel()
 	local nDistance = Station.GetMessageWheelDelta()
 	if szName == "Handle_List" then
 		this:GetRoot():Lookup("Wnd_List/Scroll_List"):ScrollNext(nDistance)
+	elseif szName == "Handle_SearchList" then
+		this:GetRoot():Lookup("Wnd_Search/Scroll_Search"):ScrollNext(nDistance)
 	end
 	return true
 end
@@ -1002,20 +1201,26 @@ function AH_Produce.OnScrollBarPosChanged()
 	local szName = this:GetName()
 	local nCurrentValue = this:GetScrollPos()
 	if szName == "Scroll_List" then
-		if nCurrentValue == 0 then
-			hWnd:Lookup("Btn_ListUp"):Enable(false)
-		else
-			hWnd:Lookup("Btn_ListUp"):Enable(true)
-		end
-
-		if nCurrentValue == this:GetStepCount() then
-			hWnd:Lookup("Btn_ListDown"):Enable(false)
-		else
-			hWnd:Lookup("Btn_ListDown"):Enable(true)
-		end
-		local hList = hWnd:Lookup("", "")
-		hList:SetItemStartRelPos(0, -nCurrentValue * 10)
+		hBtnUp = hWnd:Lookup("Btn_ListUp")
+		hBtnDown = hWnd:Lookup("Btn_ListUp")
+		hList = hWnd:Lookup("", "")
+	elseif szName == "Scroll_Search" then
+		hBtnUp = hWnd:Lookup("Btn_SUp")
+		hBtnDown = hWnd:Lookup("Btn_SDown")
+		hList = hWnd:Lookup("", "")
 	end
+	if nCurrentValue == 0 then
+		hBtnUp:Enable(false)
+	else
+		hBtnUp:Enable(true)
+	end
+
+	if nCurrentValue == this:GetStepCount() then
+		hBtnDown:Enable(false)
+	else
+		hBtnDown:Enable(true)
+	end
+	hList:SetItemStartRelPos(0, -nCurrentValue * 10)
 end
 
 function AH_Produce.IsPanelOpened()
