@@ -17,10 +17,11 @@ AH_Produce = {
 	bIsMaking = false,
 	bSub = false,
 	bIsSearch = false,
-	bIsTypeSearch = false,
 
 	nCurCraftID = -1,
 	nCurRecipeID = -1,
+
+	nCurTypeID = 0,
 }
 
 local ipairs = ipairs
@@ -35,48 +36,6 @@ local POISON_TYPE = {[2] = "辅助类",[3] = "增强类",}
 -- 分类，为了生成有序的表得用这种结构
 local tSearchSort = {
 	[1] = {
-		szType = "钥匙",
-		nTypeID = 0,
-		tSubSort = {
-			"青铜钥匙","锡制钥匙","精铁钥匙",
-		},
-	},
-	[2] = {
-		szType = "包包",
-		nTypeID = 0,
-		tSubSort = {
-			"挂件包·背部","挂件包·腰部","轻容百花包","蜀染布包",
-			"天工锦缎皮包","绫罗皮包","彩锦皮包","梨绒落绢包",
-		},
-	},
-	[3] = {
-		szType = "挂件",
-		nTypeID = 0,
-		tSubSort = {
-			"哈哈哈"
-		},
-	},
-	[4] = {
-		szType = "裁缝附魔",
-		nTypeID = 5,
-		tSubSort = {
-			"力道","根骨","元气","身法","体质",
-			"御劲","化劲","移动速度","治疗成效",
-			"外功攻击","外功命中","外功破防","外功会效",
-			"内功攻击","内功命中","内功破防","内功会效",
-		},
-	},
-	[5] = {
-		szType = "锻造附魔",
-		nTypeID = 6,
-		tSubSort = {
-			"力道","根骨","元气","身法","属性","体质",
-			"无双","御劲","化劲","仇恨","治疗成效",
-			"外功攻击","外功命中","外功破防","外功会效",
-			"内功攻击","内功命中","内功破防","内功会效",
-		},
-	},
-	[6] = {
 		szType = "药品增强",
 		nTypeID = 7,
 		tSubSort = {
@@ -84,7 +43,7 @@ local tSearchSort = {
 			"内功攻击","内功伤害","内功命中","内功会心","内功会效","疗伤成效",
 		},
 	},
-	[7] = {
+	[2] = {
 		szType = "药品辅助",
 		nTypeID = 7,
 		tSubSort = {
@@ -92,29 +51,37 @@ local tSearchSort = {
 			"外功破防","外功会效","内功破防","内功会效","疗伤成效",
 		},
 	},
-	[8] = {
+	[3] = {
 		szType = "烹饪增强",
-		nTypeID = 8,
+		nTypeID = 4,
 		tSubSort = {
 			"命中","闪避","拆招","防御","威胁值",
 			"外功攻击","外功破防","外功会效","内功攻击",
 			"内功伤害","内功破防","内功会效","疗伤成效",
 		},
 	},
-	[9] = {
+	[4] = {
 		szType = "烹饪辅助",
-		nTypeID = 8,
+		nTypeID = 4,
 		tSubSort = {
 			"力道","根骨","元气","身法","属性","体质",
 		},
 	},
-	[10] = {
-		szType = "精力体力",
+	[5] = {
+		szType = "附魔",
+		nTypeID = 8,
+		tSubSort = {
+			"力道","根骨","元气","身法","属性","体质",
+			"无双","御劲","化劲","仇恨","移动速度","治疗成效",
+			"外功攻击","外功命中","外功破防","外功会效",
+			"内功攻击","内功命中","内功破防","内功会效",
+		},
+	},
+	[6] = {
+		szType = "其他",
 		nTypeID = 0,
 		tSubSort = {
-			"毛血旺","麻辣血肠","好逑汤","剁椒肉爪","佳·回元餐",
-			"蒜泥白肉","白肉血肠","冬瓜排骨汤","银丝卷","椒麻口条","佳·转神餐",
-			"枸杞瘦肉","血丸子","和合腰子",
+			"钥匙","精力","体力"
 		},
 	},
 }
@@ -125,7 +92,6 @@ local tSearchSort = {
 function AH_Produce:Init(frame)
 	self.nProfessionID = 0
 	self.bIsSearch = false
-	self.bIsTypeSearch = false
 	self.bSub = false
 	self.bCoolDown = false
 
@@ -136,6 +102,8 @@ function AH_Produce:Init(frame)
 	self.nSubMakeCount = 0
 	self.nSubMakeCraftID  = 0
 	self.nSubMakeRecipeID = 0
+
+	self.nCurTypeID = 0
 
 	EXPAND_ITEM_TYPE = {}
 
@@ -234,6 +202,19 @@ function AH_Produce:ProcessKeywords(szName, szKey)
 	return true
 end
 
+function AH_Produce:ProcessType(nTypeID, nGenre)
+	if nTypeID == 0 then
+		return true
+	elseif nTypeID == 4 and nGenre == 14 then
+		return true
+	elseif nTypeID == 7 and nGenre == 1 then
+		return true
+	elseif nTypeID == 8 and (nGenre == 3 or nGenre == 7) then
+		return true
+	end
+	return false
+end
+
 function AH_Produce:UpdateList(frame, bSub, szKey)
 	local hList = frame:Lookup("Wnd_List", "")
 	local player = GetClientPlayer()
@@ -297,14 +278,14 @@ function AH_Produce:UpdateList(frame, bSub, szKey)
 				local nType = recipe.dwCreateItemType1
 				local nID	= recipe.dwCreateItemIndex1
 				local tInfo = GetItemInfo(nType, nID)
-				if self.bIsSearch or self.bIsTypeSearch then
+				if self.bIsSearch then
 					local szDesc = self:GetDescByItemName(tInfo.szName, nProID)
 					if bSub and POISON_TYPE[tInfo.nSub] then
 						szDesc = POISON_TYPE[tInfo.nSub] .. "：" .. szDesc
 					end
 					local szSearch = szRecipeName .." " .. szDesc
 					local bEnchant = false
-					if self:ProcessKeywords(szSearch, szKey) and (not self.bIsTypeSearch or (self.bIsTypeSearch and tInfo.nGenre ~= 0))then
+					if self:ProcessKeywords(szSearch, szKey) and self:ProcessType(self.nCurTypeID, tInfo.nGenre) then
 						bExist = true
 						local hItem = hList:AppendItemFromIni(szIniFile, "TreeLeaf_Search")
 
@@ -349,7 +330,7 @@ function AH_Produce:UpdateList(frame, bSub, szKey)
 	if not bSel then
 		self:Selected(frame, nil)
 	end
-	if self.bIsSearch or self.bIsTypeSearch then
+	if self.bIsSearch then
 		if not bExist then
 			local hItem = hList:AppendItemFromIni(szIniFile, "TreeLeaf_Search")
 			hItem:Lookup("Text_FoodNameS"):SetText(g_tStrings.STR_MSG_NOT_FIND_LIST)
@@ -583,7 +564,6 @@ function AH_Produce:UpdateBgStatus(hItem)
 	end
 	local img = nil
 	local szName = hItem:GetName()
-	--Output(szName)
 	if szName == "Handle_ListContent" then
 		img = hItem:Lookup("Image_SearchListCover")
 	elseif szName == "Handle_List01" then
@@ -825,8 +805,6 @@ function AH_Produce:OnSearchType(frame, szType, szSubType)
 			szKey = StringReplaceW(szKey, "疗伤成效", "疗")
 		end
 	end
-	Output(szKey, bSub)
-	self.bIsTypeSearch = true
 	self:UpdateList(frame, bSub, szKey)
 end
 
@@ -850,6 +828,7 @@ function AH_Produce:UpdateItemTypeList(frame)
 	    	imgBg1:Hide()
 	    	imgBg2:Show()
 	    	imgCover:Show()
+			imgMin:Show()
 	    	imgMin:SetFrame(8)
 
 	    	local wB, _ = imgBg2:GetSize()
@@ -861,6 +840,7 @@ function AH_Produce:UpdateItemTypeList(frame)
 	    	imgBg1:Show()
 	    	imgBg2:Hide()
 	    	imgCover:Hide()
+			imgMin:Show()
 	    	imgMin:SetFrame(12)
 	    	imgBg2:SetSize(0, 0)
 
@@ -909,6 +889,11 @@ function AH_Produce:OnUpdateItemTypeList(hList)
 		hWnd:Lookup("Btn_SUp"):Hide()
 		hWnd:Lookup("Btn_SDown"):Hide()
 	end
+end
+
+function AH_Produce:OnDefaultSearch(frame)
+	self.nProfessionID = 0
+	frame:Lookup("", ""):Lookup("Text_ComboBox"):SetText("全部")
 end
 
 function AH_Produce:OnSearch(frame)
@@ -1088,6 +1073,9 @@ function AH_Produce.OnSetFocus()
 	local szName = this:GetName()
 	if szName == "Edit_Search" then
 		this:SelectAll()
+		EXPAND_ITEM_TYPE = {}
+		AH_Produce.nCurTypeID = 0
+		AH_Produce:UpdateItemTypeList(this:GetRoot())
 	end
 end
 
@@ -1155,18 +1143,20 @@ function AH_Produce.OnItemLButtonClick()
 		local szType = this:Lookup("Text_ListTitle"):GetText()
 		if EXPAND_ITEM_TYPE.szType == szType then
 			EXPAND_ITEM_TYPE = {}
+			AH_Produce.nCurTypeID = 0
+			AH_Produce.bIsSearch = false
 		else
 			EXPAND_ITEM_TYPE.szType = szType
+			AH_Produce.nCurTypeID = this.nTypeID
+			AH_Produce.bIsSearch = true
 		end
-		AH_Produce.nProfessionID = this.nTypeID
+		AH_Produce:OnDefaultSearch(frame)
 		AH_Produce:UpdateItemTypeList(this:GetRoot())
 		PlaySound(SOUND.UI_SOUND,g_sound.Button)
-		Output(this.nTypeID)
 	elseif szName == "Handle_List01" then
 		local szSubType = this:Lookup("Text_List01"):GetText()
 		EXPAND_ITEM_TYPE.szSubType = szSubType
 		AH_Produce:UpdateItemTypeList(this:GetRoot())
-		--Output(szSubType)
 		AH_Produce:OnSearchType(frame, EXPAND_ITEM_TYPE.szType, szSubType)
 	end
 end
@@ -1191,7 +1181,6 @@ function AH_Produce.OnItemMouseEnter()
 		local x, y = this:GetAbsPos()
 		local w, h = this:GetSize()
 		OutputItemTip(UI_OBJECT_ITEM_INFO, GLOBAL.CURRENT_ITEM_VERSION, this.nType, this.nID, {x, y, w, h})
-		Output(this.tInfo.nGenre, this.tInfo.nSub)
 	elseif this.bEnchant then
 		local nProID, nCraftID, nRecipeID = this:GetObjectData()
 		local x, y = this:GetAbsPos()
