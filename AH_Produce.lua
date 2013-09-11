@@ -30,8 +30,8 @@ local tonumber = tonumber
 
 local szIniFile = "Interface/AH/AH_Produce.ini"
 local tRecipeSkill = {{"全部", 0}, {"烹饪", 4}, {"缝纫", 5}, {"铸造", 6}, {"医术", 7}}
-local EXPAND_ITEM_TYPE = {}
-local POISON_TYPE = {[2] = "辅助类",[3] = "增强类",}
+local tExpandItemType = {}
+local tPosionType = {[2] = "辅助类",[3] = "增强类",}
 
 -- 分类，为了生成有序的表得用这种结构
 local tSearchSort = {
@@ -40,7 +40,7 @@ local tSearchSort = {
 		nTypeID = 7,
 		tSubSort = {
 			"拆招","防御","威胁值","外功攻击","外功命中","外功会效",
-			"内功攻击","内功伤害","内功命中","内功会心","内功会效","疗伤成效",
+			"内功攻击","内功伤害","内功命中","内功会心","内功会效","治疗成效",
 		},
 	},
 	[2] = {
@@ -48,7 +48,7 @@ local tSearchSort = {
 		nTypeID = 7,
 		tSubSort = {
 			"力道","根骨","元气","身法","属性","体质","拆招",
-			"外功破防","外功会效","内功破防","内功会效","疗伤成效",
+			"外功破防","外功会效","内功破防","内功会效","治疗成效",
 		},
 	},
 	[3] = {
@@ -57,7 +57,7 @@ local tSearchSort = {
 		tSubSort = {
 			"命中","闪避","拆招","防御","威胁值",
 			"外功攻击","外功破防","外功会效","内功攻击",
-			"内功伤害","内功破防","内功会效","疗伤成效",
+			"内功伤害","内功破防","内功会效","治疗成效",
 		},
 	},
 	[4] = {
@@ -71,8 +71,8 @@ local tSearchSort = {
 		szType = "附魔",
 		nTypeID = 8,
 		tSubSort = {
-			"力道","根骨","元气","身法","属性","体质",
-			"无双","御劲","化劲","仇恨","移动速度","治疗成效",
+			"力道","根骨","元气","身法","属性","体质","闪避","招架","拆招",
+			"无双","御劲","化劲","仇恨","移动速度","内功防御","外功防御","治疗成效",
 			"外功攻击","外功命中","外功破防","外功会效",
 			"内功攻击","内功命中","内功破防","内功会效",
 		},
@@ -81,7 +81,7 @@ local tSearchSort = {
 		szType = "其他",
 		nTypeID = 0,
 		tSubSort = {
-			"钥匙","精力","体力"
+			"钥匙","精力","体力","好感度",
 		},
 	},
 }
@@ -105,7 +105,7 @@ function AH_Produce:Init(frame)
 
 	self.nCurTypeID = 0
 
-	EXPAND_ITEM_TYPE = {}
+	tExpandItemType = {}
 
 	self:UpdateItemTypeList(frame)
 	self:UpdateList(frame, false)
@@ -280,8 +280,8 @@ function AH_Produce:UpdateList(frame, bSub, szKey)
 				local tInfo = GetItemInfo(nType, nID)
 				if self.bIsSearch then
 					local szDesc = self:GetDescByItemName(tInfo.szName, nProID)
-					if bSub and POISON_TYPE[tInfo.nSub] then
-						szDesc = POISON_TYPE[tInfo.nSub] .. "：" .. szDesc
+					if bSub and tPosionType[tInfo.nSub] then
+						szDesc = tPosionType[tInfo.nSub] .. "：" .. szDesc
 					end
 					local szSearch = szRecipeName .." " .. szDesc
 					local bEnchant = false
@@ -796,15 +796,14 @@ function AH_Produce:OnSearchType(frame, szType, szSubType)
 	elseif StringFindW(szType, "辅助") then
 		bSub, szKey = true, szKey .. " 辅助"
 	end
-	if bSub then
-		if StringFindW(szKey, "会效") then
-			szKey = StringReplaceW(szKey, "会效", "会心效果")
-		elseif StringFindW(szKey, "会心") then
-			szKey = StringReplaceW(szKey, "会心", "会心等级")
-		elseif StringFindW(szKey, "疗伤") then
-			szKey = StringReplaceW(szKey, "疗伤成效", "疗")
-		end
+	if StringFindW(szKey, "会效") then
+		szKey = StringReplaceW(szKey, "会效", "会心效果")
+	elseif StringFindW(szKey, "会心") then
+		szKey = StringReplaceW(szKey, "会心", "会心等级")
+	elseif StringFindW(szKey, "治疗") then
+		szKey = StringReplaceW(szKey, "治疗成效", "疗")
 	end
+	--Output(szKey)
 	self:UpdateList(frame, bSub, szKey)
 end
 
@@ -820,7 +819,7 @@ function AH_Produce:UpdateItemTypeList(frame)
 		local imgCover = hListLv2:Lookup("Image_SearchListCover")
 		local imgMin = hListLv2:Lookup("Image_Minimize")
 		local txtTitle = hListLv2:Lookup("Text_ListTitle")
-		if EXPAND_ITEM_TYPE.szType == v.szType then
+		if tExpandItemType.szType == v.szType then
 			hListLv2.bSel = true
 
 			local hListLv3 = hListLv2:Lookup("Handle_Items")
@@ -857,7 +856,7 @@ function AH_Produce:AddItemSubTypeList(hList, tSubType)
 	for _, v in ipairs(tSubType) do
 		local hItem = hList:AppendItemFromIni(szIniFile, "Handle_List01")
 		local imgCover =  hItem:Lookup("Image_SearchListCover01")
-		if EXPAND_ITEM_TYPE.szSubType == v then
+		if tExpandItemType.szSubType == v then
 			hItem.bSel = true
 			imgCover:Show()
 		else
@@ -891,8 +890,11 @@ function AH_Produce:OnUpdateItemTypeList(hList)
 	end
 end
 
-function AH_Produce:OnDefaultSearch(frame)
+function AH_Produce:OnDefaultSearch(frame, bEdit)
 	self.nProfessionID = 0
+	if bEdit then
+		frame:Lookup("Edit_Search"):ClearText()
+	end
 	frame:Lookup("", ""):Lookup("Text_ComboBox"):SetText("全部")
 end
 
@@ -1073,7 +1075,7 @@ function AH_Produce.OnSetFocus()
 	local szName = this:GetName()
 	if szName == "Edit_Search" then
 		this:SelectAll()
-		EXPAND_ITEM_TYPE = {}
+		tExpandItemType = {}
 		AH_Produce.nCurTypeID = 0
 		AH_Produce:UpdateItemTypeList(this:GetRoot())
 	end
@@ -1113,6 +1115,15 @@ function AH_Produce.OnLButtonClick()
 		AH_Produce.bSub = false
 		AH_Produce:SetMakeInfo(frame, true)
 		AH_Produce:OnMakeRecipe()
+	elseif szName == "Btn_Default" then
+		tExpandItemType = {}
+		AH_Produce.nCurTypeID = 0
+		AH_Produce.bIsSearch = false
+		AH_Produce:OnDefaultSearch(frame, true)
+		AH_Produce:Selected(frame, nil)
+		AH_Produce:UpdateList(frame, false)
+		AH_Produce:UpdateItemTypeList(frame)
+		PlaySound(SOUND.UI_SOUND,g_sound.Button)
 	end
 end
 
@@ -1141,23 +1152,23 @@ function AH_Produce.OnItemLButtonClick()
 		end
 	elseif szName == "Handle_ListContent" then
 		local szType = this:Lookup("Text_ListTitle"):GetText()
-		if EXPAND_ITEM_TYPE.szType == szType then
-			EXPAND_ITEM_TYPE = {}
+		if tExpandItemType.szType == szType then
+			tExpandItemType = {}
 			AH_Produce.nCurTypeID = 0
 			AH_Produce.bIsSearch = false
 		else
-			EXPAND_ITEM_TYPE.szType = szType
+			tExpandItemType.szType = szType
 			AH_Produce.nCurTypeID = this.nTypeID
 			AH_Produce.bIsSearch = true
 		end
-		AH_Produce:OnDefaultSearch(frame)
+		AH_Produce:OnDefaultSearch(frame, false)
 		AH_Produce:UpdateItemTypeList(this:GetRoot())
 		PlaySound(SOUND.UI_SOUND,g_sound.Button)
 	elseif szName == "Handle_List01" then
 		local szSubType = this:Lookup("Text_List01"):GetText()
-		EXPAND_ITEM_TYPE.szSubType = szSubType
+		tExpandItemType.szSubType = szSubType
 		AH_Produce:UpdateItemTypeList(this:GetRoot())
-		AH_Produce:OnSearchType(frame, EXPAND_ITEM_TYPE.szType, szSubType)
+		AH_Produce:OnSearchType(frame, tExpandItemType.szType, szSubType)
 	end
 end
 
@@ -1181,6 +1192,7 @@ function AH_Produce.OnItemMouseEnter()
 		local x, y = this:GetAbsPos()
 		local w, h = this:GetSize()
 		OutputItemTip(UI_OBJECT_ITEM_INFO, GLOBAL.CURRENT_ITEM_VERSION, this.nType, this.nID, {x, y, w, h})
+		--Output(this.szSearch, this.tInfo.nGenre, this.tInfo.nSub)
 	elseif this.bEnchant then
 		local nProID, nCraftID, nRecipeID = this:GetObjectData()
 		local x, y = this:GetAbsPos()
@@ -1245,6 +1257,7 @@ function AH_Produce.OnScrollBarPosChanged()
 	local hWnd  = this:GetParent()
 	local szName = this:GetName()
 	local nCurrentValue = this:GetScrollPos()
+	local hBtnUp, hBtnDown, hList = nil, nil, nil
 	if szName == "Scroll_List" then
 		hBtnUp = hWnd:Lookup("Btn_ListUp")
 		hBtnDown = hWnd:Lookup("Btn_ListUp")
