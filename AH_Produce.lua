@@ -222,7 +222,7 @@ function AH_Produce:UpdateList(frame, bSub, szKey)
 	local bSel = false
 	local nProID = self.nProfessionID
 	hList:Clear()
-	local tRecipe = nil
+	local tRecipe, tCache = nil, {}
 	if nProID < 0 then	--原料搜索配方
 		for _, k in ipairs({4, 5, 6, 7}) do
 			if self.bIsSearch then
@@ -231,36 +231,19 @@ function AH_Produce:UpdateList(frame, bSub, szKey)
 					bExist = true
 					for _, v in ipairs(tRecipe) do
 						local recipe = GetRecipe(v[1], v[2])
+						local nID = recipe.dwCreateItemIndex1
 						local nType = recipe.dwCreateItemType1
-						local nID	= recipe.dwCreateItemIndex1
-						local tInfo = GetItemInfo(nType, nID)
-						local hItem = hList:AppendItemFromIni(szIniFile, "TreeLeaf_Search")
+						local tItemInfo = GetItemInfo(nType, nID)
 
-						hItem.szName = GetItemNameByItemInfo(tInfo)
-						hItem.bItem = true
-						hItem.nID	= nID
-						hItem.nType = nType
-						hItem.tInfo = tInfo
-						hItem.nCraftID = v[1]
-						hItem.nRecipeID = v[2]
-						hItem.nTotalCount = self:GetRecipeTotalCount(recipe)
-
-						local hText  = hItem:Lookup("Text_FoodNameS")
-						local hImage = hItem:Lookup("Image_FoodS")
-						local szText = hItem.szName
-						local szLearn = ""
-						if not player.IsRecipeLearned(v[1], v[2]) then
-							szLearn = szLearn .. " [未学]"
-						end
-
-						szText = szText .. szLearn
-						if hItem.nTotalCount ~= 0 then
-							szText = szText .. " " .. hItem.nTotalCount
-						end
-
-						hText:SetText(szText)
-						hText:SetFontColor(GetItemFontColorByQuality(hItem.tInfo.nQuality, false))
-						hImage:Hide()
+						table.insert(tCache, {
+							szName = GetItemNameByItemInfo(tItemInfo),
+							nID	= nID,
+							nType = nType,
+							nCraftID = v[1],
+							nRecipeID = v[2],
+							nQuality = tItemInfo.nQuality,
+							nTotalCount = self:GetRecipeTotalCount(recipe),
+						})
 					end
 				end
 			end
@@ -277,52 +260,63 @@ function AH_Produce:UpdateList(frame, bSub, szKey)
 				local recipe = GetRecipe(nCraftID, nRecipeID)
 				local nType = recipe.dwCreateItemType1
 				local nID	= recipe.dwCreateItemIndex1
-				local tInfo = GetItemInfo(nType, nID)
+				local tItemInfo = GetItemInfo(nType, nID)
 				if self.bIsSearch then
-					local szDesc = self:GetDescByItemName(tInfo.szName, nProID)
-					if bSub and tPosionType[tInfo.nSub] then
-						szDesc = tPosionType[tInfo.nSub] .. "：" .. szDesc
+					local szDesc = self:GetDescByItemName(tItemInfo.szName, nProID)
+					if bSub and tPosionType[tItemInfo.nSub] then
+						szDesc = tPosionType[tItemInfo.nSub] .. "：" .. szDesc
 					end
 					local szSearch = szRecipeName .." " .. szDesc
 					local bEnchant = false
-					if self:ProcessKeywords(szSearch, szKey) and self:ProcessType(self.nCurTypeID, tInfo.nGenre) then
+					if self:ProcessKeywords(szSearch, szKey) and self:ProcessType(self.nCurTypeID, tItemInfo.nGenre) then
 						bExist = true
-						local hItem = hList:AppendItemFromIni(szIniFile, "TreeLeaf_Search")
-
-						hItem.szName = szRecipeName
-						hItem.szSearch = szSearch
-						hItem.bItem = true
-						hItem.nID	= nID
-						hItem.nType = nType
-						hItem.tInfo = tInfo
-						hItem.nCraftID = nCraftID
-						hItem.nRecipeID = nRecipeID
-						hItem.nTotalCount = self:GetRecipeTotalCount(recipe)
-
-						local hText  = hItem:Lookup("Text_FoodNameS")
-						local hImage = hItem:Lookup("Image_FoodS")
-						local szText = szRecipeName
-						local szLearn = ""
-						if not player.IsRecipeLearned(nCraftID, nRecipeID) then
-							szLearn = szLearn .. " [未学]"
-						end
-
-						szText = szText .. szLearn
-						if hItem.nTotalCount ~= 0 then
-							szText = szText .. " " .. hItem.nTotalCount
-						end
-
-						hText:SetText(szText)
-						hText:SetFontColor(GetItemFontColorByQuality(hItem.tInfo.nQuality, false))
-						hImage:Hide()
-
-						if hItem.nCraftID == self.nCurCraftID and hItem.nRecipeID == self.nCurRecipeID then
-							bSel = true
-							self:Selected(frame, hItem)
-							self:UpdateContent(frame)
-						end
+						table.insert(tCache, {
+							szName = szRecipeName,
+							nID	= nID,
+							nType = nType,
+							nCraftID = nCraftID,
+							nRecipeID = nRecipeID,
+							nQuality = tItemInfo.nQuality,
+							nTotalCount = self:GetRecipeTotalCount(recipe),
+						})
 					end
 				end
+			end
+		end
+	end
+
+	if tCache then
+		table.sort(tCache, function(a, b) return a.nQuality > b.nQuality end)
+		for _, v in ipairs(tCache) do
+			local hI = hList:AppendItemFromIni(szIniFile, "TreeLeaf_Search")
+			hI.bItem = true
+			hI.szName = v.szName
+			hI.nID	= v.nID
+			hI.nType = v.nType
+			hI.nCraftID = v.nCraftID
+			hI.nRecipeID = v.nRecipeID
+			hI.nQuality = v.nQuality
+			hI.nTotalCount = v.nTotalCount
+
+			local hText  = hI:Lookup("Text_FoodNameS")
+			local hImage = hI:Lookup("Image_FoodS")
+			local szText = hI.szName
+			local szLearn = ""
+			if not player.IsRecipeLearned(hI.nCraftID, hI.nRecipeID) then
+				szLearn = szLearn .. " [未学]"
+			end
+			szText = szText .. szLearn
+			if hI.nTotalCount ~= 0 then
+				szText = szText .. " " .. hI.nTotalCount
+			end
+			hText:SetText(szText)
+			hText:SetFontColor(GetItemFontColorByQuality(hI.nQuality, false))
+			hImage:Hide()
+
+			if hI.nCraftID == self.nCurCraftID and hI.nRecipeID == self.nCurRecipeID then
+				bSel = true
+				self:Selected(frame, hI)
+				self:UpdateContent(frame)
 			end
 		end
 	end
@@ -332,10 +326,10 @@ function AH_Produce:UpdateList(frame, bSub, szKey)
 	end
 	if self.bIsSearch then
 		if not bExist then
-			local hItem = hList:AppendItemFromIni(szIniFile, "TreeLeaf_Search")
-			hItem:Lookup("Text_FoodNameS"):SetText(g_tStrings.STR_MSG_NOT_FIND_LIST)
-			hItem:Lookup("Text_FoodNameS"):SetFontScheme(162)
-			hItem:Lookup("Image_FoodS"):Hide()
+			local hI = hList:AppendItemFromIni(szIniFile, "TreeLeaf_Search")
+			hI:Lookup("Text_FoodNameS"):SetText(g_tStrings.STR_MSG_NOT_FIND_LIST)
+			hI:Lookup("Text_FoodNameS"):SetFontScheme(162)
+			hI:Lookup("Image_FoodS"):Hide()
 		else
 			hList:Sort()
 		end
@@ -542,7 +536,7 @@ function AH_Produce:UpdateInfo(frame)
 		hText:SetText(szText)
 
 		if not hItem.bSel then
-			hText:SetFontColor(GetItemFontColorByQuality(hItem.tInfo.nQuality, false))
+			hText:SetFontColor(GetItemFontColorByQuality(hItem.nQuality, false))
 			hImage:Hide()
 		end
 
@@ -763,7 +757,7 @@ function AH_Produce:Selected(frame, hItem)
 			if hI.bSel then
 				hI.bSel = false
 				hI:Lookup("Image_FoodS"):Hide()
-				hI:Lookup("Text_FoodNameS"):SetFontColor(GetItemFontColorByQuality(hI.tInfo.nQuality, false))
+				hI:Lookup("Text_FoodNameS"):SetFontColor(GetItemFontColorByQuality(hI.nQuality, false))
 			end
 		end
 
@@ -1192,7 +1186,7 @@ function AH_Produce.OnItemMouseEnter()
 		local x, y = this:GetAbsPos()
 		local w, h = this:GetSize()
 		OutputItemTip(UI_OBJECT_ITEM_INFO, GLOBAL.CURRENT_ITEM_VERSION, this.nType, this.nID, {x, y, w, h})
-		--Output(this.szSearch, this.tInfo.nGenre, this.tInfo.nSub)
+		--Output(this.szSearch, this.tItemInfo.nGenre, this.tItemInfo.nSub)
 	elseif this.bEnchant then
 		local nProID, nCraftID, nRecipeID = this:GetObjectData()
 		local x, y = this:GetAbsPos()
