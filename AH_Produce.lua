@@ -1254,7 +1254,7 @@ function AH_Produce.OnScrollBarPosChanged()
 	local hBtnUp, hBtnDown, hList = nil, nil, nil
 	if szName == "Scroll_List" then
 		hBtnUp = hWnd:Lookup("Btn_ListUp")
-		hBtnDown = hWnd:Lookup("Btn_ListUp")
+		hBtnDown = hWnd:Lookup("Btn_ListDown")
 		hList = hWnd:Lookup("", "")
 	elseif szName == "Scroll_Search" then
 		hBtnUp = hWnd:Lookup("Btn_SUp")

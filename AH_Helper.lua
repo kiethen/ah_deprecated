@@ -740,152 +740,142 @@ function AH_Helper.AddWidget(frame)
 	if not frame then return end
 	local page  = frame:Lookup("PageSet_Totle/Page_Business")
 	local hWndSrch = page:Lookup("Wnd_Search")
+	local temp = Wnd.OpenWindow("interface\\AH\\AH_Widget.ini")
 	if not hWndSrch:Lookup("Btn_History") then
-		local temp = Wnd.OpenWindow("interface\\AH\\AH_Widget.ini")
-		if temp then
-			local hBtnHistory = temp:Lookup("Btn_History")
-			if hBtnHistory then
-				local hEdit = AH_Helper.GetSearchEdit(frame)
-				hEdit:SetSize(125, 20)
-				hBtnHistory:ChangeRelation(hWndSrch, true, true)
-				hBtnHistory:SetRelPos(148, 32)
-				hBtnHistory.OnLButtonClick = function()
-					local xT, yT = hEdit:GetAbsPos()
-					local wT, hT = hEdit:GetSize()
-					local menu = AH_Helper.GetHistory()
-					menu.nMiniWidth = wT
-					menu.x = xT - 5
-					menu.y = yT + hT
-					PopupMenu(menu)
-				end
-				hBtnHistory.OnRButtonClick = function ()
-					local menu = AH_Helper.GetHotItem()
-					PopupMenu(menu)
-				end
+		local hBtnHistory = temp:Lookup("Btn_History")
+		if hBtnHistory then
+			local hEdit = AH_Helper.GetSearchEdit(frame)
+			hEdit:SetSize(125, 20)
+			hBtnHistory:ChangeRelation(hWndSrch, true, true)
+			hBtnHistory:SetRelPos(148, 32)
+			hBtnHistory.OnLButtonClick = function()
+				local xT, yT = hEdit:GetAbsPos()
+				local wT, hT = hEdit:GetSize()
+				local menu = AH_Helper.GetHistory()
+				menu.nMiniWidth = wT + 32
+				menu.x = xT - 5
+				menu.y = yT + hT
+				PopupMenu(menu)
+			end
+			hBtnHistory.OnRButtonClick = function ()
+				local menu = AH_Helper.GetHotItem()
+				PopupMenu(menu)
 			end
 		end
-		Wnd.CloseWindow(temp)
 	end
 
 	if not hWndSrch:Lookup("Btn_Produce") then
-		local temp = Wnd.OpenWindow("interface\\AH\\AH_Widget.ini")
-		if temp then
-			local hBtnProduce = temp:Lookup("Btn_Produce")
-			if hBtnProduce then
-				hBtnProduce:ChangeRelation(hWndSrch, true, true)
-				hBtnProduce:SetRelPos(854, 0)
-				hBtnProduce.OnLButtonClick = function()
-					AH_Produce.OpenPanel()
-				end
+		local hBtnProduce = temp:Lookup("Btn_Produce")
+		if hBtnProduce then
+			hBtnProduce:ChangeRelation(hWndSrch, true, true)
+			hBtnProduce:SetRelPos(854, 0)
+			hBtnProduce.OnLButtonClick = function()
+				AH_Produce.OpenPanel()
 			end
 		end
-		Wnd.CloseWindow(temp)
 	end
 
 	if not frame:Lookup("Wnd_Side") then
-		local temp = Wnd.OpenWindow("interface\\AH\\AH_Widget.ini")
-		if temp then
-			local hWndSide = temp:Lookup("Wnd_Side")
-			if hWndSide then
-				hWndSide:ChangeRelation(frame, true, true)
-				hWndSide:SetRelPos(960, 8)
-				hWndSide:Lookup("Btn_Price").OnLButtonClick = function()
-					local menu =
+		local hWndSide = temp:Lookup("Wnd_Side")
+		if hWndSide then
+			hWndSide:ChangeRelation(frame, true, true)
+			hWndSide:SetRelPos(960, 8)
+			hWndSide:Lookup("Btn_Price").OnLButtonClick = function()
+				local menu =
+				{
+					--{szOption = "使用最高价", bMCheck = true, bChecked = (AH_Helper.szDefaultValue == "Btn_Max"), fnAction = function() AH_Helper.szDefaultValue = "Btn_Max" AH_Helper.SetSellPriceType() end,},
+					{szOption = "使用最低价", bMCheck = true, bChecked = (AH_Helper.szDefaultValue == "Btn_Min"), fnAction = function() AH_Helper.szDefaultValue = "Btn_Min" AH_Helper.SetSellPriceType() end,},
+					{szOption = "使用系统保存价格", bMCheck = true, bChecked = (AH_Helper.szDefaultValue == "Btn_Save"), fnAction = function() AH_Helper.szDefaultValue = "Btn_Save" AH_Helper.SetSellPriceType() end,},
+					--{bDevide = true},
+					--{szOption = "起拍价等于一口价", bCheck = true, bChecked = AH_Helper.bBidEqualBuy, fnAction = function() AH_Helper.bBidEqualBuy = not AH_Helper.bBidEqualBuy end,},
+				}
+				PopupMenu(menu)
+			end
+			hWndSide:Lookup("Btn_Favorite").OnLButtonClick = function()
+				local menu = {}
+				local m_1 = {szOption = "收藏夹"}
+				for k, v in pairs(AH_Helper.tItemFavorite) do
+					table.insert(m_1,
 					{
-						--{szOption = "使用最高价", bMCheck = true, bChecked = (AH_Helper.szDefaultValue == "Btn_Max"), fnAction = function() AH_Helper.szDefaultValue = "Btn_Max" AH_Helper.SetSellPriceType() end,},
-						{szOption = "使用最低价", bMCheck = true, bChecked = (AH_Helper.szDefaultValue == "Btn_Min"), fnAction = function() AH_Helper.szDefaultValue = "Btn_Min" AH_Helper.SetSellPriceType() end,},
-						{szOption = "使用系统保存价格", bMCheck = true, bChecked = (AH_Helper.szDefaultValue == "Btn_Save"), fnAction = function() AH_Helper.szDefaultValue = "Btn_Save" AH_Helper.SetSellPriceType() end,},
-						--{bDevide = true},
-						--{szOption = "起拍价等于一口价", bCheck = true, bChecked = AH_Helper.bBidEqualBuy, fnAction = function() AH_Helper.bBidEqualBuy = not AH_Helper.bBidEqualBuy end,},
-					}
-					PopupMenu(menu)
+						szOption = k,
+						{szOption = "搜索", fnAction = function() AH_Helper.UpdateList(k, "收藏物品") AH_Helper.szLastSearchKey = nil end,},
+						{szOption = "删除", fnAction = function() local szText = "删除收藏物品: "..k AH_Helper.Message(szText) AH_Helper.tItemFavorite[k] = nil end,},
+					})
 				end
-				hWndSide:Lookup("Btn_Favorite").OnLButtonClick = function()
-					local menu = {}
-					local m_1 = {szOption = "收藏夹"}
-					for k, v in pairs(AH_Helper.tItemFavorite) do
-						table.insert(m_1,
-						{
-							szOption = k,
-							{szOption = "搜索", fnAction = function() AH_Helper.UpdateList(k, "收藏物品") AH_Helper.szLastSearchKey = nil end,},
-							{szOption = "删除", fnAction = function() local szText = "删除收藏物品: "..k AH_Helper.Message(szText) AH_Helper.tItemFavorite[k] = nil end,},
-						})
-					end
-					local m_3 = {szOption = "黑名单"}
-					for k, v in pairs(AH_Helper.tBlackList) do
-						table.insert(m_3,
-						{
-							szOption = k,
-							{szOption = "删除", fnAction = function() local szText = "删除黑心卖家: "..k AH_Helper.Message(szText) AH_Helper.tBlackList[k] = nil AH_Helper.UpdateList() end,},
-						})
-					end
-					table.insert(menu, m_1)
-					table.insert(menu, m_3)
-					PopupMenu(menu)
-				end
-				hWndSide:Lookup("Btn_Split").OnLButtonClick = function()
-					local x, y = this:GetAbsPos()
-					local w, h = this:GetSize()
-					AH_Spliter.OnSplitBoxItem({x, y, w, h})
-				end
-				hWndSide:Lookup("Btn_Split").OnRButtonClick = function()
-					AH_Spliter.StackItem()
-				end
-				hWndSide:Lookup("Btn_Option").OnLButtonClick = function()
-					local menu =
+				local m_3 = {szOption = "黑名单"}
+				for k, v in pairs(AH_Helper.tBlackList) do
+					table.insert(m_3,
 					{
-						{szOption = "版本：v" .. AH_Helper.szVersion, fnDisable = function() return true end,},
-						{ bDevide = true },
-						{szOption = "过滤已读秘籍", bCheck = true, bChecked = AH_Helper.bFilterRecipe, fnAction = function() AH_Helper.bFilterRecipe = not AH_Helper.bFilterRecipe end, fnMouseEnter = function() AH_Helper.OutputTip("勾选此项后，将过滤掉已阅读的秘籍") end,},
-						{szOption = "过滤已读书籍",bCheck = true,bChecked = AH_Helper.bFilterBook,fnAction = function()AH_Helper.bFilterBook = not AH_Helper.bFilterBook end, fnMouseEnter = function() AH_Helper.OutputTip("勾选此项后，将过滤掉已阅读的书籍") end,},
-						{ bDevide = true },
-						{szOption = "最大历史记录", fnMouseEnter = function() AH_Helper.OutputTip("记录物品搜索历史，点击搜索框下拉按钮中的记录可以快速搜索") end,
-							{szOption = "5", bMCheck = true, bChecked = (AH_Helper.nMaxHistory == 5), fnAction = function() AH_Helper.nMaxHistory = 5 end,},
-							{szOption = "10", bMCheck = true, bChecked = (AH_Helper.nMaxHistory == 10), fnAction = function() AH_Helper.nMaxHistory = 10 end,},
-							{szOption = "15", bMCheck = true, bChecked = (AH_Helper.nMaxHistory == 15), fnAction = function() AH_Helper.nMaxHistory = 15 end,},
-							{szOption = "20", bMCheck = true, bChecked = (AH_Helper.nMaxHistory == 20), fnAction = function() AH_Helper.nMaxHistory = 20 end,},
-						},
-						{ bDevide = true },
-						{szOption = "寄售保管时间", fnMouseEnter = function() AH_Helper.OutputTip("寄售物品时默认的保管时间") end,
-							{szOption = "12小时", bMCheck = true, bChecked = (AH_Helper.szDefaultTime == "12小时"), fnAction = function() AH_Helper.szDefaultTime = "12小时" end,},
-							{szOption = "24小时", bMCheck = true, bChecked = (AH_Helper.szDefaultTime == "24小时"), fnAction = function() AH_Helper.szDefaultTime = "24小时" end,},
-							{szOption = "48小时", bMCheck = true, bChecked = (AH_Helper.szDefaultTime == "48小时"), fnAction = function() AH_Helper.szDefaultTime = "48小时" end,},
-						},
-						{szOption = "启用自动差价", bCheck = true, bChecked = AH_Helper.bLowestPrices, fnAction = function() AH_Helper.bLowestPrices = not AH_Helper.bLowestPrices end, fnMouseEnter = function() AH_Helper.OutputTip("勾选此项后，寄售物品时将自动乘以差价系数或减去差价") end,
-							{szOption = "差价系数", bCheck = true, bChecked = AH_Helper.bPricePercentage, fnDisable = function() return not AH_Helper.bLowestPrices end, fnAction = function() AH_Helper.bPricePercentage = not AH_Helper.bPricePercentage end,
-								{szOption = "修改 [" .. AH_Helper.nPricePercentage.."]", fnDisable = function() return not AH_Helper.bPricePercentage end, fnAction = function()
-										GetUserInput("输入差价系数：", function(szText)
-											local n = tonumber(szText)
-											if n > 0 then
-												AH_Helper.nPricePercentage = n
-											end
-										end, nil, nil, nil, nil, nil)
-									end,
-								}
-							},
-							{ bDevide = true },
-							{szOption = "1铜", bMCheck = true, bChecked = (AH_Helper.nDefaultPrices == 1), fnDisable = function() return AH_Helper.bPricePercentage or not AH_Helper.bLowestPrices end, fnAction = function() AH_Helper.nDefaultPrices = 1 end,},
-							{szOption = "1银", bMCheck = true, bChecked = (AH_Helper.nDefaultPrices == 1 * 100), fnDisable = function() return AH_Helper.bPricePercentage or not AH_Helper.bLowestPrices end, fnAction = function() AH_Helper.nDefaultPrices = 1 * 100 end,},
-							{szOption = "1金", bMCheck = true, bChecked = (AH_Helper.nDefaultPrices == 100 * 100), fnDisable = function() return AH_Helper.bPricePercentage or not AH_Helper.bLowestPrices end, fnAction = function() AH_Helper.nDefaultPrices = 100 * 100 end,},
-						},
-						{ bDevide = true },
-						{szOption = "屏蔽确认提示", bCheck = true, bChecked = AH_Helper.bNoAllPrompt, fnAction = function() AH_Helper.bNoAllPrompt = not AH_Helper.bNoAllPrompt end, fnMouseEnter = function() AH_Helper.OutputTip("勾选此项后，所以操作都将无确认提示（配合快速竞拍、购买、取消，谨慎勾选）") end,
-							{szOption = "屏蔽批量寄售确认提示", bCheck = true, bChecked = AH_Helper.bSellNotice, fnAction = function() AH_Helper.bSellNotice = not AH_Helper.bSellNotice end,},
-						},
-						{ bDevide = true },
-						{szOption = "启用快速竞拍", bCheck = true, bChecked = AH_Helper.bFastBid, fnAction = function() AH_Helper.bFastBid = not AH_Helper.bFastBid end, fnMouseEnter = function() AH_Helper.OutputTip("按住SHIFT+CTRL，鼠标左键点击物品栏可以快速出价") end,},
-						{szOption = "启用快速购买", bCheck = true, bChecked = AH_Helper.bFastBuy, fnAction = function() AH_Helper.bFastBuy = not AH_Helper.bFastBuy end, fnMouseEnter = function() AH_Helper.OutputTip("按住ALT+CTRL，鼠标左键点击物品栏可以快速购买") end,},
-						{szOption = "启用快速取消", bCheck = true, bChecked = AH_Helper.bFastCancel, fnAction = function() AH_Helper.bFastCancel = not AH_Helper.bFastCancel end, fnMouseEnter = function() AH_Helper.OutputTip("按住ALT+CTRL，鼠标左键点击物品栏可以快速取消") end,},
-						{ bDevide = true },
-						{szOption = "启用自动搜索", bCheck = true, bChecked = AH_Helper.bAutoSearch, fnAction = function() AH_Helper.bAutoSearch = not AH_Helper.bAutoSearch end, fnMouseEnter = function() AH_Helper.OutputTip("按住CTRL，鼠标左键点击背包中的物品栏可以快速搜索该物品") end,},
-						{szOption = "材料配方提示", bCheck = true, bChecked = AH_Tip.bShowTipEx, fnAction = function() AH_Tip.bShowTipEx = not AH_Tip.bShowTipEx end, fnMouseEnter = function() AH_Helper.OutputTip("按住ALT或SHIFT亦可以显示提示") end,},
-					}
-					PopupMenu(menu)
+						szOption = k,
+						{szOption = "删除", fnAction = function() local szText = "删除黑心卖家: "..k AH_Helper.Message(szText) AH_Helper.tBlackList[k] = nil AH_Helper.UpdateList() end,},
+					})
 				end
+				table.insert(menu, m_1)
+				table.insert(menu, m_3)
+				PopupMenu(menu)
+			end
+			hWndSide:Lookup("Btn_Split").OnLButtonClick = function()
+				local x, y = this:GetAbsPos()
+				local w, h = this:GetSize()
+				AH_Spliter.OnSplitBoxItem({x, y, w, h})
+			end
+			hWndSide:Lookup("Btn_Split").OnRButtonClick = function()
+				AH_Spliter.StackItem()
+			end
+			hWndSide:Lookup("Btn_Option").OnLButtonClick = function()
+				local menu =
+				{
+					{szOption = "版本：v" .. AH_Helper.szVersion, fnDisable = function() return true end,},
+					{ bDevide = true },
+					{szOption = "过滤已读秘籍", bCheck = true, bChecked = AH_Helper.bFilterRecipe, fnAction = function() AH_Helper.bFilterRecipe = not AH_Helper.bFilterRecipe end, fnMouseEnter = function() AH_Helper.OutputTip("勾选此项后，将过滤掉已阅读的秘籍") end,},
+					{szOption = "过滤已读书籍",bCheck = true,bChecked = AH_Helper.bFilterBook,fnAction = function()AH_Helper.bFilterBook = not AH_Helper.bFilterBook end, fnMouseEnter = function() AH_Helper.OutputTip("勾选此项后，将过滤掉已阅读的书籍") end,},
+					{ bDevide = true },
+					{szOption = "最大历史记录", fnMouseEnter = function() AH_Helper.OutputTip("记录物品搜索历史，点击搜索框下拉按钮中的记录可以快速搜索") end,
+						{szOption = "5", bMCheck = true, bChecked = (AH_Helper.nMaxHistory == 5), fnAction = function() AH_Helper.nMaxHistory = 5 end,},
+						{szOption = "10", bMCheck = true, bChecked = (AH_Helper.nMaxHistory == 10), fnAction = function() AH_Helper.nMaxHistory = 10 end,},
+						{szOption = "15", bMCheck = true, bChecked = (AH_Helper.nMaxHistory == 15), fnAction = function() AH_Helper.nMaxHistory = 15 end,},
+						{szOption = "20", bMCheck = true, bChecked = (AH_Helper.nMaxHistory == 20), fnAction = function() AH_Helper.nMaxHistory = 20 end,},
+					},
+					{ bDevide = true },
+					{szOption = "寄售保管时间", fnMouseEnter = function() AH_Helper.OutputTip("寄售物品时默认的保管时间") end,
+						{szOption = "12小时", bMCheck = true, bChecked = (AH_Helper.szDefaultTime == "12小时"), fnAction = function() AH_Helper.szDefaultTime = "12小时" end,},
+						{szOption = "24小时", bMCheck = true, bChecked = (AH_Helper.szDefaultTime == "24小时"), fnAction = function() AH_Helper.szDefaultTime = "24小时" end,},
+						{szOption = "48小时", bMCheck = true, bChecked = (AH_Helper.szDefaultTime == "48小时"), fnAction = function() AH_Helper.szDefaultTime = "48小时" end,},
+					},
+					{szOption = "启用自动差价", bCheck = true, bChecked = AH_Helper.bLowestPrices, fnAction = function() AH_Helper.bLowestPrices = not AH_Helper.bLowestPrices end, fnMouseEnter = function() AH_Helper.OutputTip("勾选此项后，寄售物品时将自动乘以差价系数或减去差价") end,
+						{szOption = "差价系数", bCheck = true, bChecked = AH_Helper.bPricePercentage, fnDisable = function() return not AH_Helper.bLowestPrices end, fnAction = function() AH_Helper.bPricePercentage = not AH_Helper.bPricePercentage end,
+							{szOption = "修改 [" .. AH_Helper.nPricePercentage.."]", fnDisable = function() return not AH_Helper.bPricePercentage end, fnAction = function()
+									GetUserInput("输入差价系数：", function(szText)
+										local n = tonumber(szText)
+										if n > 0 then
+											AH_Helper.nPricePercentage = n
+										end
+									end, nil, nil, nil, nil, nil)
+								end,
+							}
+						},
+						{ bDevide = true },
+						{szOption = "1铜", bMCheck = true, bChecked = (AH_Helper.nDefaultPrices == 1), fnDisable = function() return AH_Helper.bPricePercentage or not AH_Helper.bLowestPrices end, fnAction = function() AH_Helper.nDefaultPrices = 1 end,},
+						{szOption = "1银", bMCheck = true, bChecked = (AH_Helper.nDefaultPrices == 1 * 100), fnDisable = function() return AH_Helper.bPricePercentage or not AH_Helper.bLowestPrices end, fnAction = function() AH_Helper.nDefaultPrices = 1 * 100 end,},
+						{szOption = "1金", bMCheck = true, bChecked = (AH_Helper.nDefaultPrices == 100 * 100), fnDisable = function() return AH_Helper.bPricePercentage or not AH_Helper.bLowestPrices end, fnAction = function() AH_Helper.nDefaultPrices = 100 * 100 end,},
+					},
+					{ bDevide = true },
+					{szOption = "屏蔽确认提示", bCheck = true, bChecked = AH_Helper.bNoAllPrompt, fnAction = function() AH_Helper.bNoAllPrompt = not AH_Helper.bNoAllPrompt end, fnMouseEnter = function() AH_Helper.OutputTip("勾选此项后，所以操作都将无确认提示（配合快速竞拍、购买、取消，谨慎勾选）") end,
+						{szOption = "屏蔽批量寄售确认提示", bCheck = true, bChecked = AH_Helper.bSellNotice, fnAction = function() AH_Helper.bSellNotice = not AH_Helper.bSellNotice end,},
+					},
+					{ bDevide = true },
+					{szOption = "启用快速竞拍", bCheck = true, bChecked = AH_Helper.bFastBid, fnAction = function() AH_Helper.bFastBid = not AH_Helper.bFastBid end, fnMouseEnter = function() AH_Helper.OutputTip("按住SHIFT+CTRL，鼠标左键点击物品栏可以快速出价") end,},
+					{szOption = "启用快速购买", bCheck = true, bChecked = AH_Helper.bFastBuy, fnAction = function() AH_Helper.bFastBuy = not AH_Helper.bFastBuy end, fnMouseEnter = function() AH_Helper.OutputTip("按住ALT+CTRL，鼠标左键点击物品栏可以快速购买") end,},
+					{szOption = "启用快速取消", bCheck = true, bChecked = AH_Helper.bFastCancel, fnAction = function() AH_Helper.bFastCancel = not AH_Helper.bFastCancel end, fnMouseEnter = function() AH_Helper.OutputTip("按住ALT+CTRL，鼠标左键点击物品栏可以快速取消") end,},
+					{ bDevide = true },
+					{szOption = "启用自动搜索", bCheck = true, bChecked = AH_Helper.bAutoSearch, fnAction = function() AH_Helper.bAutoSearch = not AH_Helper.bAutoSearch end, fnMouseEnter = function() AH_Helper.OutputTip("按住CTRL，鼠标左键点击背包中的物品栏可以快速搜索该物品") end,},
+					{szOption = "材料配方提示", bCheck = true, bChecked = AH_Tip.bShowTipEx, fnAction = function() AH_Tip.bShowTipEx = not AH_Tip.bShowTipEx end, fnMouseEnter = function() AH_Helper.OutputTip("按住ALT或SHIFT亦可以显示提示") end,},
+				}
+				PopupMenu(menu)
 			end
 		end
-		Wnd.CloseWindow(temp)
 	end
+	Wnd.CloseWindow(temp)
 	local nW, nH = frame:GetSize()
 	frame:SetSize(nW + 56, nH)
 end
