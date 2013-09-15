@@ -23,6 +23,8 @@ AH_Helper = {
 	bFastBid = true,
 	bFastBuy = true,
 	bFastCancel = true,
+	bDBClickFastBuy = false,
+	bDBClickFastCancel = false,
 	bNoAllPrompt = false,
 	bPricePercentage = false,
 	bLowestPrices = true,
@@ -655,6 +657,17 @@ function AH_Helper.ShowNotice(szNotice, bSure, fun, bCancel, bText)
 	end
 end
 
+function AH_Helper.OnItemLButtonDBClick()
+	local szName = this:GetName()
+	if szName == "Handle_ItemList" and AH_Helper.bDBClickFastBuy then
+		AuctionPanel.AuctionBuy(this, "Search")
+	elseif szName == "Handle_AItemList" and AH_Helper.bDBClickFastCancel then
+		AuctionPanel.AuctionCancel(this)
+	else
+		AH_Helper.OnItemLButtonDBClickOrg()
+	end
+end
+
 function AH_Helper.OnItemLButtonClick()
 	local szName = this:GetName()
 	if szName == "Handle_ItemList" then
@@ -865,8 +878,12 @@ function AH_Helper.AddWidget(frame)
 					},
 					{ bDevide = true },
 					{szOption = "启用快速竞拍", bCheck = true, bChecked = AH_Helper.bFastBid, fnAction = function() AH_Helper.bFastBid = not AH_Helper.bFastBid end, fnMouseEnter = function() AH_Helper.OutputTip("按住SHIFT+CTRL，鼠标左键点击物品栏可以快速出价") end,},
-					{szOption = "启用快速购买", bCheck = true, bChecked = AH_Helper.bFastBuy, fnAction = function() AH_Helper.bFastBuy = not AH_Helper.bFastBuy end, fnMouseEnter = function() AH_Helper.OutputTip("按住ALT+CTRL，鼠标左键点击物品栏可以快速购买") end,},
-					{szOption = "启用快速取消", bCheck = true, bChecked = AH_Helper.bFastCancel, fnAction = function() AH_Helper.bFastCancel = not AH_Helper.bFastCancel end, fnMouseEnter = function() AH_Helper.OutputTip("按住ALT+CTRL，鼠标左键点击物品栏可以快速取消") end,},
+					{szOption = "启用快速购买", bCheck = true, bChecked = AH_Helper.bFastBuy, fnAction = function() AH_Helper.bFastBuy = not AH_Helper.bFastBuy end, fnMouseEnter = function() AH_Helper.OutputTip("按住ALT+CTRL，鼠标左键点击物品栏可以快速购买") end,
+						{szOption = "启用鼠标双击方式", bCheck = true, bChecked = AH_Helper.bDBClickFastBuy, fnAction = function() AH_Helper.bDBClickFastBuy = not AH_Helper.bDBClickFastBuy end,},
+					},
+					{szOption = "启用快速取消", bCheck = true, bChecked = AH_Helper.bFastCancel, fnAction = function() AH_Helper.bFastCancel = not AH_Helper.bFastCancel end, fnMouseEnter = function() AH_Helper.OutputTip("按住ALT+CTRL，鼠标左键点击物品栏可以快速取消") end,
+						{szOption = "启用鼠标双击方式", bCheck = true, bChecked = AH_Helper.bDBClickFastCancel, fnAction = function() AH_Helper.bDBClickFastCancel = not AH_Helper.bDBClickFastCancel end,},
+					},
 					{ bDevide = true },
 					{szOption = "启用自动搜索", bCheck = true, bChecked = AH_Helper.bAutoSearch, fnAction = function() AH_Helper.bAutoSearch = not AH_Helper.bAutoSearch end, fnMouseEnter = function() AH_Helper.OutputTip("按住CTRL，鼠标左键点击背包中的物品栏可以快速搜索该物品") end,},
 					{szOption = "材料配方提示", bCheck = true, bChecked = AH_Tip.bShowTipEx, fnAction = function() AH_Tip.bShowTipEx = not AH_Tip.bShowTipEx end, fnMouseEnter = function() AH_Helper.OutputTip("按住ALT或SHIFT亦可以显示提示") end,},
@@ -1282,6 +1299,7 @@ function AH_Helper.FuncHook()
 	AuctionPanel.UpdateItemPriceInfo = AH_Helper.UpdateItemPriceInfo
 	AuctionPanel.ApplyLookup = AH_Helper.ApplyLookup
 	AuctionPanel.OnItemLButtonClick = AH_Helper.OnItemLButtonClick
+	AuctionPanel.OnItemLButtonDBClick = AH_Helper.OnItemLButtonDBClick
 	AuctionPanel.OnItemRButtonClick = AH_Helper.OnItemRButtonClick
 	AuctionPanel.OnItemMouseEnter = AH_Helper.OnItemMouseEnter
 	AuctionPanel.OnItemMouseLeave = AH_Helper.OnItemMouseLeave
