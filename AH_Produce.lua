@@ -109,6 +109,7 @@ function AH_Produce:Init(frame)
 
 	self:UpdateItemTypeList(frame)
 	self:UpdateList(frame, false)
+	self:HideAndShowFilter(frame, false)
 end
 
 function AH_Produce:ForamtCoolDownTime(nTime)
@@ -840,6 +841,7 @@ function AH_Produce:UpdateItemTypeList(frame)
 	    	local w, h = imgBg1:GetSize()
 	    	hListLv2:SetSize(w, h)
 	    end
+		hListLv2:Show()
 		txtTitle:Show()
 		txtTitle:SetText(v.szType)
 	end
@@ -857,6 +859,7 @@ function AH_Produce:AddItemSubTypeList(hList, tSubType)
 			imgCover:Hide()
 		end
 		hItem:Lookup("Text_List01"):SetText(v)
+		hItem:Show()
 	end
 	hList:Show()
 	hList:FormatAllItemPos()
@@ -942,6 +945,45 @@ function AH_Produce:SelectProfession(frame)
 	menu.x = xT + 2
 	menu.y = yT + hT - 1
 	PopupMenu(menu)
+end
+
+function AH_Produce:SelectFilter(frame)
+	local hText = frame:Lookup("", ""):Lookup("Text_Filter")
+	local menu = {}
+	for k, v in ipairs({"帽子", "上衣", "护腕", "腰带", "下装", "鞋子", "武器"}) do
+		local m = {
+			szOption = v,
+			fnAction = function()
+				hText:SetText(v)
+				local szKey = tExpandItemType.szSubType .. " " .. v
+				--self:UpdateList(frame, false, szKey)
+				self:OnSearchType(frame, tExpandItemType.szType, szKey)
+			end
+		}
+		table.insert(menu, m)
+	end
+	local xT, yT = hText:GetAbsPos()
+	local wT, hT = hText:GetSize()
+	menu.nMiniWidth = wT + 16
+	menu.x = xT + 2
+	menu.y = yT + hT - 1
+	PopupMenu(menu)
+end
+
+function AH_Produce:HideAndShowFilter(frame, bShow)
+	local handle = frame:Lookup("", "")
+	local imgBg = handle:Lookup("Image_FilterBg")
+	local txtFilter = handle:Lookup("Text_Filter")
+	local btnFilter = frame:Lookup("Btn_Filter")
+	if bShow then
+		imgBg:Show()
+		txtFilter:Show()
+		btnFilter:Show()
+	else
+		imgBg:Hide()
+		txtFilter:Hide()
+		btnFilter:Hide()
+	end
 end
 
 --递归生成菜单
@@ -1087,6 +1129,8 @@ function AH_Produce.OnLButtonClick()
 		AH_Produce.ClosePanel()
 	elseif szName == "Btn_ComboBox" then
 		AH_Produce:SelectProfession(frame)
+	elseif szName == "Btn_Filter" then
+		AH_Produce:SelectFilter(frame)
 	elseif szName == "Btn_Add" then
 		AH_Produce:UpdateMakeCount(frame, 1)
 	elseif szName == "Btn_Del" then
@@ -1150,10 +1194,14 @@ function AH_Produce.OnItemLButtonClick()
 			tExpandItemType = {}
 			AH_Produce.nCurTypeID = 0
 			AH_Produce.bIsSearch = false
+			AH_Produce:HideAndShowFilter(frame, false)
 		else
 			tExpandItemType.szType = szType
 			AH_Produce.nCurTypeID = this.nTypeID
 			AH_Produce.bIsSearch = true
+			if szType == "附魔" then
+				AH_Produce:HideAndShowFilter(frame, true)
+			end
 		end
 		AH_Produce:OnDefaultSearch(frame, false)
 		AH_Produce:UpdateItemTypeList(this:GetRoot())
@@ -1163,6 +1211,7 @@ function AH_Produce.OnItemLButtonClick()
 		tExpandItemType.szSubType = szSubType
 		AH_Produce:UpdateItemTypeList(this:GetRoot())
 		AH_Produce:OnSearchType(frame, tExpandItemType.szType, szSubType)
+		frame:Lookup("", ""):Lookup("Text_Filter"):SetText("部位")
 	end
 end
 
@@ -1186,7 +1235,6 @@ function AH_Produce.OnItemMouseEnter()
 		local x, y = this:GetAbsPos()
 		local w, h = this:GetSize()
 		OutputItemTip(UI_OBJECT_ITEM_INFO, GLOBAL.CURRENT_ITEM_VERSION, this.nType, this.nID, {x, y, w, h})
-		--Output(this.szSearch, this.tItemInfo.nGenre, this.tItemInfo.nSub)
 	elseif this.bEnchant then
 		local nProID, nCraftID, nRecipeID = this:GetObjectData()
 		local x, y = this:GetAbsPos()
