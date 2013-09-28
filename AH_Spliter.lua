@@ -3,7 +3,7 @@
 -- #模块说明：为批量寄售提供拆分功能
 ------------------------------------------------------
 
-AH_Spliter = {}
+AH_Spliter = AH_Spliter or {}
 
 local function PlayTipSound(szSound)
 	local szFile = "ui\\sound\\female\\"..szSound..".wav"
@@ -111,7 +111,7 @@ function AH_Spliter.GetPlayerBagFreeBoxList()
 end
 
 function AH_Spliter.OnExchangeBoxItem(boxItem, boxDsc, nHandCount, bHand)
-	if not boxItem or not boxDsc then
+	if not boxDsc then
 		return
 	end
 
@@ -126,7 +126,7 @@ function AH_Spliter.OnExchangeBoxItem(boxItem, boxDsc, nHandCount, bHand)
 	end
 
 	local item = GetPlayerItem(player, dwBox1, dwX1)
-	if not item then
+	if not item or item.nGenre == ITEM_GENRE.EQUIPMENT then
 		return
 	end
 
@@ -146,6 +146,19 @@ function AH_Spliter.OnExchangeBoxItem(boxItem, boxDsc, nHandCount, bHand)
 	if nHandCount and nHandCount ~= nCount then
 		OutputMessage("MSG_ANNOUNCE_RED", "请把拆开的物品放进背包后再拆分\n")
 		return
+	end
+
+	local frame = Station.Lookup("Normal/AH_Spliter")
+	if not boxItem then
+		if not AH_Spliter.IsPanelOpened() then
+			frame = Wnd.OpenWindow("Interface\\AH\\AH_Spliter.ini", "AH_Spliter")
+		end
+		frame:Lookup("Edit_Group"):SetText("1")
+		frame:Lookup("Edit_Num"):SetText("1")
+		frame:SetPoint("CENTER", 0, 0, "CENTER", 0, 0)
+		Station.SetActiveFrame(frame)
+		PlaySound(SOUND.UI_SOUND, g_sound.OpenFrame)
+		boxItem = frame:Lookup("", ""):Lookup("Box_Item")
 	end
 
 	boxItem.szName = item.szName

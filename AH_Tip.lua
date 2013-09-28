@@ -58,6 +58,17 @@ function AH_Tip.OnFrameBreathe()
 			else
 				AH_Tip.UpdateNormal(frame)
 			end
+			local hSplit = frame:Lookup("Btn_Split")
+			hSplit:Lookup("","Text_Split"):SetText("拆堆")
+			hSplit.OnRButtonClick = function()
+				AH_Spliter.StackItem()
+			end
+			hSplit.OnMouseEnter = function()
+				local x, y = this:GetAbsPos()
+				local w, h = this:GetSize()
+				local szTip = "<text>text=\"左键拆分，右键堆叠\n或ALT+鼠标左键点击物品拆分。\" font=162</text>"
+				OutputTip(szTip, 400, {x, y, w, h})
+			end
 			bBagHooked = true
 		elseif not frame:IsVisible() then
 			bBagHooked = false
@@ -94,6 +105,11 @@ function AH_Tip.InitHookTip(frame)
 	end
 end
 
+--[[
+/script local box=Station.Lookup("Normal/BigBagPanel"):Lookup("", "Handle_Bag_Compact"):Lookup(0):Lookup(1)
+]]
+
+
 --背包相关
 function AH_Tip.UpdateCompact(frame)
 	local handle = frame:Lookup("", "Handle_Bag_Compact")
@@ -128,6 +144,26 @@ function AH_Tip.HookBagItemBox(box)
 			elseif bOver == 0 then
 				AH_Tip.szBagItemTip = nil
 			end
+		end
+		if not box.SetObjectStaringOrg then
+			box.SetObjectStaringOrg = box.SetObjectStaring
+		end
+		if not box.SetObjectPressedOrg then
+			box.SetObjectPressedOrg = box.SetObjectPressed
+		end
+		local bStarting = true
+		box.SetObjectStaring = function(h, bStart)
+			box.SetObjectStaringOrg(bStart)
+			if bStart == false then
+				bStarting = false
+			end
+		end
+		box.SetObjectPressed = function(h, bPress)
+			if IsAltKeyDown() and not bStarting and bPress == 1 then
+				AH_Spliter.OnExchangeBoxItem(nil, box, nil, false)
+			end
+			box:SetObjectPressedOrg(bPress)
+			bStarting = true
 		end
 	end
 end
