@@ -3,7 +3,12 @@
 -- #模块说明：为批量寄售提供拆分功能
 ------------------------------------------------------
 
-AH_Spliter = AH_Spliter or {}
+AH_Spliter = {
+	tItemHistory = {},
+}
+
+--存储拆分方案
+RegisterCustomData("AH_Spliter.tItemHistory")
 
 local function PlayTipSound(szSound)
 	local szFile = "ui\\sound\\female\\"..szSound..".wav"
@@ -88,6 +93,11 @@ function AH_Spliter.SplitItem(frame)
 		local dwBox, dwX = tFreeBoxList[i][1], tFreeBoxList[i][2]
 		player.ExchangeItem(hBox.dwBox, hBox.dwX, dwBox, dwX, nNum)
 	end
+	--拆分结束后存储
+	if not AH_Spliter.tItemHistory[hBox.szName] then
+		AH_Spliter.tItemHistory[hBox.szName] = {}
+	end
+	AH_Spliter.tItemHistory[hBox.szName] = {nGroup, nNum}
 	OutputMessage("MSG_SYS", "拆分物品结束\n")
 end
 
@@ -153,13 +163,19 @@ function AH_Spliter.OnExchangeBoxItem(boxItem, boxDsc, nHandCount, bHand)
 		if not AH_Spliter.IsPanelOpened() then
 			frame = Wnd.OpenWindow("Interface\\AH\\AH_Spliter.ini", "AH_Spliter")
 		end
-		frame:Lookup("Edit_Group"):SetText("1")
-		frame:Lookup("Edit_Num"):SetText("1")
 		frame:SetPoint("CENTER", 0, 0, "CENTER", 0, 0)
 		Station.SetActiveFrame(frame)
 		PlaySound(SOUND.UI_SOUND, g_sound.OpenFrame)
 		boxItem = frame:Lookup("", ""):Lookup("Box_Item")
+
 	end
+	local nGroup, nNum = "1", "1"
+	--载入拆分方案
+	if AH_Spliter.tItemHistory[item.szName] then
+		nGroup, nNum = AH_Spliter.tItemHistory[item.szName][1], AH_Spliter.tItemHistory[item.szName][2]
+	end
+	frame:Lookup("Edit_Group"):SetText(nGroup)
+	frame:Lookup("Edit_Num"):SetText(nNum)
 
 	boxItem.szName = item.szName
 	boxItem.dwBox = dwBox1
