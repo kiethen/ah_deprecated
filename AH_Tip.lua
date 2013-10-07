@@ -14,6 +14,9 @@ RegisterCustomData("AH_Tip.bShowTipEx")
 local ipairs = ipairs
 local pairs = pairs
 
+local PRICE_LIMITED = PackMoney(9000000, 0, 0)
+local MAX_BID_PRICE = PackMoney(800000, 0, 0)
+
 local bBagHooked = false
 local bTipHooked = false
 local bCompact = nil
@@ -187,8 +190,8 @@ function AH_Tip.GetBagItemTip(box)
 
 		local v = AH_Helper.tItemPrice[item.nUiId]
 		if v and v[1] then
-			if MoneyOptCmp(v[1], PRICE_LIMITED) ~= 0 and MoneyOptCmp(v[1], 0) == 1 then
-				szTip = szTip .. GetFormatText("\n最低一口价：", 163) .. GetMoneyTipText(v[1], 106)
+			if MoneyOptCmp(v[1], PRICE_LIMITED) ~= 0 then
+				szTip = szTip .. GetFormatText("\n价格：", 163) .. GetMoneyTipText(v[1], 106)
 			end
 		end
 	end
