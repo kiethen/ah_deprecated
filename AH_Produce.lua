@@ -765,7 +765,7 @@ function AH_Produce:Selected(frame, hItem)
 		hItem.bSel = true
 		self.nCurCraftID  = hItem.nCraftID
 		self.nCurRecipeID = hItem.nRecipeID
-		self.nCurTotalCount = hItem.nTotalCount
+		self.nCurTotalCount = hItem.nTotalCount or 0
 
 		if hItem.nTotalCount > 0 then
 			frame:Lookup("Edit_Number"):SetText(1)
