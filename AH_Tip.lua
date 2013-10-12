@@ -36,11 +36,7 @@ local function FormatTipEx(h, szText, szTip)
 	h:InsertItemFromString(j, false, szTip)
 end
 
-function AH_Tip.OnFrameCreate()
-	this:RegisterEvent("ON_SET_BAG_COMPACT_MODE")
-end
-
-function AH_Tip.OnFrameBreathe()
+function AH_Tip.OnUpdate()
 	if not bTipHooked then
 		local frame = Station.Lookup("Topmost1/TipPanel_Normal")
 		if frame and frame:IsVisible() then
@@ -79,12 +75,6 @@ function AH_Tip.OnFrameBreathe()
 	end
 end
 
-function AH_Tip.OnEvent(szEvent)
-	if szEvent == "ON_SET_BAG_COMPACT_MODE" then
-		bBagHooked = false
-	end
-end
-
 --Hook TIP
 function AH_Tip.InitHookTip(frame)
 	local h = frame:Lookup("", "Handle_Message")
@@ -107,10 +97,6 @@ function AH_Tip.InitHookTip(frame)
 		end
 	end
 end
-
---[[
-/script local box=Station.Lookup("Normal/BigBagPanel"):Lookup("", "Handle_Bag_Compact"):Lookup(0):Lookup(1)
-]]
 
 
 --背包相关
@@ -191,7 +177,7 @@ function AH_Tip.GetBagItemTip(box)
 		local v = AH_Helper.tItemPrice[item.nUiId]
 		if v and v[1] then
 			if MoneyOptCmp(v[1], PRICE_LIMITED) ~= 0 then
-				szTip = szTip .. GetFormatText("\n价格：", 163) .. GetMoneyTipText(v[1], 106)
+				szTip = szTip .. GetFormatText("\n价格：", 157) .. GetMoneyTipText(v[1], 106)
 			end
 		end
 	end
@@ -273,4 +259,6 @@ function AH_Tip.GetRecipeTip(player, item)
 	return szTip
 end
 
-Wnd.OpenWindow("Interface\\AH\\AH_Tip.ini", "AH_Tip")
+RegisterEvent("ON_SET_BAG_COMPACT_MODE", function() bBagHooked = false end)
+AH_Library.RegisterBreatheEvent("ON_AH_TIP_UPDATE", AH_Tip.OnUpdate)
+--Wnd.OpenWindow("Interface\\AH\\AH_Tip.ini", "AH_Tip")

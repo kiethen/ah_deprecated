@@ -1165,9 +1165,9 @@ function AH_Helper.GetItemTip(hItem)
 
 		if MoneyOptCmp(hItem.tBuyPrice, 0) == 1 and MoneyOptCmp(hItem.tBuyPrice, PRICE_LIMITED) ~= 0 then
 			if AH_Helper.GetCheckPervalue() then
-				szTip = szTip .. GetFormatText("\n一口价总价：", 163) .. GetMoneyTipText(hItem.tBuyPrice, 106)
+				szTip = szTip .. GetFormatText("\n总价：", 157) .. GetMoneyTipText(hItem.tBuyPrice, 106)
 			else
-				szTip = szTip .. GetFormatText("\n一口价单价：", 163) .. GetMoneyTipText(MoneyOptDiv(hItem.tBuyPrice, hItem.nCount), 106)
+				szTip = szTip .. GetFormatText("\n单价：", 157) .. GetMoneyTipText(MoneyOptDiv(hItem.tBuyPrice, hItem.nCount), 106)
 			end
 		end
 	end
@@ -1306,70 +1306,35 @@ function AH_Helper.FuncHook()
 	AuctionPanel.ShowNotice = AH_Helper.ShowNotice
 end
 
-function AH_Helper.OnFrameCreate()
-	this:RegisterEvent("GAME_EXIT")
-	this:RegisterEvent("LOGIN_GAME")
-	this:RegisterEvent("PLAYER_EXIT_GAME")
-	this:RegisterEvent("OPEN_AUCTION")
-end
-
---[[function AH_Helper.CheckVersion()
-	local page = Station.Lookup("Lowest/AH_Helper/Page_IE")
-	if page then
-		page:Navigate("http://jx3server.duapp.com/update")
+RegisterEvent("LOGIN_GAME", function()
+	if IsFileExist(AH_Helper.szDataPath) then
+		AH_Helper.tItemPrice = LoadLUAData(AH_Helper.szDataPath)
 	end
-end
+end)
 
-function AH_Helper.OnTitleChanged()
-	local szDoc = this:GetDocument()
-	if szDoc ~= ""  then
-		szDoc = string.sub(szDoc:match("%b()"), 2, -2)
-		local a1, b1, c1 = szDoc:match("(%d+).(%d+).(%d+)")
-		local a2, b2, c2 = AH_Helper.szVersion:match("(%d+).(%d+).(%d+)")
-		if a1 >= a2 and b1 >= b2 and c1 > c2 then
-			local tVersionInfo = {
-				szName = "AH_HelperVersionInfo",
-				szMessage = "发现交易行助手新版本：" .. szDoc .. "，去下载页面？",
-				{
-					szOption = g_tStrings.STR_HOTKEY_SURE, fnAction = function()
-						OpenInternetExplorer("http://jx3server.duapp.com/", true)
-					end
-				},
-				{
-					szOption = g_tStrings.STR_HOTKEY_CANCEL,fnAction = function() end
-				}
-			}
-			MessageBox(tVersionInfo)
-		end
+RegisterEvent("GAME_EXIT", function()
+	SaveLUAData(AH_Helper.szDataPath, AH_Helper.tItemPrice)
+end)
+
+RegisterEvent("PLAYER_EXIT_GAME", function()
+	SaveLUAData(AH_Helper.szDataPath, AH_Helper.tItemPrice)
+end)
+
+RegisterEvent("OPEN_AUCTION", function()
+	local bNotExistOtherAddon = false
+	if AuctionTip and AuctionTip.bFilter then
+		AuctionTip.bFilter = false
+		bNotExistOtherAddon = true
+	elseif HM_ToolBox and HM_ToolBox.bShiftAuction then
+		HM_ToolBox.bShiftAuction = false
+		bNotExistOtherAddon = true
 	end
-end]]
-
-function AH_Helper.OnEvent(szEvent)
-	if szEvent == "LOGIN_GAME" then
-		if IsFileExist(AH_Helper.szDataPath) then
-			AH_Helper.tItemPrice = LoadLUAData(AH_Helper.szDataPath)
-		end
-	elseif szEvent == "GAME_EXIT" or szEvent == "PLAYER_EXIT_GAME" then
-		SaveLUAData(AH_Helper.szDataPath, AH_Helper.tItemPrice)
-	elseif szEvent == "OPEN_AUCTION" then
-		local bNotExistOtherAddon = false
-		if AuctionTip and AuctionTip.bFilter then
-			AuctionTip.bFilter = false
-			bNotExistOtherAddon = true
-		elseif HM_ToolBox and HM_ToolBox.bShiftAuction then
-			HM_ToolBox.bShiftAuction = false
-			bNotExistOtherAddon = true
-		end
-		if bNotExistOtherAddon then
-			AH_Helper.Message("检测到非兼容交易行插件，已强制将其关闭")
-			AH_Helper.FuncHook()
-		end
-		AH_Helper.SetSellPriceType()
-		--AH_Helper.CheckVersion()
+	if bNotExistOtherAddon then
+		AH_Helper.Message("检测到非兼容交易行插件，已强制将其关闭")
+		AH_Helper.FuncHook()
 	end
-end
-
-Wnd.OpenWindow("Interface\\AH\\AH_Helper.ini", "AH_Helper")
+	AH_Helper.SetSellPriceType()
+end)
 
 Hotkey.AddBinding("AH_Produce_Open", "技艺助手", "交易行助手", function() AH_Produce.OpenPanel() end, nil)
 Hotkey.AddBinding("AH_Spliter_Open", "拆分物品", "", function() AH_Spliter.OnSplitBoxItem() end, nil)

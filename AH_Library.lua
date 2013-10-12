@@ -222,6 +222,16 @@ if not IsBigBagPanelOpened then
 	end
 end
 
+if not IsMailPanelOpened then
+	IsMailPanelOpened = function()
+		local frame = Station.Lookup("Normal/MailPanel")
+		if frame and frame:IsVisible() then
+			return true
+		end
+		return false
+	end
+end
+
 if not ALL_CRAFT_TYPE then
 	ALL_CRAFT_TYPE = {
 		COPY = 6,
@@ -400,6 +410,40 @@ do
 		AH_Library.tMergeRecipe = AH_Library.tMergeRecipe + AH_Library.tRecipeALL[v]
 	end
 end
+
+-----------------------------------------------
+-- 统一所用模块的刷新事件及延迟调用
+-----------------------------------------------
+local tBreatheAction = {}
+local tDelayCall = {}
+function AH_Library.OnFrameBreathe()
+	local nTime = GetTickCount()
+	local nCount = #tDelayCall
+	for i = nCount, 1, -1 do
+		local v = tDelayCall[i]
+		if nTime >= v[1] then
+			local f = v[2]
+			table.remove(tDelayCall, i)
+			f()
+		end
+	end
+
+	for szKey, fnAction in pairs(tBreatheAction) do
+		assert(fnAction)
+		fnAction()
+	end
+end
+
+function AH_Library.RegisterBreatheEvent(szKey, fnAction)
+	assert(type(szKey) == "string")
+	tBreatheAction[szKey] = fnAction
+end
+
+function AH_Library.DelayCall(nTime, fnAction)
+	table.insert(tDelayCall, {GetTickCount() + nTime * 1000, fnAction})
+end
+
+Wnd.OpenWindow("Interface\\AH\\AH_Library.ini", "AH_Library")
 
 --[[RegisterEvent("CALL_LUA_ERROR", function()
 	OutputMessage("MSG_SYS", arg0)
