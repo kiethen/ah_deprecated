@@ -8,6 +8,7 @@ AH_MailBank = {
 	szDataPath = "\\Interface\\AH\\data\\mail.AH",
 	szCurRole = nil,
 	nCurIndex = 1,
+	nFilterType = 1,
 }
 
 local ipairs = ipairs
@@ -17,9 +18,10 @@ local tonumber = tonumber
 local szIniFile = "Interface/AH/AH_MailBank.ini"
 local bMailHooked = false
 local bBagHooked = false
+local tFilterType = {"物品名称", "信件标题", "寄信人", "到期时间"}
 
 -- UI初始化
-function AH_MailBank.Init(frame)
+function AH_MailBank.Init(frame, bMail)
 	local handle = frame:Lookup("", "")
 	local hBg = handle:Lookup("Handle_Bg")
 	local hBox = handle:Lookup("Handle_Box")
@@ -45,9 +47,7 @@ function AH_MailBank.Init(frame)
 	end
 	hBg:FormatAllItemPos()
 	hBox:FormatAllItemPos()
-
-	frame:Lookup("Btn_Prev"):Hide()
-	frame:Lookup("Btn_Next"):Hide()
+	frame:Lookup("Btn_Filter"):Enable(bMail)
 end
 
 -- 将数据分页处理，每页98个数据，返回分页数据和页数
@@ -80,10 +80,11 @@ function AH_MailBank.LoadMailData(frame, szName, nIndex)
 	--重新附加数据
 	local tItemCache, nMax = AH_MailBank.GetPageMailData(szName)
 	local i = 0
-	for k, v in pairs(tItemCache[nIndex]) do
+	for k, v in pairs(tItemCache[nIndex] or {}) do
 		if type(k) == "number" then		--物品
 			local box = hBox:Lookup(i)
 			box.szType = "item"
+			box.szName = Table_GetItemName(k)
 			box.nUiId = k
 			box.data = v
 			box:SetObject(UI_OBJECT_ITEM_ONLY_ID, k, v[1], v[2], v[3], v[4])
@@ -100,6 +101,7 @@ function AH_MailBank.LoadMailData(frame, szName, nIndex)
 		elseif type(k) == "string" and k == "money" then	--金钱
 			local box = hBox:Lookup(i)
 			box.szType = "money"
+			box.szName = "金钱"
 			box.data = v
 			box:SetObject(UI_OBJECT_NOT_NEED_KNOWN, 0)
 			box:SetObjectIcon(582)
@@ -108,9 +110,11 @@ function AH_MailBank.LoadMailData(frame, szName, nIndex)
 	end
 	frame:Lookup("", ""):Lookup("Text_Account"):SetText(szName)
 	local hPrev, hNext = frame:Lookup("Btn_Prev"), frame:Lookup("Btn_Next")
+	local hPage = frame:Lookup("", ""):Lookup("Text_Page")
 	if nMax > 1 then
 		hPrev:Show()
 		hNext:Show()
+		hPage:Show()
 		if nIndex == 1 then
 			hPrev:Enable(false)
 			hNext:Enable(true)
@@ -121,11 +125,79 @@ function AH_MailBank.LoadMailData(frame, szName, nIndex)
 			hPrev:Enable(true)
 			hNext:Enable(true)
 		end
+		hPage:SetText(string.format("%d/%d", nIndex, nMax))
 	else
 		hPrev:Hide()
 		hNext:Hide()
+		hPage:Hide()
 	end
-	frame:Lookup("", ""):Lookup("Text_Page"):SetText(string.format("%d/%d", nIndex, nMax))
+	frame:Lookup("", ""):Lookup("Text_Filter"):SetText(tFilterType[AH_MailBank.nFilterType])
+	local hType = frame:Lookup("", ""):Lookup("Text_Type")
+	if AH_MailBank.nFilterType == 4 then
+		hType:SetText("少于(天)：")
+	else
+		hType:SetText("包含字符：")
+	end
+end
+
+local function IsMailTitleExist(data, szKey)
+	local MailClient = GetMailClient()
+	for k, v in ipairs(data) do
+		local mail = MailClient.GetMailInfo(v)
+		if StringFindW(mail.szTitle, szKey) then
+			return true
+		end
+	end
+	return false
+end
+
+local function IsMailSenderNameExist(data, szKey)
+	local MailClient = GetMailClient()
+	for k, v in ipairs(data) do
+		local mail = MailClient.GetMailInfo(v)
+		if StringFindW(mail.szSenderName, szKey) then
+			return true
+		end
+	end
+	return false
+end
+
+local function IsLessMailItemTime(data, szKey)
+	local nLeft = 86400 * tonumber(szKey)
+	local MailClient = GetMailClient()
+	for k, v in ipairs(data) do
+		local mail = MailClient.GetMailInfo(v)
+		if mail.GetLeftTime() < nLeft then
+			return true
+		end
+	end
+	return false
+end
+
+-- 过滤物品
+function AH_MailBank.FilterMailItem(frame, szKey)
+	local handle = frame:Lookup("", "")
+	local hBox = handle:Lookup("Handle_Box")
+	for i = 0, 97, 1 do
+		local box = hBox:Lookup(i)
+		local bExist = false
+		if AH_MailBank.nFilterType == 1 then
+			bExist = (StringFindW(box.szName, szKey) ~= nil)
+		elseif AH_MailBank.nFilterType == 2 then
+			bExist = IsMailTitleExist(box.data[6], szKey)
+		elseif AH_MailBank.nFilterType == 3 then
+			bExist = IsMailSenderNameExist(box.data[6], szKey)
+		elseif AH_MailBank.nFilterType == 4 then
+			bExist = IsLessMailItemTime(box.data[6], szKey)
+		end
+		if bExist then
+			box:SetAlpha(255)
+			box:SetOverTextFontScheme(0, 15)
+		else
+			box:SetAlpha(50)
+			box:SetOverTextFontScheme(0, 30)
+		end
+	end
 end
 
 -- 保存邮件物品数据，以物品nUiId为key的数据表，同种物品全部累加，每种物品包含所属邮件ID
@@ -205,7 +277,8 @@ function AH_MailBank.OnUpdate()
 					hBtnMailBank:ChangeRelation(page, true, true)
 					hBtnMailBank:SetRelPos(600, 8)
 					hBtnMailBank.OnLButtonClick = function()
-						AH_MailBank.OpenPanel()
+						AH_MailBank.OpenPanel(true)
+						AH_MailBank.nFilterType = 1
 					end
 				end
 			end
@@ -236,7 +309,7 @@ function AH_MailBank.OnUpdate()
 				hBtnMail:ChangeRelation(frame, true, true)
 				hBtnMail:SetRelPos(55, 0)
 				hBtnMail.OnLButtonClick = function()
-					AH_MailBank.OpenPanel()
+					AH_MailBank.OpenPanel(false)
 				end
 				hBtnMail.OnMouseEnter = function()
 					local x, y = this:GetAbsPos()
@@ -295,6 +368,11 @@ end
 -- 回调函数
 ------------------------------------------------------------
 function AH_MailBank.OnEditChanged()
+	local frame = this:GetRoot()
+	local szName = this:GetName()
+	if szName == "Edit_Search" then
+		AH_MailBank.FilterMailItem(frame, this:GetText())
+	end
 end
 
 function AH_MailBank.OnLButtonClick()
@@ -316,6 +394,46 @@ function AH_MailBank.OnLButtonClick()
 					AH_MailBank.szCurRole = k
 					AH_MailBank.LoadMailData(frame, k, 1)
 				end
+			}
+			table.insert(menu, m)
+		end
+		PopupMenu(menu)
+	elseif szName == "Btn_Filter" then
+		local hText = frame:Lookup("", ""):Lookup("Text_Filter")
+		local x, y = hText:GetAbsPos()
+		local w, h = hText:GetSize()
+		local menu = {}
+		menu.nMiniWidth = w + 20
+		menu.x = x
+		menu.y = y + h
+		for k, v in ipairs(tFilterType) do
+			local m = {
+				szOption = v,
+				fnAction = function()
+					hText:SetText(v)
+					AH_MailBank.nFilterType = k
+					local hType = frame:Lookup("", ""):Lookup("Text_Type")
+					if k == 4 then
+						hType:SetText("少于(天)：")
+					else
+						hType:SetText("包含字符：")
+					end
+				end
+			}
+			table.insert(menu, m)
+		end
+		PopupMenu(menu)
+	elseif szName == "Btn_Setting" then
+		local menu = {}
+		for k, v in pairs(AH_MailBank.tItemCache) do
+			local m = {
+				szOption = k,
+				{
+					szOption = "删除",
+					fnAction = function()
+						AH_MailBank.tItemCache[k] = nil
+					end
+				}
 			}
 			table.insert(menu, m)
 		end
@@ -505,12 +623,15 @@ function AH_MailBank.IsPanelOpened()
 	return false
 end
 
-function AH_MailBank.OpenPanel()
+function AH_MailBank.OpenPanel(bMail)
 	local frame = nil
 	if not AH_MailBank.IsPanelOpened()  then
 		frame = Wnd.OpenWindow(szIniFile, "AH_MailBank")
-		AH_MailBank.Init(frame)
+		AH_MailBank.Init(frame, bMail)
 		AH_MailBank.szCurRole = GetClientPlayer().szName
+		if not AH_MailBank.tItemCache[AH_MailBank.szCurRole] then
+			AH_MailBank.tItemCache[AH_MailBank.szCurRole] = {}
+		end
 		AH_MailBank.LoadMailData(frame, AH_MailBank.szCurRole, AH_MailBank.nCurIndex)
 	else
 		AH_MailBank.ClosePanel()
