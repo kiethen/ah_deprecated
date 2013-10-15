@@ -11,6 +11,7 @@ AH_MailBank = {
 	szCurKey = "",
 	nFilterType = 1,
 	bShowNoReturn = false,
+	bMail = true,
 }
 
 local ipairs = ipairs
@@ -21,37 +22,6 @@ local szIniFile = "Interface/AH/AH_MailBank.ini"
 local bMailHooked = false
 local bBagHooked = false
 local tFilterType = {"物品名称", "信件标题", "寄信人", "到期时间"}
-
--- UI初始化
-function AH_MailBank.Init(frame, bMail)
-	local handle = frame:Lookup("", "")
-	local hBg = handle:Lookup("Handle_Bg")
-	local hBox = handle:Lookup("Handle_Box")
-	hBg:Clear()
-	hBox:Clear()
-	local nIndex = 0
-	for i = 1, 7, 1 do
-		for j = 1, 14, 1 do
-			hBg:AppendItemFromString("<image>w=52 h=52 path=\"ui/Image/LootPanel/LootPanel.UITex\" frame=13 </image>")
-			local img = hBg:Lookup(nIndex)
-			hBox:AppendItemFromString("<box>w=48 h=48 eventid=304 </box>")
-			local box = hBox:Lookup(nIndex)
-			box.nIndex = nIndex
-			box.bItemBox = true
-			local x, y = (j - 1) * 52, (i - 1) * 52
-			img:SetRelPos(x, y)
-			box:SetRelPos(x + 2, y + 2)
-			box:SetOverTextPosition(0, ITEM_POSITION.RIGHT_BOTTOM)
-			box:SetOverTextFontScheme(0, 15)
-
-			nIndex = nIndex + 1
-		end
-	end
-	hBg:FormatAllItemPos()
-	hBox:FormatAllItemPos()
-	frame:Lookup("Btn_Filter"):Enable(bMail)
-	frame:Lookup("Check_NotReturn"):Enable(bMail)
-end
 
 -- 将数据分页处理，每页98个数据，返回分页数据和页数
 function AH_MailBank.GetPageMailData(tItemCache)
@@ -94,10 +64,10 @@ function AH_MailBank.LoadMailData(frame, szName, nIndex)
 			box:SetObjectIcon(Table_GetItemIconID(k))
 			box:SetAlpha(255)
 			box:SetOverTextFontScheme(0, 15)
-			--local item = GetItem(v[1])
-			--if item then
-				--UpdateItemBoxExtend(box, item)
-			--end
+			local item = GetItem(v[1])
+			if item then
+				UpdateItemBoxExtend(box, item)
+			end
 			if v[5] > 1 then
 				box:SetOverText(0, v[5])
 			else
@@ -150,6 +120,8 @@ function AH_MailBank.LoadMailData(frame, szName, nIndex)
 	else
 		hType:SetText("包含字符：")
 	end
+	frame:Lookup("Btn_Filter"):Enable(AH_MailBank.bMail)
+	frame:Lookup("Check_NotReturn"):Enable(AH_MailBank.bMail)
 end
 
 -- 以邮件标题筛选
@@ -294,8 +266,13 @@ function AH_MailBank.OnUpdate()
 					hBtnMailBank:ChangeRelation(page, true, true)
 					hBtnMailBank:SetRelPos(600, 8)
 					hBtnMailBank.OnLButtonClick = function()
-						AH_MailBank.OpenPanel(true)
-						AH_MailBank.nFilterType = 1
+						if not AH_MailBank.IsPanelOpened() then
+							AH_MailBank.bMail = true
+							AH_MailBank.nFilterType = 1
+							AH_MailBank.OpenPanel()
+						else
+							AH_MailBank.ClosePanel()
+						end
 					end
 				end
 			end
@@ -328,7 +305,12 @@ function AH_MailBank.OnUpdate()
 				hBtnMail:ChangeRelation(frame, true, true)
 				hBtnMail:SetRelPos(55, 0)
 				hBtnMail.OnLButtonClick = function()
-					AH_MailBank.OpenPanel(false)
+					if not AH_MailBank.IsPanelOpened() then
+						AH_MailBank.bMail = false
+						AH_MailBank.OpenPanel()
+					else
+						AH_MailBank.ClosePanel()
+					end
 				end
 				hBtnMail.OnMouseEnter = function()
 					local x, y = this:GetAbsPos()
@@ -405,6 +387,34 @@ end
 ------------------------------------------------------------
 -- 回调函数
 ------------------------------------------------------------
+function AH_MailBank.OnFrameCreate()
+	local handle = this:Lookup("", "")
+	local hBg = handle:Lookup("Handle_Bg")
+	local hBox = handle:Lookup("Handle_Box")
+	hBg:Clear()
+	hBox:Clear()
+	local nIndex = 0
+	for i = 1, 7, 1 do
+		for j = 1, 14, 1 do
+			hBg:AppendItemFromString("<image>w=52 h=52 path=\"ui/Image/LootPanel/LootPanel.UITex\" frame=13 </image>")
+			local img = hBg:Lookup(nIndex)
+			hBox:AppendItemFromString("<box>w=48 h=48 eventid=304 </box>")
+			local box = hBox:Lookup(nIndex)
+			box.nIndex = nIndex
+			box.bItemBox = true
+			local x, y = (j - 1) * 52, (i - 1) * 52
+			img:SetRelPos(x, y)
+			box:SetRelPos(x + 2, y + 2)
+			box:SetOverTextPosition(0, ITEM_POSITION.RIGHT_BOTTOM)
+			box:SetOverTextFontScheme(0, 15)
+
+			nIndex = nIndex + 1
+		end
+	end
+	hBg:FormatAllItemPos()
+	hBox:FormatAllItemPos()
+end
+
 function AH_MailBank.OnEditChanged()
 	local szName, frame = this:GetName(), this:GetRoot()
 	if szName == "Edit_Search" then
@@ -686,25 +696,25 @@ function AH_MailBank.IsPanelOpened()
 	return false
 end
 
-function AH_MailBank.OpenPanel(bMail)
-	local frame = nil
-	if not AH_MailBank.IsPanelOpened()  then
+function AH_MailBank.OpenPanel()
+	local frame = Station.Lookup("Normal/AH_MailBank")
+	if not frame then
 		frame = Wnd.OpenWindow(szIniFile, "AH_MailBank")
-		AH_MailBank.Init(frame, bMail)
-		AH_MailBank.szCurRole = GetClientPlayer().szName
-		if not AH_MailBank.tItemCache[AH_MailBank.szCurRole] then
-			AH_MailBank.tItemCache[AH_MailBank.szCurRole] = {}
-		end
-		AH_MailBank.LoadMailData(frame, AH_MailBank.szCurRole, AH_MailBank.nCurIndex)
-	else
-		AH_MailBank.ClosePanel()
 	end
+	frame:Show()
+	frame:BringToTop()
+	AH_MailBank.szCurRole = GetClientPlayer().szName
+	if not AH_MailBank.tItemCache[AH_MailBank.szCurRole] then
+		AH_MailBank.tItemCache[AH_MailBank.szCurRole] = {}
+	end
+	AH_MailBank.LoadMailData(frame, AH_MailBank.szCurRole, AH_MailBank.nCurIndex)
 	PlaySound(SOUND.UI_SOUND,g_sound.OpenFrame)
 end
 
 function AH_MailBank.ClosePanel()
-	if AH_MailBank.IsPanelOpened() then
-		Wnd.CloseWindow("AH_MailBank")
+	local frame = Station.Lookup("Normal/AH_MailBank")
+	if frame and frame:IsVisible() then
+		frame:Hide()
 	end
 	PlaySound(SOUND.UI_SOUND,g_sound.CloseFrame)
 end
