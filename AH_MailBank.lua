@@ -8,7 +8,9 @@ AH_MailBank = {
 	szDataPath = "\\Interface\\AH\\data\\mail.AH",
 	szCurRole = nil,
 	nCurIndex = 1,
+	szCurKey = "",
 	nFilterType = 1,
+	bShowNoReturn = false,
 }
 
 local ipairs = ipairs
@@ -32,7 +34,7 @@ function AH_MailBank.Init(frame, bMail)
 		for j = 1, 14, 1 do
 			hBg:AppendItemFromString("<image>w=52 h=52 path=\"ui/Image/LootPanel/LootPanel.UITex\" frame=13 </image>")
 			local img = hBg:Lookup(nIndex)
-			hBox:AppendItemFromString("<box>w=48 h=48 eventid=524607 </box>")
+			hBox:AppendItemFromString("<box>w=48 h=48 eventid=304 </box>")
 			local box = hBox:Lookup(nIndex)
 			box.nIndex = nIndex
 			box.bItemBox = true
@@ -48,16 +50,14 @@ function AH_MailBank.Init(frame, bMail)
 	hBg:FormatAllItemPos()
 	hBox:FormatAllItemPos()
 	frame:Lookup("Btn_Filter"):Enable(bMail)
+	frame:Lookup("Check_NotReturn"):Enable(bMail)
 end
 
 -- 将数据分页处理，每页98个数据，返回分页数据和页数
-function AH_MailBank.GetPageMailData(szName)
-	local tItemCache = AH_MailBank.tItemCache[szName]
+function AH_MailBank.GetPageMailData(tItemCache)
 	local t, i, n = {}, 1, 1
 	for k, v in pairs(tItemCache) do
-		if not t[i] then
-			t[i] = {}
-		end
+		t[i] = t[i] or {}
 		t[i][k] = v
 		n = n + 1
 		i = math.ceil(n / 98)
@@ -69,19 +69,22 @@ end
 function AH_MailBank.LoadMailData(frame, szName, nIndex)
 	local handle = frame:Lookup("", "")
 	local hBox = handle:Lookup("Handle_Box")
-	--清除原有数据
-	for i = 0, 97, 1 do
-		local box = hBox:Lookup(i)
-		box:ClearObject()
-		box:ClearObjectIcon()
-		box:SetOverText(0, "")
-	end
 
-	--重新附加数据
-	local tItemCache, nMax = AH_MailBank.GetPageMailData(szName)
+	--附加数据
+	local tItemCache = AH_MailBank.bShowNoReturn and AH_MailBank.SaveItemCache(false) or AH_MailBank.tItemCache[szName]
+	local tCache, nMax = AH_MailBank.GetPageMailData(tItemCache)
 	local i = 0
-	for k, v in pairs(tItemCache[nIndex] or {}) do
-		if type(k) == "number" then		--物品
+	for k, v in pairs(tCache[nIndex] or {}) do
+		if k == "money" then	--金钱
+			local box = hBox:Lookup(i)
+			box.szType = "money"
+			box.szName = "金钱"
+			box.data = v
+			box:SetObject(UI_OBJECT_NOT_NEED_KNOWN, 0)
+			box:SetObjectIcon(582)
+			box:SetAlpha(255)
+			box:SetOverTextFontScheme(0, 15)
+		else	--物品
 			local box = hBox:Lookup(i)
 			box.szType = "item"
 			box.szName = Table_GetItemName(k)
@@ -89,26 +92,34 @@ function AH_MailBank.LoadMailData(frame, szName, nIndex)
 			box.data = v
 			box:SetObject(UI_OBJECT_ITEM_ONLY_ID, k, v[1], v[2], v[3], v[4])
 			box:SetObjectIcon(Table_GetItemIconID(k))
-			local item = GetItem(v[1])
-			if item then
-				UpdateItemBoxExtend(box, item)
-			end
+			box:SetAlpha(255)
+			box:SetOverTextFontScheme(0, 15)
+			--local item = GetItem(v[1])
+			--if item then
+				--UpdateItemBoxExtend(box, item)
+			--end
 			if v[5] > 1 then
 				box:SetOverText(0, v[5])
 			else
 				box:SetOverText(0, "")
 			end
-		elseif type(k) == "string" and k == "money" then	--金钱
-			local box = hBox:Lookup(i)
-			box.szType = "money"
-			box.szName = "金钱"
-			box.data = v
-			box:SetObject(UI_OBJECT_NOT_NEED_KNOWN, 0)
-			box:SetObjectIcon(582)
 		end
 		i = i + 1
 	end
+	--清空其余box
+	for j = i, 97, 1 do
+		local box = hBox:Lookup(j)
+		if not box:IsEmpty() then
+			box:ClearObject()
+			box:ClearObjectIcon()
+			box:SetOverText(0, "")
+			box:SetAlpha(255)
+			box:SetOverTextFontScheme(0, 15)
+		end
+	end
+
 	frame:Lookup("", ""):Lookup("Text_Account"):SetText(szName)
+	-- 翻页处理
 	local hPrev, hNext = frame:Lookup("Btn_Prev"), frame:Lookup("Btn_Next")
 	local hPage = frame:Lookup("", ""):Lookup("Text_Page")
 	if nMax > 1 then
@@ -131,6 +142,7 @@ function AH_MailBank.LoadMailData(frame, szName, nIndex)
 		hNext:Hide()
 		hPage:Hide()
 	end
+	--筛选处理
 	frame:Lookup("", ""):Lookup("Text_Filter"):SetText(tFilterType[AH_MailBank.nFilterType])
 	local hType = frame:Lookup("", ""):Lookup("Text_Type")
 	if AH_MailBank.nFilterType == 4 then
@@ -140,6 +152,7 @@ function AH_MailBank.LoadMailData(frame, szName, nIndex)
 	end
 end
 
+-- 以邮件标题筛选
 local function IsMailTitleExist(data, szKey)
 	local MailClient = GetMailClient()
 	for k, v in ipairs(data) do
@@ -151,6 +164,7 @@ local function IsMailTitleExist(data, szKey)
 	return false
 end
 
+-- 以寄信人筛选
 local function IsMailSenderNameExist(data, szKey)
 	local MailClient = GetMailClient()
 	for k, v in ipairs(data) do
@@ -162,8 +176,9 @@ local function IsMailSenderNameExist(data, szKey)
 	return false
 end
 
+-- 以剩余时间筛选
 local function IsLessMailItemTime(data, szKey)
-	local nLeft = 86400 * tonumber(szKey)
+	local nLeft = 86400 * tonumber(szKey) or 0
 	local MailClient = GetMailClient()
 	for k, v in ipairs(data) do
 		local mail = MailClient.GetMailInfo(v)
@@ -180,58 +195,61 @@ function AH_MailBank.FilterMailItem(frame, szKey)
 	local hBox = handle:Lookup("Handle_Box")
 	for i = 0, 97, 1 do
 		local box = hBox:Lookup(i)
-		local bExist = false
-		if AH_MailBank.nFilterType == 1 then
-			bExist = (StringFindW(box.szName, szKey) ~= nil)
-		elseif AH_MailBank.nFilterType == 2 then
-			bExist = IsMailTitleExist(box.data[6], szKey)
-		elseif AH_MailBank.nFilterType == 3 then
-			bExist = IsMailSenderNameExist(box.data[6], szKey)
-		elseif AH_MailBank.nFilterType == 4 then
-			bExist = IsLessMailItemTime(box.data[6], szKey)
-		end
-		if bExist then
-			box:SetAlpha(255)
-			box:SetOverTextFontScheme(0, 15)
-		else
-			box:SetAlpha(50)
-			box:SetOverTextFontScheme(0, 30)
+		if not box:IsEmpty() then
+			local bExist = false
+			if AH_MailBank.nFilterType == 1 then
+				bExist = (StringFindW(box.szName, szKey) ~= nil)
+			elseif AH_MailBank.nFilterType == 2 then
+				bExist = IsMailTitleExist(box.data[6], szKey)
+			elseif AH_MailBank.nFilterType == 3 then
+				bExist = IsMailSenderNameExist(box.data[6], szKey)
+			elseif AH_MailBank.nFilterType == 4 then
+				bExist = IsLessMailItemTime(box.data[6], szKey)
+			end
+			if bExist then
+				box:SetAlpha(255)
+				box:SetOverTextFontScheme(0, 15)
+			else
+				box:SetAlpha(50)
+				box:SetOverTextFontScheme(0, 30)
+			end
 		end
 	end
 end
 
 -- 保存邮件物品数据，以物品nUiId为key的数据表，同种物品全部累加，每种物品包含所属邮件ID
-function AH_MailBank.SaveItemCache()
+function AH_MailBank.SaveItemCache(bAll)
 	local MailClient = GetMailClient()
 	local tMail = MailClient.GetMailList("all") or {}
 	local t, count, ids, m = {}, {}, {}, 0
 	for _, dwID in ipairs(tMail) do
-		local tItem = AH_MailBank.GetMailItem(dwID)
-		for k, v in pairs(tItem) do
-			if type(k) == "number" then
-				if not count[k] then
-					count[k]= 0
-				end
-				if not ids[k] then
-					ids[k] = {dwID}
+		local mail = MailClient.GetMailInfo(dwID)
+		if bAll or (not bAll and not (mail.GetType() == MAIL_TYPE.PLAYER and (mail.bMoneyFlag or mail.bItemFlag))) then
+			local tItem = AH_MailBank.GetMailItem(mail)
+			for k, v in pairs(tItem) do
+				if k == "money" then
+					if not ids["money"] then
+						ids["money"] = {dwID}
+					else
+						table.insert(ids["money"], dwID)
+					end
+					m = MoneyOptAdd(m, v)
+					t["money"] = {m, ids["money"]}
 				else
-					table.insert(ids[k], dwID)
+					if not ids[k] then
+						ids[k] = {dwID}
+					else
+						table.insert(ids[k], dwID)
+					end
+					count[k] = count[k] or 0
+					if not t[k] then
+						count[k] = v[5]
+						t[k] = {v[1], v[2], v[3], v[4], v[5], ids[k]}
+					else
+						count[k] = count[k] + v[5]
+						t[k] = {v[1], v[2], v[3], v[4], count[k], ids[k]}
+					end
 				end
-				if not t[k] then
-					count[k] = v[5]
-					t[k] = {v[1], v[2], v[3], v[4], v[5], ids[k]}
-				else
-					count[k] = count[k] + v[5]
-					t[k] = {v[1], v[2], v[3], v[4], count[k], ids[k]}
-				end
-			elseif type(k) == "string" and k == "money" then
-				if not ids["money"] then
-					ids["money"] = {dwID}
-				else
-					table.insert(ids["money"], dwID)
-				end
-				m = MoneyOptAdd(m, v)
-				t["money"] = {m, ids["money"]}
 			end
 		end
 	end
@@ -239,22 +257,21 @@ function AH_MailBank.SaveItemCache()
 end
 
 -- 获取单封右键的所有物品数据，包括金钱，同种物品做个数累加处理
-function AH_MailBank.GetMailItem(dwID)
+function AH_MailBank.GetMailItem(mail)
 	local t, count = {}, {}
-	local mail = GetMailClient().GetMailInfo(dwID)
 	if mail.bItemFlag then
 		for i = 0, 7, 1 do
 			local item = mail.GetItem(i)
 			if item then
-				if not count[item.nUiId] then
-					count[item.nUiId] = 0	--邮箱内同种物品计数器
-				end
-				if not t[item.nUiId] then
-					count[item.nUiId] = item.nStackNum
-					t[item.nUiId] = {item.dwID, item.nVersion, item.dwTabType, item.dwIndex, item.nStackNum}
+				local szKey = (item.nGenre == ITEM_GENRE.BOOK) and GetItemNameByItem(item) or item.nUiId
+				local nStack = (item.bCanStack) and item.nStackNum or 1
+				count[szKey] = count[szKey] or 0	--邮箱内同种物品计数器
+				if not t[szKey] then
+					count[szKey] = nStack
+					t[szKey] = {item.dwID, item.nVersion, item.dwTabType, item.dwIndex, nStack}
 				else
-					count[item.nUiId] = count[item.nUiId] + item.nStackNum
-					t[item.nUiId] = {item.dwID, item.nVersion, item.dwTabType, item.dwIndex, count[item.nUiId]}
+					count[item.nUiId] = count[item.nUiId] + nStack
+					t[szKey] = {item.dwID, item.nVersion, item.dwTabType, item.dwIndex, count[item.nUiId]}
 				end
 			end
 		end
@@ -268,7 +285,7 @@ end
 function AH_MailBank.OnUpdate()
 	local frame = Station.Lookup("Normal/MailPanel")
 	if frame and frame:IsVisible() then
-		if not bMailHooked then
+		if not bMailHooked then	--邮件界面添加一个按钮
 			local page = frame:Lookup("PageSet_Total/Page_Receive")
 			local temp = Wnd.OpenWindow("interface\\AH\\AH_Widget.ini")
 			if not page:Lookup("Btn_MailBank") then
@@ -285,23 +302,25 @@ function AH_MailBank.OnUpdate()
 			Wnd.CloseWindow(temp)
 			bMailHooked = true
 		end
-		local MailClient = GetMailClient()
-		local tMail = MailClient.GetMailList("all") or {}
-		for _, dwID in ipairs(tMail) do
-			local mail = MailClient.GetMailInfo(dwID)
-			local target = Station.Lookup("Normal/Target")
-			if target then
-				mail.RequestContent(target.dwID)
+		if GetLogicFrameCount() % 8 == 0 then
+			local MailClient = GetMailClient()
+			local tMail = MailClient.GetMailList("all") or {}
+			for _, dwID in ipairs(tMail) do
+				local mail = MailClient.GetMailInfo(dwID)
+				local target = Station.Lookup("Normal/Target")
+				if target then
+					mail.RequestContent(target.dwID)
+				end
 			end
+			local szName = GetClientPlayer().szName
+			AH_MailBank.tItemCache[szName] = AH_MailBank.SaveItemCache(true)
 		end
-		local szName = GetClientPlayer().szName
-		AH_MailBank.tItemCache[szName] = AH_MailBank.SaveItemCache()
 	elseif not frame or not frame:IsVisible() then
 		bMailHooked = false
 	end
 
 	local frame = Station.Lookup("Normal/BigBagPanel")
-	if not bBagHooked and frame and frame:IsVisible() then
+	if not bBagHooked and frame and frame:IsVisible() then --背包界面添加一个按钮
 		local temp = Wnd.OpenWindow("interface\\AH\\AH_Widget.ini")
 		if not frame:Lookup("Btn_Mail") then
 			local hBtnMail = temp:Lookup("Btn_Mail")
@@ -329,6 +348,7 @@ function AH_MailBank.OnUpdate()
 	end
 end
 
+-- 附件剩余时间格式化
 function AH_MailBank.FormatItemLeftTime(nTime)
 	if nTime >= 86400 then
 		return FormatString(g_tStrings.STR_MAIL_LEFT_DAY, math.floor(nTime / 86400))
@@ -341,6 +361,7 @@ function AH_MailBank.FormatItemLeftTime(nTime)
 	end
 end
 
+-- 金钱格式化
 function AH_MailBank.FormatMailMoney(nMoney)
 	local tMoney = FormatMoneyTab(nMoney)
 	local szMoney = ""
@@ -356,6 +377,7 @@ function AH_MailBank.FormatMailMoney(nMoney)
 	return szMoney
 end
 
+-- 取附件
 function AH_MailBank.TakeMailItemToBag(fnAction, nCount)
 	local tFreeBoxList = AH_Spliter.GetPlayerBagFreeBoxList()
 	if nCount > #tFreeBoxList then
@@ -364,14 +386,48 @@ function AH_MailBank.TakeMailItemToBag(fnAction, nCount)
 	end
 	fnAction()
 end
+
+-- 重新筛选
+function AH_MailBank.ReFilter(frame)
+	if AH_MailBank.szCurKey ~= "" then
+		AH_MailBank.FilterMailItem(frame, AH_MailBank.szCurKey)
+	end
+end
+
+-- 检查当前角色
+function AH_MailBank.CheckCurRole(frame)
+	AH_MailBank.nFilterType = 1
+	frame:Lookup("", ""):Lookup("Text_Filter"):SetText(tFilterType[AH_MailBank.nFilterType])
+	local bTrue = (AH_MailBank.szCurRole == GetClientPlayer().szName)
+	frame:Lookup("Btn_Filter"):Enable(bTrue)
+	frame:Lookup("Check_NotReturn"):Enable(bTrue)
+end
 ------------------------------------------------------------
 -- 回调函数
 ------------------------------------------------------------
 function AH_MailBank.OnEditChanged()
-	local frame = this:GetRoot()
-	local szName = this:GetName()
+	local szName, frame = this:GetName(), this:GetRoot()
 	if szName == "Edit_Search" then
-		AH_MailBank.FilterMailItem(frame, this:GetText())
+		AH_MailBank.szCurKey = this:GetText()
+		AH_MailBank.FilterMailItem(frame, AH_MailBank.szCurKey)
+	end
+end
+
+function AH_MailBank.OnCheckBoxCheck()
+	local szName, frame = this:GetName(), this:GetRoot()
+	if szName == "Check_NotReturn" then
+		AH_MailBank.bShowNoReturn = true
+		AH_MailBank.LoadMailData(frame, AH_MailBank.szCurRole, AH_MailBank.nCurIndex)
+		AH_MailBank.ReFilter(frame)
+	end
+end
+
+function AH_MailBank.OnCheckBoxUncheck()
+	local szName, frame = this:GetName(), this:GetRoot()
+	if szName == "Check_NotReturn" then
+		AH_MailBank.bShowNoReturn = false
+		AH_MailBank.LoadMailData(frame, AH_MailBank.szCurRole, AH_MailBank.nCurIndex)
+		AH_MailBank.ReFilter(frame)
 	end
 end
 
@@ -393,6 +449,8 @@ function AH_MailBank.OnLButtonClick()
 				fnAction = function()
 					AH_MailBank.szCurRole = k
 					AH_MailBank.LoadMailData(frame, k, 1)
+					AH_MailBank.ReFilter(frame)
+					AH_MailBank.CheckCurRole(frame)
 				end
 			}
 			table.insert(menu, m)
@@ -418,6 +476,7 @@ function AH_MailBank.OnLButtonClick()
 					else
 						hType:SetText("包含字符：")
 					end
+					AH_MailBank.ReFilter(frame)
 				end
 			}
 			table.insert(menu, m)
@@ -441,11 +500,14 @@ function AH_MailBank.OnLButtonClick()
 	elseif szName == "Btn_Prev" then
 		AH_MailBank.nCurIndex = AH_MailBank.nCurIndex - 1
 		AH_MailBank.LoadMailData(frame, AH_MailBank.szCurRole, AH_MailBank.nCurIndex)
+		AH_MailBank.ReFilter(frame)
 	elseif szName == "Btn_Next" then
 		AH_MailBank.nCurIndex = AH_MailBank.nCurIndex + 1
 		AH_MailBank.LoadMailData(frame, AH_MailBank.szCurRole, AH_MailBank.nCurIndex)
+		AH_MailBank.ReFilter(frame)
 	elseif szName == "Btn_Refresh" then
 		AH_MailBank.LoadMailData(frame, AH_MailBank.szCurRole, AH_MailBank.nCurIndex)
+		AH_MailBank.ReFilter(frame)
 	end
 end
 
@@ -467,8 +529,8 @@ function AH_MailBank.OnItemLButtonClick()
 					if mail.bItemFlag then
 						for i = 0, 7, 1 do
 							local item2 = mail.GetItem(i)
-							if item2 then
-								AH_MailBank.TakeMailItemToBag(mail.TakeItem(i), math.ceil(data[5] / item.nMaxStackNum))
+							if item2 and item2.nUiId == this.nUiId then
+								AH_MailBank.TakeMailItemToBag(function() mail.TakeItem(i) end, math.ceil(data[5] / item.nMaxStackNum))
 							end
 						end
 					end
@@ -484,8 +546,9 @@ function AH_MailBank.OnItemLButtonClick()
 			end
 		end
 	end
-	AH_Library.DelayCall(0.5, function()
+	AH_Library.DelayCall(0.6, function()
 		AH_MailBank.LoadMailData(frame, AH_MailBank.szCurRole, AH_MailBank.nCurIndex)
+		AH_MailBank.ReFilter(frame)
 	end)
 end
 
@@ -513,8 +576,8 @@ function AH_MailBank.OnItemRButtonClick()
 								local m_1 = {
 									szOption = string.format("%s x%d", item2.szName, item2.nStackNum),
 									fnAction = function()
-										AH_MailBank.TakeMailItemToBag(mail.TakeItem(i), 1)
-										AH_Library.DelayCall(0.5, function()
+										AH_MailBank.TakeMailItemToBag(function() mail.TakeItem(i) end, 1)
+										AH_Library.DelayCall(0.6, function()
 											AH_MailBank.LoadMailData(frame, AH_MailBank.szCurRole, AH_MailBank.nCurIndex)
 										end)
 									end
@@ -539,7 +602,7 @@ function AH_MailBank.OnItemRButtonClick()
 							szOption = AH_MailBank.FormatMailMoney(mail.nMoney),
 							fnAction = function()
 								mail.TakeMoney()
-								AH_Library.DelayCall(0.5, function()
+								AH_Library.DelayCall(0.6, function()
 									AH_MailBank.LoadMailData(frame, AH_MailBank.szCurRole, AH_MailBank.nCurIndex)
 								end)
 							end
@@ -580,7 +643,7 @@ function AH_MailBank.OnItemMouseEnter()
 						szTip = szTip .. GetFormatText(string.format(" 『%s』\n", mail.szTitle), 163)
 						local szLeft = AH_MailBank.FormatItemLeftTime(mail.GetLeftTime())
 						szTip = szTip .. GetFormatText(string.format("剩余时间：%s", szLeft), 162)
-						local nCount = AH_MailBank.GetMailItem(v)[this.nUiId][5]
+						local nCount = AH_MailBank.GetMailItem(mail)[this.nUiId][5]
 						szTip = szTip .. GetFormatText(string.format("  数量：%d", nCount), 162)
 					end
 					OutputTip(szTip, 300, {x, y, w, h})

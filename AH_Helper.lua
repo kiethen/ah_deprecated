@@ -41,7 +41,7 @@ AH_Helper = {
 	tItemPrice = {},
 
 	szDataPath = "\\Interface\\AH\\data\\data.AH",
-	szVersion = "2.0.3",		--用于版本检测
+	szVersion = "2.0.4",		--用于版本检测
 }
 
 
@@ -311,15 +311,15 @@ function AH_Helper.SetSaleInfo(hItem, szDataType, tItemData)
 
 	--价格记录
 	if szDataType == "Search" then
-		--tMinBid = PRICE_LIMITED, tMaxBid = 0, tMinBuy = PRICE_LIMITED, tMaxBuy = 0, nVersion = AH_Helper.nVersion
-		if AH_Helper.tItemPrice[item.nUiId] == nil or AH_Helper.tItemPrice[item.nUiId][2] ~= AH_Helper.nVersion then
-			AH_Helper.tItemPrice[item.nUiId] = {PRICE_LIMITED, AH_Helper.nVersion}
+		local szKey = (item.nGenre == ITEM_GENRE.BOOK) and GetItemNameByItem(item) or item.nUiId	--书籍需要特殊处理
+		if AH_Helper.tItemPrice[szKey] == nil or AH_Helper.tItemPrice[szKey][2] ~= AH_Helper.nVersion then
+			AH_Helper.tItemPrice[szKey] = {PRICE_LIMITED, AH_Helper.nVersion}
 		end
 		if MoneyOptCmp(hItem.tBuyPrice, PRICE_LIMITED) ~= 0 then
 			local tBuyPrice = MoneyOptDiv(hItem.tBuyPrice, hItem.nCount)
 			--最低一口
-			if MoneyOptCmp(AH_Helper.tItemPrice[item.nUiId][1], tBuyPrice) == 1 then
-				AH_Helper.tItemPrice[item.nUiId][1] = tBuyPrice
+			if MoneyOptCmp(AH_Helper.tItemPrice[szKey][1], tBuyPrice) == 1 then
+				AH_Helper.tItemPrice[szKey][1] = tBuyPrice
 			end
 		end
 	end
@@ -504,7 +504,8 @@ end
 function AH_Helper.GetItemSellInfo(szItemName)
     if AH_Helper.szDefaultValue == "Btn_Max" or AH_Helper.szDefaultValue == "Btn_Min" then
 		for i, v in pairs(AH_Helper.tItemPrice) do
-			if szItemName == Table_GetItemName(i) then
+			local szName = (type(i) == "number") and Table_GetItemName(i) or i	--lua 三元表达式
+			if szItemName == szName then
 				local u = {szName = szItemName, tBidPrice = 0, tBuyPrice = 0, szTime = AH_Helper.szDefaultTime}
                 if AH_Helper.szDefaultValue == "Btn_Min" then
                     AH_Helper.Message("当前寄售价格为【最低价格】")
