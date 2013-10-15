@@ -311,9 +311,10 @@ function AH_Helper.SetSaleInfo(hItem, szDataType, tItemData)
 
 	--价格记录
 	if szDataType == "Search" then
-		local szKey = (item.nGenre == ITEM_GENRE.BOOK) and GetItemNameByItem(item) or item.nUiId	--书籍需要特殊处理
+		local szKey = item.nUiId
+		local dwID = (item.nGenre == ITEM_GENRE.BOOK) and item.dwID or nil
 		if AH_Helper.tItemPrice[szKey] == nil or AH_Helper.tItemPrice[szKey][2] ~= AH_Helper.nVersion then
-			AH_Helper.tItemPrice[szKey] = {PRICE_LIMITED, AH_Helper.nVersion}
+			AH_Helper.tItemPrice[szKey] = {PRICE_LIMITED, AH_Helper.nVersion, dwID}
 		end
 		if MoneyOptCmp(hItem.tBuyPrice, PRICE_LIMITED) ~= 0 then
 			local tBuyPrice = MoneyOptDiv(hItem.tBuyPrice, hItem.nCount)
@@ -502,11 +503,13 @@ function AH_Helper.UpdatePriceInfo(hList, szDataType)
 end
 
 function AH_Helper.GetItemSellInfo(szItemName)
-    if AH_Helper.szDefaultValue == "Btn_Max" or AH_Helper.szDefaultValue == "Btn_Min" then
+	local szText = Station.Lookup("Normal/AuctionPanel"):Lookup("PageSet_Totle/Page_Auction/Wnd_Sale", "Text_ItemName"):GetText()
+	szItemName = (szItemName == "书") and szText or szItemName	--修复书籍出价错误
+    if AH_Helper.szDefaultValue == "Btn_Min" then
 		for i, v in pairs(AH_Helper.tItemPrice) do
-			local szName = (type(i) == "number") and Table_GetItemName(i) or i	--lua 三元表达式
-			if szItemName == szName then
-				local u = {szName = szItemName, tBidPrice = 0, tBuyPrice = 0, szTime = AH_Helper.szDefaultTime}
+			local szItem = (v[3] ~= nil and GetItem(v[3])) and GetItemNameByItem(GetItem(v[3])) or Table_GetItemName(i)	--lua 三元表达式
+			if szItemName == szItem then
+				local u = {szName = szItem, tBidPrice = 0, tBuyPrice = 0, szTime = AH_Helper.szDefaultTime}
                 if AH_Helper.szDefaultValue == "Btn_Min" then
                     AH_Helper.Message("当前寄售价格为【最低价格】")
                     u.tBidPrice = v[1]
@@ -1171,6 +1174,7 @@ function AH_Helper.GetItemTip(hItem)
 				szTip = szTip .. GetFormatText("\n单价：", 157) .. GetMoneyTipText(MoneyOptDiv(hItem.tBuyPrice, hItem.nCount), 106)
 			end
 		end
+		--szTip = szTip .. GetFormatText("\n"..item.dwID .. "-" .. GetItemNameByItem(GetItem(item.dwID)))
 	end
 	return szTip
 end

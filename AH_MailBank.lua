@@ -54,20 +54,19 @@ function AH_MailBank.LoadMailData(frame, szName, nIndex)
 			box:SetObjectIcon(582)
 			box:SetAlpha(255)
 			box:SetOverTextFontScheme(0, 15)
+			box:SetOverText(0, "")
 		else	--物品
 			local box = hBox:Lookup(i)
 			box.szType = "item"
-			box.szName = Table_GetItemName(k)
+			local item = GetItem(v[1])
+			box.szName = (item and item.nGenre == ITEM_GENRE.BOOK) and GetItemNameByItem(item) or Table_GetItemName(k)
 			box.nUiId = k
 			box.data = v
 			box:SetObject(UI_OBJECT_ITEM_ONLY_ID, k, v[1], v[2], v[3], v[4])
 			box:SetObjectIcon(Table_GetItemIconID(k))
 			box:SetAlpha(255)
 			box:SetOverTextFontScheme(0, 15)
-			local item = GetItem(v[1])
-			if item then
-				UpdateItemBoxExtend(box, item)
-			end
+			UpdateItemBoxExtend(box, item)
 			if v[5] > 1 then
 				box:SetOverText(0, v[5])
 			else
@@ -501,6 +500,7 @@ function AH_MailBank.OnLButtonClick()
 					szOption = "删除",
 					fnAction = function()
 						AH_MailBank.tItemCache[k] = nil
+						AH_MailBank.LoadMailData(frame, AH_MailBank.szCurRole, AH_MailBank.nCurIndex)
 					end
 				}
 			}
@@ -556,7 +556,7 @@ function AH_MailBank.OnItemLButtonClick()
 			end
 		end
 	end
-	AH_Library.DelayCall(0.6, function()
+	AH_Library.DelayCall(1, function()
 		AH_MailBank.LoadMailData(frame, AH_MailBank.szCurRole, AH_MailBank.nCurIndex)
 		AH_MailBank.ReFilter(frame)
 	end)
@@ -587,7 +587,7 @@ function AH_MailBank.OnItemRButtonClick()
 									szOption = string.format("%s x%d", item2.szName, item2.nStackNum),
 									fnAction = function()
 										AH_MailBank.TakeMailItemToBag(function() mail.TakeItem(i) end, 1)
-										AH_Library.DelayCall(0.6, function()
+										AH_Library.DelayCall(1, function()
 											AH_MailBank.LoadMailData(frame, AH_MailBank.szCurRole, AH_MailBank.nCurIndex)
 										end)
 									end
@@ -612,7 +612,7 @@ function AH_MailBank.OnItemRButtonClick()
 							szOption = AH_MailBank.FormatMailMoney(mail.nMoney),
 							fnAction = function()
 								mail.TakeMoney()
-								AH_Library.DelayCall(0.6, function()
+								AH_Library.DelayCall(1, function()
 									AH_MailBank.LoadMailData(frame, AH_MailBank.szCurRole, AH_MailBank.nCurIndex)
 								end)
 							end
@@ -670,7 +670,7 @@ function AH_MailBank.OnItemMouseEnter()
 				szTip = szTip .. GetFormatText(string.format("\n\n%s", mail.szSenderName), 164)
 				szTip = szTip .. GetFormatText(string.format(" 『%s』\n", mail.szTitle), 163)
 				local szLeft = AH_MailBank.FormatItemLeftTime(mail.GetLeftTime())
-				szTip = szTip .. GetFormatText(string.format("剩余时间：%s", szLeft), 162)
+				szTip = szTip .. GetFormatText(string.format("剩余时间：%s ", szLeft), 162)
 				szTip = szTip .. GetFormatText(g_tStrings.STR_MAIL_HAVE_MONEY, 162) .. GetMoneyTipText(mail.nMoney, 106)
 			end
 			OutputTip(szTip, 300, {x, y, w, h})
