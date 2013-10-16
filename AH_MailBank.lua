@@ -121,6 +121,9 @@ function AH_MailBank.LoadMailData(frame, szName, nIndex)
 	end
 	frame:Lookup("Btn_Filter"):Enable(AH_MailBank.bMail)
 	frame:Lookup("Check_NotReturn"):Enable(AH_MailBank.bMail)
+	local tColor = AH_MailBank.bMail and {255, 255, 255} or {180, 180, 180}
+	frame:Lookup("", ""):Lookup("Text_Filter"):SetFontColor(unpack(tColor))
+	frame:Lookup("", ""):Lookup("Text_NotReturn"):SetFontColor(unpack(tColor))
 end
 
 -- 以邮件标题筛选
@@ -355,12 +358,42 @@ end
 
 -- 取附件
 function AH_MailBank.TakeMailItemToBag(fnAction, nCount)
+	local dwID, dwType = Target_GetTargetData()
+	local hNpc = dwType == TARGET.NPC and GetNpc(dwID) or nil
+	if not hNpc or (hNpc and not StringFindW(hNpc.szTitle, "信使")) then
+		OutputMessage("MSG_SYS", "请选中信使再收件\n")
+		return false
+	end
 	local tFreeBoxList = AH_Spliter.GetPlayerBagFreeBoxList()
 	if nCount > #tFreeBoxList then
 		OutputMessage("MSG_SYS", "背包空间不足\n")
-		return
+		return false
 	end
 	fnAction()
+	return true
+end
+
+--用于拾取物品后手动刷新列表
+function  AH_MailBank.UpdateItemCache(szItemName, dwMailID, bDelete)
+	local szName = GetClientPlayer().szName
+	local tItemCache = AH_MailBank.tItemCache[szName]
+	if bDelete then
+		if tItemCache[szItemName] then
+			tItemCache[szItemName] = nil
+		end
+	else
+		local tMail = (szItemName == "money") and tItemCache[szItemName][2] or tItemCache[szItemName][6]
+		if tMail then
+			for k, v in ipairs(tMail) do
+				if v == dwMailID then
+					table.remove(tMail, k)
+				end
+			end
+		end
+		if not tMail or IsTableEmpty(tMail) then
+			tItemCache[szItemName] = nil
+		end
+	end
 end
 
 -- 重新筛选
@@ -496,7 +529,7 @@ function AH_MailBank.OnLButtonClick()
 					szOption = "删除",
 					fnAction = function()
 						AH_MailBank.tItemCache[k] = nil
-						AH_MailBank.LoadMailData(frame, AH_MailBank.szCurRole, AH_MailBank.nCurIndex)
+						--AH_MailBank.LoadMailData(frame, AH_MailBank.szCurRole, AH_MailBank.nCurIndex)
 					end
 				}
 			}
@@ -526,6 +559,7 @@ function AH_MailBank.OnItemLButtonClick()
 
 	if not this:IsEmpty() then
 		local data = this.data
+		local bSuccess = false
 		if this.szType == "item" then
 			local item = GetItem(data[1])
 			if item then
@@ -536,7 +570,7 @@ function AH_MailBank.OnItemLButtonClick()
 						for i = 0, 7, 1 do
 							local item2 = mail.GetItem(i)
 							if item2 and item2.nUiId == this.nUiId then
-								AH_MailBank.TakeMailItemToBag(function() mail.TakeItem(i) end, math.ceil(data[5] / item.nMaxStackNum))
+								bSuccess = AH_MailBank.TakeMailItemToBag(function() mail.TakeItem(i) end, math.ceil(data[5] / item.nMaxStackNum))
 							end
 						end
 					end
@@ -547,13 +581,16 @@ function AH_MailBank.OnItemLButtonClick()
 			for k, v in ipairs(data[2]) do
 				local mail = MailClient.GetMailInfo(v)
 				if mail.bMoneyFlag then
-					mail.TakeMoney()
+					bSuccess = AH_MailBank.TakeMailItemToBag(function() mail.TakeMoney() end, 0)
 				end
 			end
 		end
-		this:ClearObject()
-		this:ClearObjectIcon()
-		this:SetOverText(0, "")
+		if bSuccess then
+			this:ClearObject()
+			this:ClearObjectIcon()
+			this:SetOverText(0, "")
+			AH_MailBank.UpdateItemCache(this.szName, nil, true)
+		end
 	end
 end
 
@@ -567,6 +604,7 @@ function AH_MailBank.OnItemRButtonClick()
 	if not this:IsEmpty() then
 		local data = this.data
 		if this.szType == "item" then
+			local bSuccess = false
 			local item = GetItem(data[1])
 			if item then
 				local menu = {}
@@ -582,23 +620,26 @@ function AH_MailBank.OnItemRButtonClick()
 								local m_1 = {
 									szOption = string.format("%s x%d", GetItemNameByItem(item2), nStack),
 									fnAction = function()
-										AH_MailBank.TakeMailItemToBag(function() mail.TakeItem(i) end, 1)
-										data[5] = data[5] - nStack
-										--将取走附件的邮件删除
-										for kk, vv in ipairs(data[6]) do
-											if vv == v then
-												table.remove(data[6], kk)
+										bSuccess = AH_MailBank.TakeMailItemToBag(function() mail.TakeItem(i) end, 1)
+										if bSuccess then
+											data[5] = data[5] - nStack
+											--将取走附件的邮件删除
+											for kk, vv in ipairs(data[6]) do
+												if vv == v then
+													table.remove(data[6], kk)
+												end
 											end
-										end
-										--相应的更改box数字
-										if data[5] > 1 then
-											box:SetOverText(0, data[5])
-										elseif data[5] == 1 then
-											box:SetOverText(0, "")
-										else
-											box:ClearObject()
-											box:ClearObjectIcon()
-											box:SetOverText(0, "")
+											--相应的更改box数字
+											if data[5] > 1 then
+												box:SetOverText(0, data[5])
+											elseif data[5] == 1 then
+												box:SetOverText(0, "")
+											else
+												box:ClearObject()
+												box:ClearObjectIcon()
+												box:SetOverText(0, "")
+											end
+											AH_MailBank.UpdateItemCache(GetItemNameByItem(item2), v)
 										end
 									end
 								}
@@ -612,6 +653,7 @@ function AH_MailBank.OnItemRButtonClick()
 			end
 		elseif this.szType == "money" then
 			local menu = {}
+			local bSuccess = false
 			local MailClient = GetMailClient()
 			for k, v in ipairs(data[2]) do
 				local mail = MailClient.GetMailInfo(v)
@@ -621,19 +663,22 @@ function AH_MailBank.OnItemRButtonClick()
 						{
 							szOption = AH_MailBank.FormatMailMoney(mail.nMoney),
 							fnAction = function()
-								mail.TakeMoney()
-								data[1] = MoneyOptSub(data[1], mail.nMoney)
-								--将取走金钱的那封邮件删除
-								for kk, vv in ipairs(data[2]) do
-									if vv == v then
-										table.remove(data[2], kk)
+								bSuccess = AH_MailBank.TakeMailItemToBag(function() mail.TakeMoney() end, 0)
+								if bSuccess then
+									data[1] = MoneyOptSub(data[1], mail.nMoney)
+									--将取走金钱的那封邮件删除
+									for kk, vv in ipairs(data[2]) do
+										if vv == v then
+											table.remove(data[2], kk)
+										end
 									end
-								end
-								Output(data[1])
-								if MoneyOptCmp(data[1], 0) == 0 then
-									box:ClearObject()
-									box:ClearObjectIcon()
-									box:SetOverText(0, "")
+									--Output(data[1])
+									if MoneyOptCmp(data[1], 0) == 0 then
+										box:ClearObject()
+										box:ClearObjectIcon()
+										box:SetOverText(0, "")
+									end
+									AH_MailBank.UpdateItemCache("money", v)
 								end
 							end
 						}

@@ -999,7 +999,7 @@ end
 
 local function IsSameSellItem(item1, item2)
 	if item1.nGenre == ITEM_GENRE.BOOK then
-		if item2 and item1.nQuality == item2.nQuality and item1.nGenre == item2.nGenre then
+		if item2 and item1.nQuality == item2.nQuality and item1.nGenre == item2.nGenre and item1.szName == item2.szName then
 			return true
 		end
 		return false
@@ -1051,7 +1051,7 @@ function AH_Helper.AuctionAutoSell2(frame)
 	box.tBidPrice = tBidPrice
 	box.tBuyPrice = tBuyPrice
 
-	local nStackNum = item.nStackNum
+	local nStackNum = item.bCanStack and item.nStackNum or 1	--修复不可叠加类物品定价错误
 	local tSBidPrice = MoneyOptDiv(tBidPrice, nStackNum)
 	local tSBuyPrice = MoneyOptDiv(tBuyPrice, nStackNum)
 	local AtClient = GetAuctionClient()
@@ -1062,8 +1062,10 @@ function AH_Helper.AuctionAutoSell2(frame)
 			for j = 0, player.GetBoxSize(i) - 1 do
 				local item2 = player.GetItem(i, j)
 				if IsSameSellItem(item, item2) then
-					local tBidPrice2 = MoneyOptMult(tSBidPrice, item2.nStackNum)
-					local tBuyPrice2 = MoneyOptMult(tSBuyPrice, item2.nStackNum)
+					local nStack = item2.bCanStack and item2.nStackNum or 1
+					local tBidPrice2 = MoneyOptMult(tSBidPrice, nStack)
+					local tBuyPrice2 = MoneyOptMult(tSBuyPrice, nStack)
+					Output(tSBuyPrice, tBuyPrice2)
 					AtClient.Sell(AuctionPanel.dwTargetID, i, j, tBidPrice2.nGold, tBidPrice2.nSilver, tBidPrice2.nCopper, tBuyPrice2.nGold, tBuyPrice2.nSilver, tBuyPrice2.nCopper, nTime)
 				end
 			end
