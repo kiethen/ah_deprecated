@@ -311,10 +311,10 @@ function AH_Helper.SetSaleInfo(hItem, szDataType, tItemData)
 
 	--价格记录
 	if szDataType == "Search" then
-		local szKey = item.nUiId
-		local dwID = (item.nGenre == ITEM_GENRE.BOOK) and item.dwID or nil
+		local szKey = GetItemNameByItem(item)	--改nUiId为name可以解决书籍的出价问题
+		--local dwID = (item.nGenre == ITEM_GENRE.BOOK) and item.dwID or nil
 		if AH_Helper.tItemPrice[szKey] == nil or AH_Helper.tItemPrice[szKey][2] ~= AH_Helper.nVersion then
-			AH_Helper.tItemPrice[szKey] = {PRICE_LIMITED, AH_Helper.nVersion, dwID}
+			AH_Helper.tItemPrice[szKey] = {PRICE_LIMITED, AH_Helper.nVersion}
 		end
 		if MoneyOptCmp(hItem.tBuyPrice, PRICE_LIMITED) ~= 0 then
 			local tBuyPrice = MoneyOptDiv(hItem.tBuyPrice, hItem.nCount)
@@ -504,12 +504,12 @@ end
 
 function AH_Helper.GetItemSellInfo(szItemName)
 	local szText = Station.Lookup("Normal/AuctionPanel"):Lookup("PageSet_Totle/Page_Auction/Wnd_Sale", "Text_ItemName"):GetText()
-	szItemName = (szItemName == "书") and szText or szItemName	--修复书籍出价错误
+	szItemName = (szItemName == "书") and szText or szItemName	--书籍名字转化
     if AH_Helper.szDefaultValue == "Btn_Min" then
-		for i, v in pairs(AH_Helper.tItemPrice) do
-			local szItem = (v[3] ~= nil and GetItem(v[3])) and GetItemNameByItem(GetItem(v[3])) or Table_GetItemName(i)	--lua 三元表达式
-			if szItemName == szItem then
-				local u = {szName = szItem, tBidPrice = 0, tBuyPrice = 0, szTime = AH_Helper.szDefaultTime}
+		for k, v in pairs(AH_Helper.tItemPrice) do
+			--local szItem = (v[3] ~= nil and GetItem(v[3])) and GetItemNameByItem(GetItem(v[3])) or Table_GetItemName(i)	--lua 三元表达式
+			if szItemName == k then
+				local u = {szName = k, tBidPrice = 0, tBuyPrice = 0, szTime = AH_Helper.szDefaultTime}
                 if AH_Helper.szDefaultValue == "Btn_Min" then
                     AH_Helper.Message("当前寄售价格为【最低价格】")
                     u.tBidPrice = v[1]
@@ -891,6 +891,8 @@ function AH_Helper.AddWidget(frame)
 					{ bDevide = true },
 					{szOption = "启用自动搜索", bCheck = true, bChecked = AH_Helper.bAutoSearch, fnAction = function() AH_Helper.bAutoSearch = not AH_Helper.bAutoSearch end, fnMouseEnter = function() AH_Helper.OutputTip("按住CTRL，鼠标左键点击背包中的物品栏可以快速搜索该物品") end,},
 					{szOption = "材料配方提示", bCheck = true, bChecked = AH_Tip.bShowTipEx, fnAction = function() AH_Tip.bShowTipEx = not AH_Tip.bShowTipEx end, fnMouseEnter = function() AH_Helper.OutputTip("按住ALT或SHIFT亦可以显示提示") end,},
+					{ bDevide = true },
+					{szOption = "重置价格数据", fnAction = function() AH_Helper.tItemPrice = {} end,},
 				}
 				PopupMenu(menu)
 			end

@@ -445,6 +445,6 @@ end
 
 Wnd.OpenWindow("Interface\\AH\\AH_Library.ini", "AH_Library")
 
---[[RegisterEvent("CALL_LUA_ERROR", function()
+RegisterEvent("CALL_LUA_ERROR", function()
 	OutputMessage("MSG_SYS", arg0)
-end)]]
+end)

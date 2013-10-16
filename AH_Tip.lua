@@ -174,7 +174,8 @@ function AH_Tip.GetBagItemTip(box)
 			szTip = szTip .. AH_Tip.GetRecipeTip(player, item)
 		end
 
-		local v = AH_Helper.tItemPrice[item.nUiId]
+		local szName = GetItemNameByItem(item)
+		local v = AH_Helper.tItemPrice[szName]
 		if v and v[1] then
 			if MoneyOptCmp(v[1], PRICE_LIMITED) ~= 0 then
 				szTip = szTip .. GetFormatText("\n¼Û¸ñ£º", 157) .. GetMoneyTipText(v[1], 106)
