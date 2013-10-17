@@ -170,6 +170,7 @@ AH_Helper.OnItemMouseEnterOrg = AuctionPanel.OnItemMouseEnter
 AH_Helper.OnItemMouseLeaveOrg = AuctionPanel.OnItemMouseLeave
 AH_Helper.InitOrg = AuctionPanel.Init
 AH_Helper.ShowNoticeOrg = AuctionPanel.ShowNotice
+AH_Helper.UpdateSaleInfoOrg = AuctionPanel.UpdateSaleInfo
 --------------------------------------------------------
 -- AH函数重构
 --------------------------------------------------------
@@ -502,12 +503,27 @@ function AH_Helper.UpdatePriceInfo(hList, szDataType)
 	end
 end
 
+--无记录时调整寄售时间
+function AH_Helper.UpdateSaleInfo(frame, bDefault)
+	AH_Helper.UpdateSaleInfoOrg(frame, bDefault)
+	local hWndSale = frame:Lookup("PageSet_Totle/Page_Auction/Wnd_Sale")
+	local handle = hWndSale:Lookup("", "")
+	local box = handle:Lookup("Box_Item")
+	local textTime = handle:Lookup("Text_Time")
+	if not box:IsEmpty() then
+		local szText = textTime:GetText()
+		if szText ~= AH_Helper.szDefaultTime then
+			textTime:SetText(AH_Helper.szDefaultTime)
+		end
+	end
+end
+
 function AH_Helper.GetItemSellInfo(szItemName)
-	local szText = Station.Lookup("Normal/AuctionPanel"):Lookup("PageSet_Totle/Page_Auction/Wnd_Sale", "Text_ItemName"):GetText()
+	local frame = Station.Lookup("Normal/AuctionPanel")
+	local szText = frame:Lookup("PageSet_Totle/Page_Auction/Wnd_Sale", "Text_ItemName"):GetText()
 	szItemName = (szItemName == "书") and szText or szItemName	--书籍名字转化
     if AH_Helper.szDefaultValue == "Btn_Min" then
 		for k, v in pairs(AH_Helper.tItemPrice) do
-			--local szItem = (v[3] ~= nil and GetItem(v[3])) and GetItemNameByItem(GetItem(v[3])) or Table_GetItemName(i)	--lua 三元表达式
 			if szItemName == k then
 				local u = {szName = k, tBidPrice = 0, tBuyPrice = 0, szTime = AH_Helper.szDefaultTime}
                 if AH_Helper.szDefaultValue == "Btn_Min" then
@@ -548,7 +564,7 @@ end
 function AH_Helper.OnMouseEnter()
 	local szName = this:GetName()
 	if szName == "Btn_Sale" then
-		AH_Helper.OutputTip("批量寄售：按住SHIFT键，再点击此按钮（ALT寄售五彩石及书籍）")
+		AH_Helper.OutputTip("批量寄售：按住SHIFT键，再点击此按钮\nALT寄售五彩石秘籍及书籍")
 	elseif szName == "Btn_History" then
 		AH_Helper.OutputTip("左键点击显示历史记录")
 	end
@@ -892,7 +908,7 @@ function AH_Helper.AddWidget(frame)
 					{szOption = "启用自动搜索", bCheck = true, bChecked = AH_Helper.bAutoSearch, fnAction = function() AH_Helper.bAutoSearch = not AH_Helper.bAutoSearch end, fnMouseEnter = function() AH_Helper.OutputTip("按住CTRL，鼠标左键点击背包中的物品栏可以快速搜索该物品") end,},
 					{szOption = "材料配方提示", bCheck = true, bChecked = AH_Tip.bShowTipEx, fnAction = function() AH_Tip.bShowTipEx = not AH_Tip.bShowTipEx end, fnMouseEnter = function() AH_Helper.OutputTip("按住ALT或SHIFT亦可以显示提示") end,},
 					{ bDevide = true },
-					{szOption = "重置价格数据", fnAction = function() AH_Helper.tItemPrice = {} end,},
+					{szOption = "重置价格数据", fnAction = function() AH_Helper.tItemPrice = {} AH_Helper.Message("数据重置完毕") end,},
 				}
 				PopupMenu(menu)
 			end
@@ -1003,6 +1019,11 @@ local function IsSameSellItem(item1, item2)
 			return true
 		end
 		return false
+	elseif item1.nGenre == ITEM_GENRE.MATERIAL and item1.nSub == 5 then
+		if item2 and item1.nQuality == item2.nQuality and item1.nGenre == item2.nGenre and item1.nSub == item2.nSub then
+			return true
+		end
+		return false
 	elseif item1.nGenre == ITEM_GENRE.COLOR_DIAMOND then
 		if item2 and item1.nQuality == item2.nQuality and item1.nGenre == item2.nGenre then
 			local szName1, szName2 = GetItemNameByItem(item1), GetItemNameByItem(item2)
@@ -1065,7 +1086,6 @@ function AH_Helper.AuctionAutoSell2(frame)
 					local nStack = item2.bCanStack and item2.nStackNum or 1
 					local tBidPrice2 = MoneyOptMult(tSBidPrice, nStack)
 					local tBuyPrice2 = MoneyOptMult(tSBuyPrice, nStack)
-					Output(tSBuyPrice, tBuyPrice2)
 					AtClient.Sell(AuctionPanel.dwTargetID, i, j, tBidPrice2.nGold, tBidPrice2.nSilver, tBidPrice2.nCopper, tBuyPrice2.nGold, tBuyPrice2.nSilver, tBuyPrice2.nCopper, nTime)
 				end
 			end
@@ -1313,6 +1333,7 @@ function AH_Helper.FuncHook()
 	AuctionPanel.OnItemMouseEnter = AH_Helper.OnItemMouseEnter
 	AuctionPanel.OnItemMouseLeave = AH_Helper.OnItemMouseLeave
 	AuctionPanel.ShowNotice = AH_Helper.ShowNotice
+	AuctionPanel.UpdateSaleInfo = AH_Helper.UpdateSaleInfo
 end
 
 RegisterEvent("LOGIN_GAME", function()

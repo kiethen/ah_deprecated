@@ -276,7 +276,7 @@ function AH_MailBank.OnUpdate()
 			Wnd.CloseWindow(temp)
 			bMailHooked = true
 		end
-		if GetLogicFrameCount() % 8 == 0 then
+		if GetLogicFrameCount() % 4 == 0 then
 			local MailClient = GetMailClient()
 			local tMail = MailClient.GetMailList("all") or {}
 			for _, dwID in ipairs(tMail) do
