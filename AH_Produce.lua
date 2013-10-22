@@ -658,7 +658,7 @@ function AH_Produce:UpdateMakeCount(frame, nDelta)
 		frame:Lookup("Btn_Del"):Enable(false)
 	end
 	local nTotCount  = 0
-	if self.nCurTotalCount > 0 then
+	if self.nCurTotalCount and self.nCurTotalCount > 0 then
 		nTotCount = self.nCurTotalCount
 	end
 	if nCount >= nTotCount then
@@ -955,7 +955,7 @@ function AH_Produce:SelectFilter(frame)
 			szOption = v,
 			fnAction = function()
 				hText:SetText(v)
-				local szKey = tExpandItemType.szSubType .. " " .. v
+				local szKey = tExpandItemType.szSubType and tExpandItemType.szSubType .. " " .. v or v
 				--self:UpdateList(frame, false, szKey)
 				self:OnSearchType(frame, tExpandItemType.szType, szKey)
 			end

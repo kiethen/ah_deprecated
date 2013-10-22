@@ -340,22 +340,6 @@ function AH_MailBank.FormatItemLeftTime(nTime)
 	end
 end
 
--- 金钱格式化
-function AH_MailBank.FormatMailMoney(nMoney)
-	local tMoney = FormatMoneyTab(nMoney)
-	local szMoney = ""
-	if tMoney["nGold"] and tMoney["nGold"] > 0 then
-		szMoney = szMoney .. tMoney["nGold"] .. "金 "
-	end
-	if tMoney["nSilver"] and tMoney["nSilver"] > 0 then
-		szMoney = szMoney .. tMoney["nSilver"] .. "银 "
-	end
-	if tMoney["nCopper"] and tMoney["nCopper"] > 0 then
-		szMoney = szMoney .. tMoney["nCopper"] .. "铜"
-	end
-	return szMoney
-end
-
 -- 取附件
 function AH_MailBank.TakeMailItemToBag(fnAction, nCount)
 	local dwID, dwType = Target_GetTargetData()
@@ -612,10 +596,46 @@ function AH_MailBank.OnItemRButtonClick()
 				for k, v in ipairs(data[6]) do
 					local mail = MailClient.GetMailInfo(v)
 					if mail.bItemFlag then
-						local m = {szOption = string.format("%s『%s』", mail.szSenderName, mail.szTitle)}
+						local nUiId = this.nUiId
+						local m = {
+							szOption = string.format(" %s『%s』", mail.szSenderName, mail.szTitle),
+							szIcon = "UI\\Image\\UICommon\\CommonPanel2.UITex",
+							nFrame = 105,
+							nMouseOverFrame = 106,
+							szLayer = "ICON_LEFT",
+							fnClickIcon = function()
+								for i = 0, 7, 1 do
+									local item2 = mail.GetItem(i)
+									if item2 and item2.nUiId == nUiId then
+										local nStack = (item.bCanStack) and item.nStackNum or 1
+										bSuccess = AH_MailBank.TakeMailItemToBag(function() mail.TakeItem(i) end, nStack / item.nMaxStackNum)
+										if bSuccess then
+											data[5] = data[5] - nStack
+											--将取走附件的邮件删除
+											for kk, vv in ipairs(data[6]) do
+												if vv == v then
+													table.remove(data[6], kk)
+												end
+											end
+											--相应的更改box数字
+											if data[5] > 1 then
+												box:SetOverText(0, data[5])
+											elseif data[5] == 1 then
+												box:SetOverText(0, "")
+											else
+												box:ClearObject()
+												box:ClearObjectIcon()
+												box:SetOverText(0, "")
+											end
+											AH_MailBank.UpdateItemCache(GetItemNameByItem(item2), v)
+										end
+									end
+								end
+							end,
+						}
 						for i = 0, 7, 1 do
 							local item2 = mail.GetItem(i)
-							if item2 and item2.nUiId == this.nUiId then
+							if item2 and item2.nUiId == nUiId then
 								local nStack = (item2.bCanStack) and item2.nStackNum or 1
 								local m_1 = {
 									szOption = string.format("%s x%d", GetItemNameByItem(item2), nStack),
@@ -661,7 +681,7 @@ function AH_MailBank.OnItemRButtonClick()
 					local m = {
 						szOption = string.format("%s『%s』", mail.szSenderName, mail.szTitle),
 						{
-							szOption = AH_MailBank.FormatMailMoney(mail.nMoney),
+							szOption = GetMoneyPureText(mail.nMoney),
 							fnAction = function()
 								bSuccess = AH_MailBank.TakeMailItemToBag(function() mail.TakeMoney() end, 0)
 								if bSuccess then

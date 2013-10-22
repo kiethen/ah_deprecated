@@ -186,6 +186,17 @@ local function FormatMoney(handle, bText)
 	end
 	return tonumber(szMoney)
 end
+--800,000
+--800,000
+local function FormatBigMoney(nGold)
+	local nLen, szGold = GetIntergerBit(nGold), tostring(nGold)
+	if nLen > 3 then
+		local a = string.sub(szGold, 0, nLen - 3)
+		local b = string.sub(szGold, -3)
+		return string.format("%s,%s", a, b)
+	end
+	return szGold
+end
 
 function AH_Helper.UpdateItemList(frame, szDataType, tItemInfo)
 	if not tItemInfo then
@@ -312,7 +323,7 @@ function AH_Helper.SetSaleInfo(hItem, szDataType, tItemData)
 
 	--价格记录
 	if szDataType == "Search" then
-		local szKey = GetItemNameByItem(item)	--改nUiId为name可以解决书籍的出价问题
+		local szKey = hItem.szItemName	--改nUiId为name可以解决书籍的出价问题
 		--local dwID = (item.nGenre == ITEM_GENRE.BOOK) and item.dwID or nil
 		if AH_Helper.tItemPrice[szKey] == nil or AH_Helper.tItemPrice[szKey][2] ~= AH_Helper.nVersion then
 			AH_Helper.tItemPrice[szKey] = {PRICE_LIMITED, AH_Helper.nVersion}
@@ -351,13 +362,15 @@ function AH_Helper.SetSaleInfo(hItem, szDataType, tItemData)
 	end
 
 	local nGold, nSliver, nCopper = UnpackMoney(hItem.tBidPrice)
-	hItem:Lookup(tInfo.aBidText[1]):SetText(nGold)
+	--hItem:Lookup(tInfo.aBidText[1]):SetText(nGold)
+	hItem:Lookup(tInfo.aBidText[1]):SetText(FormatBigMoney(nGold))
 	hItem:Lookup(tInfo.aBidText[2]):SetText(nSliver)
 	hItem:Lookup(tInfo.aBidText[3]):SetText(nCopper)
 
 	if MoneyOptCmp(hItem.tBuyPrice, PRICE_LIMITED) ~= 0 then
 		nGold, nSliver, nCopper = UnpackMoney(hItem.tBuyPrice)
-		hItem:Lookup(tInfo.aBuyText[1]):SetText(nGold)
+		--hItem:Lookup(tInfo.aBuyText[1]):SetText(nGold)
+		hItem:Lookup(tInfo.aBuyText[1]):SetText(FormatBigMoney(nGold))
 		hItem:Lookup(tInfo.aBuyText[2]):SetText(nSliver)
 		hItem:Lookup(tInfo.aBuyText[3]):SetText(nCopper)
 	else
@@ -452,7 +465,7 @@ function AH_Helper.UpdatePriceInfo(hList, szDataType)
 
 			if szDataType == "Search" then
 				if hItem.szBidderName == "" then
-					hTextBid:SetText("单")
+					hTextBid:SetText("单价")
 				elseif player.szName == hItem.szBidderName then
 					hTextBid:SetText("我的单价")
 				else
@@ -466,7 +479,7 @@ function AH_Helper.UpdatePriceInfo(hList, szDataType)
 			end
 
 			if MoneyOptCmp(hItem.tBuyPrice, PRICE_LIMITED) ~= 0 then
-				hItem:Lookup(tInfo.aBuyText[4]):SetText("单")
+				hItem:Lookup(tInfo.aBuyText[4]):SetText("")
 			end
 		else
 			if szDataType == "Search" then
@@ -490,13 +503,15 @@ function AH_Helper.UpdatePriceInfo(hList, szDataType)
 		end
 
 		local nGold, nSliver, nCopper = UnpackMoney(tBidPrice)
-		hItem:Lookup(tInfo.aBidText[1]):SetText(nGold)
+		--hItem:Lookup(tInfo.aBidText[1]):SetText(nGold)
+		hItem:Lookup(tInfo.aBidText[1]):SetText(FormatBigMoney(nGold))
 		hItem:Lookup(tInfo.aBidText[2]):SetText(nSliver)
 		hItem:Lookup(tInfo.aBidText[3]):SetText(nCopper)
 
 		if MoneyOptCmp(hItem.tBuyPrice, PRICE_LIMITED) ~= 0 then
 			nGold, nSliver, nCopper = UnpackMoney(tBuyPrice)
-			hItem:Lookup(tInfo.aBuyText[1]):SetText(nGold)
+			--hItem:Lookup(tInfo.aBuyText[1]):SetText(nGold)
+			hItem:Lookup(tInfo.aBuyText[1]):SetText(FormatBigMoney(nGold))
 			hItem:Lookup(tInfo.aBuyText[2]):SetText(nSliver)
 			hItem:Lookup(tInfo.aBuyText[3]):SetText(nCopper)
 		end
@@ -915,6 +930,7 @@ function AH_Helper.AddWidget(frame)
 		end
 	end
 	Wnd.CloseWindow(temp)
+
 	local nW, nH = frame:GetSize()
 	frame:SetSize(nW + 56, nH)
 end
