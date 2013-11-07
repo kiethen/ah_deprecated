@@ -83,7 +83,7 @@ function AH_MailBank.LoadMailData(frame, szName, nIndex)
 			box:SetAlpha(255)
 			box:SetOverTextFontScheme(0, 15)
 			if AH_MailBank.bMail then
-				local item = GetItem(v[1])
+				local item = GetItem(v.dwID)
 				UpdateItemBoxExtend(box, item)
 				local mail = GetMailClient().GetMailInfo(v.tMailIDs[1])
 				local nTime = mail.GetLeftTime()
