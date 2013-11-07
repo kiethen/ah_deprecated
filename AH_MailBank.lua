@@ -84,13 +84,17 @@ function AH_MailBank.LoadMailData(frame, szName, nIndex)
 			box:SetOverTextFontScheme(0, 15)
 			if AH_MailBank.bMail then
 				local item = GetItem(v.dwID)
-				UpdateItemBoxExtend(box, item)
+				if item then
+					UpdateItemBoxExtend(box, item)
+				end
 				local mail = GetMailClient().GetMailInfo(v.tMailIDs[1])
-				local nTime = mail.GetLeftTime()
-				if nTime <= 86400 * 2 then
-					box:SetOverText(1, "将过期")
-				else
-					box:SetOverText(1, "")
+				if mail then
+					local nTime = mail.GetLeftTime()
+					if nTime <= 86400 * 2 then
+						box:SetOverText(1, "将过期")
+					else
+						box:SetOverText(1, "")
+					end
 				end
 			end
 			if v.nStack > 1 then
@@ -241,10 +245,10 @@ function AH_MailBank.SaveItemCache(bAll)
 				end
 				--用无索引表存储物品数据，便于排序
 				if k == "money" then
-					nMoney = MoneyOptAdd(nMoney, v)
+					--nMoney = MoneyOptAdd(nMoney, v)
 					tItems = AH_MailBank.InsertData(tItems, {
 						szName = "money",
-						nMoney = nMoney,
+						nMoney = v,
 						nUiId = -1,
 						tMailIDs = tMailIDs["money"]
 					})
