@@ -424,7 +424,11 @@ function AH_Library.OnFrameBreathe()
 		if nTime >= v[1] then
 			local f = v[2]
 			table.remove(tDelayCall, i)
-			f()
+			if v[3] then
+				f(unpack(v[3]))
+			else
+				f()
+			end
 		end
 	end
 
@@ -439,8 +443,8 @@ function AH_Library.RegisterBreatheEvent(szKey, fnAction)
 	tBreatheAction[szKey] = fnAction
 end
 
-function AH_Library.DelayCall(nTime, fnAction)
-	table.insert(tDelayCall, {GetTickCount() + nTime * 1000, fnAction})
+function AH_Library.DelayCall(nTime, fnAction, ...)
+	table.insert(tDelayCall, {GetTickCount() + nTime * 1000, fnAction, {...}})
 end
 
 Wnd.OpenWindow("Interface\\AH\\AH_Library.ini", "AH_Library")

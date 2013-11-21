@@ -129,7 +129,7 @@ function AH_Spliter.OnExchangeBoxItem(boxItem, boxDsc, nHandCount, bHand)
 	local _, dwBox1, dwX1 = boxDsc:GetObjectData()
 	local player = GetClientPlayer()
 
-	if nSourceType ~= UI_OBJECT_ITEM or (not dwBox1 or dwBox1 < INVENTORY_INDEX.PACKAGE or dwBox1 > INVENTORY_INDEX.PACKAGE4) then
+	if nSourceType ~= UI_OBJECT_ITEM or (not dwBox1 or dwBox1 < INVENTORY_INDEX.PACKAGE or dwBox1 > INVENTORY_INDEX.PACKAGE_MIBAO) then
 		OutputMessage("MSG_ANNOUNCE_RED", g_tStrings.STR_ERROR_ITEM_CANNOT_SPLIT)
 		PlayTipSound("002")
 		return
