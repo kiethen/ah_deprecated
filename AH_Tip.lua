@@ -142,7 +142,7 @@ function AH_Tip.HookBagItemBox(box)
 		end
 		local bStarting = true
 		box.SetObjectStaring = function(h, bStart)
-			box.SetObjectStaringOrg(bStart)
+			box:SetObjectStaringOrg(bStart)
 			if bStart == false then
 				bStarting = false
 			end
