@@ -386,7 +386,7 @@ function AH_Produce:UpdateContent(frame)
 
 		hBox:SetObject(UI_OBJECT_ITEM_INFO, ItemInfo.nUiId, GLOBAL.CURRENT_ITEM_VERSION, nType, nID)
 		hBox:SetObjectIcon(Table_GetItemIconID(ItemInfo.nUiId))
-		UpdateItemBoxExtend(hBox, ItemInfo)
+		UpdateItemBoxExtend(hBox, ItemInfo.nGenre, ItemInfo.nQuality, ItemInfo.nStrengthLevel)
 		hBox:SetOverTextPosition(0, ITEM_POSITION.RIGHT_BOTTOM)
 		hBox:SetOverTextFontScheme(0, 15)
 

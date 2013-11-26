@@ -85,7 +85,7 @@ function AH_MailBank.LoadMailData(frame, szName, nIndex)
 			if AH_MailBank.bMail then
 				local item = GetItem(v.dwID)
 				if item then
-					UpdateItemBoxExtend(box, item)
+					UpdateItemBoxExtend(box, item.nGenre, item.nQuality, item.nStrengthLevel)
 				end
 				local mail = GetMailClient().GetMailInfo(v.tMailIDs[1])
 				if mail then

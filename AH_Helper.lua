@@ -41,7 +41,7 @@ AH_Helper = {
 	tItemPrice = {},
 
 	szDataPath = "\\Interface\\AH\\data\\data.AH",
-	szVersion = "2.0.6",		--用于版本检测
+	szVersion = "2.0.7",		--用于版本检测
 }
 
 
@@ -342,7 +342,7 @@ function AH_Helper.SetSaleInfo(hItem, szDataType, tItemData)
 
 	hBox:SetObject(UI_OBJECT_ITEM_INFO, item.nVersion, item.dwTabType, item.dwIndex)
 	hBox:SetObjectIcon(nIconID)
-	UpdateItemBoxExtend(hBox, item)
+	UpdateItemBoxExtend(hBox, item.nGenre, item.nQuality, item.nStrengthLevel)
 	hBox:SetOverTextPosition(0, ITEM_POSITION.RIGHT_BOTTOM)
 	hBox:SetOverTextFontScheme(0, 15)
 	hBox:SetOverTextPosition(1, ITEM_POSITION.LEFT_TOP)
