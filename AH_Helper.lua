@@ -438,7 +438,11 @@ function AH_Helper.UpdateAllBidItemTime(frame)
 			local nLeftTime = math.max(0, math.ceil((tBidTime[hItem.nSaleID].nTime - GetTickCount()) / 1000))
 			local szTime = AuctionPanel.FormatAuctionTime(nLeftTime)
 			if nLeftTime <= 120 then
-				hTextTime:SetText(""..nLeftTime.."秒")
+				if nLeftTime > 0 then
+					hTextTime:SetText(""..nLeftTime.."秒")
+				else
+					hTextTime:SetText("结算中")
+				end
 				hTextTime:SetFontColor(255, 0, 0)
 			else
 				hTextTime:SetText(szTime)
@@ -521,17 +525,19 @@ end
 --无记录时调整寄售时间
 function AH_Helper.UpdateSaleInfo(frame, bDefault)
 	AH_Helper.UpdateSaleInfoOrg(frame, bDefault)
-	local hWndSale = frame:Lookup("PageSet_Totle/Page_Auction/Wnd_Sale")
-	local handle = hWndSale:Lookup("", "")
-	local box = handle:Lookup("Box_Item")
-	local textTime = handle:Lookup("Text_Time")
-	local textItemName = handle:Lookup("Text_ItemName")
-	if not box:IsEmpty() then
-		local szItemName = textItemName:GetText()
-		if not AH_Helper.tItemPrice[szItemName] then
-			local szText = textTime:GetText()
-			if szText ~= AH_Helper.szDefaultTime then
-				textTime:SetText(AH_Helper.szDefaultTime)
+	if bDefault then
+		local hWndSale = frame:Lookup("PageSet_Totle/Page_Auction/Wnd_Sale")
+		local handle = hWndSale:Lookup("", "")
+		local box = handle:Lookup("Box_Item")
+		local textTime = handle:Lookup("Text_Time")
+		local textItemName = handle:Lookup("Text_ItemName")
+		if not box:IsEmpty() then
+			local szItemName = textItemName:GetText()
+			if not AH_Helper.tItemPrice[szItemName] then
+				local szText = textTime:GetText()
+				if szText ~= AH_Helper.szDefaultTime then
+					textTime:SetText(AH_Helper.szDefaultTime)
+				end
 			end
 		end
 	end
@@ -543,7 +549,7 @@ function AH_Helper.GetItemSellInfo(szItemName)
 	szItemName = (szItemName == "书") and szText or szItemName	--书籍名字转化
     if AH_Helper.szDefaultValue == "Btn_Min" then
 		for k, v in pairs(AH_Helper.tItemPrice) do
-			if szItemName == k then
+			if szItemName == k and MoneyOptCmp(v[1], PRICE_LIMITED) ~= 0 then
 				local u = {szName = k, tBidPrice = 0, tBuyPrice = 0, szTime = AH_Helper.szDefaultTime}
                 if AH_Helper.szDefaultValue == "Btn_Min" then
                     AH_Helper.Message("当前寄售价格为【最低价格】")
@@ -712,18 +718,22 @@ function AH_Helper.OnItemLButtonClick()
 	if szName == "Handle_ItemList" then
 		if AH_Helper.bFastBid and IsShiftKeyDown() and IsCtrlKeyDown() then
 			AuctionPanel.Selected(this)
+			AuctionPanel.UpdateSelectedInfo(this:GetRoot(), "Search", true)
 			AuctionPanel.AuctionBid(this)
 		elseif AH_Helper.bFastBuy and IsAltKeyDown() and IsCtrlKeyDown() then
 			AuctionPanel.Selected(this)
+			AuctionPanel.UpdateSelectedInfo(this:GetRoot(), "Search", true)
 			AuctionPanel.AuctionBuy(this, "Search")
 		end
 	elseif szName == "Handle_AItemList" then
 		if AH_Helper.bFastCancel and IsAltKeyDown() and IsCtrlKeyDown() then
 			AuctionPanel.Selected(this)
+			AuctionPanel.UpdateSelectedInfo(this:GetRoot(), "Sell", true)
 			AuctionPanel.AuctionCancel(this)
 		end
+	else
+		AH_Helper.OnItemLButtonClickOrg()
 	end
-	AH_Helper.OnItemLButtonClickOrg()
 end
 
 function AH_Helper.OnItemMouseEnter()
@@ -738,11 +748,9 @@ function AH_Helper.OnItemMouseEnter()
 	elseif szName == "Handle_ItemList" then
 		this.bOver = true
 		AuctionPanel.UpdateBgStatus(this)
-		AuctionPanel.UpdateSelectedInfo(this:GetRoot(), "Search", true)
 	elseif szName == "Handle_AItemList" then
 		this.bOver = true
 		AuctionPanel.UpdateBgStatus(this)
-		AuctionPanel.UpdateSelectedInfo(this:GetRoot(), "Sell", true)
 	else
 		AH_Helper.OnItemMouseEnterOrg()
 	end
@@ -813,17 +821,6 @@ function AH_Helper.AddWidget(frame)
 		end
 	end
 
-	if not hWndSrch:Lookup("Btn_Produce") then
-		local hBtnProduce = temp:Lookup("Btn_Produce")
-		if hBtnProduce then
-			hBtnProduce:ChangeRelation(hWndSrch, true, true)
-			hBtnProduce:SetRelPos(854, 0)
-			hBtnProduce.OnLButtonClick = function()
-				AH_Produce.OpenPanel()
-			end
-		end
-	end
-
 	if not frame:Lookup("Wnd_Side") then
 		local hWndSide = temp:Lookup("Wnd_Side")
 		if hWndSide then
@@ -870,6 +867,9 @@ function AH_Helper.AddWidget(frame)
 			end
 			hWndSide:Lookup("Btn_Split").OnRButtonClick = function()
 				AH_Spliter.StackItem()
+			end
+			hWndSide:Lookup("Btn_Produce").OnLButtonClick = function()
+				AH_Produce.OpenPanel()
 			end
 			hWndSide:Lookup("Btn_Option").OnLButtonClick = function()
 				local menu =
