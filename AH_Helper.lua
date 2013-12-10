@@ -41,7 +41,7 @@ AH_Helper = {
 	tItemPrice = {},
 
 	szDataPath = "\\Interface\\AH\\data\\data.AH",
-	szVersion = "2.0.7",		--用于版本检测
+	szVersion = "2.0.8",		--用于版本检测
 }
 
 
@@ -525,10 +525,14 @@ function AH_Helper.UpdateSaleInfo(frame, bDefault)
 	local handle = hWndSale:Lookup("", "")
 	local box = handle:Lookup("Box_Item")
 	local textTime = handle:Lookup("Text_Time")
+	local textItemName = handle:Lookup("Text_ItemName")
 	if not box:IsEmpty() then
-		local szText = textTime:GetText()
-		if szText ~= AH_Helper.szDefaultTime then
-			textTime:SetText(AH_Helper.szDefaultTime)
+		local szItemName = textItemName:GetText()
+		if not AH_Helper.tItemPrice[szItemName] then
+			local szText = textTime:GetText()
+			if szText ~= AH_Helper.szDefaultTime then
+				textTime:SetText(AH_Helper.szDefaultTime)
+			end
 		end
 	end
 end
@@ -707,12 +711,15 @@ function AH_Helper.OnItemLButtonClick()
 	local szName = this:GetName()
 	if szName == "Handle_ItemList" then
 		if AH_Helper.bFastBid and IsShiftKeyDown() and IsCtrlKeyDown() then
+			AuctionPanel.Selected(this)
 			AuctionPanel.AuctionBid(this)
 		elseif AH_Helper.bFastBuy and IsAltKeyDown() and IsCtrlKeyDown() then
+			AuctionPanel.Selected(this)
 			AuctionPanel.AuctionBuy(this, "Search")
 		end
 	elseif szName == "Handle_AItemList" then
 		if AH_Helper.bFastCancel and IsAltKeyDown() and IsCtrlKeyDown() then
+			AuctionPanel.Selected(this)
 			AuctionPanel.AuctionCancel(this)
 		end
 	end
@@ -731,17 +738,11 @@ function AH_Helper.OnItemMouseEnter()
 	elseif szName == "Handle_ItemList" then
 		this.bOver = true
 		AuctionPanel.UpdateBgStatus(this)
-		if (IsShiftKeyDown() and IsCtrlKeyDown()) or (IsAltKeyDown() and IsCtrlKeyDown()) then
-			AuctionPanel.Selected(this)
-			AuctionPanel.UpdateSelectedInfo(this:GetRoot(), "Search", true)
-		end
+		AuctionPanel.UpdateSelectedInfo(this:GetRoot(), "Search", true)
 	elseif szName == "Handle_AItemList" then
 		this.bOver = true
 		AuctionPanel.UpdateBgStatus(this)
-		if IsAltKeyDown() and IsCtrlKeyDown() then
-			AuctionPanel.Selected(this)
-			AuctionPanel.UpdateSelectedInfo(this:GetRoot(), "Sell", true)
-		end
+		AuctionPanel.UpdateSelectedInfo(this:GetRoot(), "Sell", true)
 	else
 		AH_Helper.OnItemMouseEnterOrg()
 	end
