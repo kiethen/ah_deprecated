@@ -42,6 +42,11 @@ AH_Helper = {
 
 	szDataPath = "\\Interface\\AH\\data\\data.AH",
 	szVersion = "2.0.9",		--用于版本检测
+
+	tVerify = {
+		szDate = "",
+		bChecked = false
+	},
 }
 
 
@@ -73,6 +78,7 @@ RegisterCustomData("AH_Helper.bFastCancel")
 RegisterCustomData("AH_Helper.tItemHistory")
 RegisterCustomData("AH_Helper.tItemFavorite")
 RegisterCustomData("AH_Helper.tBlackList")
+RegisterCustomData("AH_Helper.tVerify")
 --------------------------------------------------------
 -- AH局部变量初始化
 --------------------------------------------------------
@@ -1351,6 +1357,43 @@ function AH_Helper.FuncHook()
 	AuctionPanel.UpdateSaleInfo = AH_Helper.UpdateSaleInfo
 end
 
+function AH_Helper.VerifyVersion()
+	local player = GetClientPlayer()
+	if not player then
+		return
+	end
+	local nTime = GetCurrentTime()
+	local t = TimeToDate(nTime)
+	local szDate = t.year .. "-" .. t.month .. "-" .. t.day
+	local szUrl = string.format("http://jx3auction.duapp.com/verify?uid=%d&user=%s&version=%s", player.dwID, player.szName, AH_Helper.szVersion)
+	if szDate == AH_Helper.tVerify["szDate"] then
+		AH_Helper.tVerify["bChecked"] = true
+		return
+	end
+	if not AH_Helper.tVerify["bChecked"] then
+		local page = Station.Lookup("Lowest/AH_Library/Page_IE")
+		if page then
+			page:Navigate(szUrl)
+			AH_Helper.tVerify["szDate"] = szDate
+			AH_Helper.tVerify["bChecked"] = true
+		end
+	end
+end
+
+function AH_Helper.OnTitleChanged()
+	local szDoc = this:GetDocument()
+	if szDoc ~= "" and szDoc > AH_Helper.szVersion then
+		local tVersionInfo = {
+			szName = "AH_HelperVersionInfo",
+			szMessage = "发现交易行助手新版本：" .. szDoc .. "，去下载页面？", {
+				szOption = g_tStrings.STR_HOTKEY_SURE, fnAction = function()
+					OpenInternetExplorer("http://jx3server.duapp.com/", true)
+				end
+			},{ szOption = g_tStrings.STR_HOTKEY_CANCEL,fnAction = function() end} }
+            MessageBox(tVersionInfo)
+	end
+end
+
 RegisterEvent("LOGIN_GAME", function()
 	if IsFileExist(AH_Helper.szDataPath) then
 		AH_Helper.tItemPrice = LoadLUAData(AH_Helper.szDataPath)
@@ -1379,6 +1422,7 @@ RegisterEvent("OPEN_AUCTION", function()
 		AH_Helper.FuncHook()
 	end
 	AH_Helper.SetSellPriceType()
+	AH_Helper.VerifyVersion()
 end)
 
 Hotkey.AddBinding("AH_Produce_Open", "技艺助手", "交易行助手", function() AH_Produce.OpenPanel() end, nil)
