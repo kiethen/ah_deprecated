@@ -41,7 +41,7 @@ AH_Helper = {
 	tItemPrice = {},
 
 	szDataPath = "\\Interface\\AH\\data\\data.AH",
-	szVersion = "2.0.8",		--用于版本检测
+	szVersion = "2.0.9",		--用于版本检测
 }
 
 
@@ -716,19 +716,17 @@ end
 function AH_Helper.OnItemLButtonClick()
 	local szName = this:GetName()
 	if szName == "Handle_ItemList" then
+		AuctionPanel.Selected(this)
+		AuctionPanel.UpdateSelectedInfo(this:GetRoot(), "Search", true)
 		if AH_Helper.bFastBid and IsShiftKeyDown() and IsCtrlKeyDown() then
-			AuctionPanel.Selected(this)
-			AuctionPanel.UpdateSelectedInfo(this:GetRoot(), "Search", true)
 			AuctionPanel.AuctionBid(this)
 		elseif AH_Helper.bFastBuy and IsAltKeyDown() and IsCtrlKeyDown() then
-			AuctionPanel.Selected(this)
-			AuctionPanel.UpdateSelectedInfo(this:GetRoot(), "Search", true)
 			AuctionPanel.AuctionBuy(this, "Search")
 		end
 	elseif szName == "Handle_AItemList" then
-		if AH_Helper.bFastCancel and IsAltKeyDown() and IsCtrlKeyDown() then
-			AuctionPanel.Selected(this)
+		AuctionPanel.Selected(this)
 			AuctionPanel.UpdateSelectedInfo(this:GetRoot(), "Sell", true)
+		if AH_Helper.bFastCancel and IsAltKeyDown() and IsCtrlKeyDown() then
 			AuctionPanel.AuctionCancel(this)
 		end
 	else
