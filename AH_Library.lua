@@ -447,6 +447,22 @@ function AH_Library.DelayCall(nTime, fnAction, ...)
 	table.insert(tDelayCall, {GetTickCount() + nTime * 1000, fnAction, {...}})
 end
 
+
+function AH_Library.OnTitleChanged()
+	local szDoc = this:GetDocument()
+	if szDoc ~= "" and szDoc > AH_Helper.szVersion then
+		local tVersionInfo = {
+			szName = "AH_HelperVersionInfo",
+			szMessage = "发现交易行助手新版本：" .. szDoc, {
+				szOption = g_tStrings.STR_HOTKEY_SURE, fnAction = function()
+					--OpenInternetExplorer("http://jx3auction.duapp.com/", true)
+				end
+			},
+		}
+		MessageBox(tVersionInfo)
+	end
+end
+
 Wnd.OpenWindow("Interface\\AH\\AH_Library.ini", "AH_Library")
 
 --~ RegisterEvent("CALL_LUA_ERROR", function()

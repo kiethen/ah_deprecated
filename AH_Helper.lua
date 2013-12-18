@@ -1364,8 +1364,9 @@ function AH_Helper.VerifyVersion()
 	end
 	local nTime = GetCurrentTime()
 	local t = TimeToDate(nTime)
-	local szDate = t.year .. "-" .. t.month .. "-" .. t.day
-	local szUrl = string.format("http://jx3auction.duapp.com/verify?uid=%d&user=%s&version=%s", player.dwID, player.szName, AH_Helper.szVersion)
+	local szDate = string.format("%d-%d-%d", t.year, t.month, t.day)
+	local szName = player.szName:match("(.+)@")
+	local szUrl = string.format("http://jx3auction.duapp.com/verify?uid=%d&user=%s&version=%s", player.dwID, szName, AH_Helper.szVersion)
 	if szDate == AH_Helper.tVerify["szDate"] then
 		AH_Helper.tVerify["bChecked"] = true
 		return
@@ -1377,20 +1378,6 @@ function AH_Helper.VerifyVersion()
 			AH_Helper.tVerify["szDate"] = szDate
 			AH_Helper.tVerify["bChecked"] = true
 		end
-	end
-end
-
-function AH_Helper.OnTitleChanged()
-	local szDoc = this:GetDocument()
-	if szDoc ~= "" and szDoc > AH_Helper.szVersion then
-		local tVersionInfo = {
-			szName = "AH_HelperVersionInfo",
-			szMessage = "发现交易行助手新版本：" .. szDoc .. "，去下载页面？", {
-				szOption = g_tStrings.STR_HOTKEY_SURE, fnAction = function()
-					OpenInternetExplorer("http://jx3server.duapp.com/", true)
-				end
-			},{ szOption = g_tStrings.STR_HOTKEY_CANCEL,fnAction = function() end} }
-            MessageBox(tVersionInfo)
 	end
 end
 
