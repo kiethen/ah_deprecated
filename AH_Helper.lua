@@ -41,7 +41,7 @@ AH_Helper = {
 	tItemPrice = {},
 
 	szDataPath = "\\Interface\\AH\\data\\data.AH",
-	szVersion = "2.0.9",		--用于版本检测
+	szVersion = "2.1.0b2",		--用于版本检测
 
 	tVerify = {
 		szDate = "",
@@ -1365,19 +1365,18 @@ function AH_Helper.VerifyVersion()
 	local nTime = GetCurrentTime()
 	local t = TimeToDate(nTime)
 	local szDate = string.format("%d-%d-%d", t.year, t.month, t.day)
-	local szName = player.szName:match("(.+)@")
-	local szUrl = string.format("http://jx3auction.duapp.com/verify?uid=%d&user=%s&version=%s", player.dwID, szName, AH_Helper.szVersion)
-	if szDate == AH_Helper.tVerify["szDate"] then
-		AH_Helper.tVerify["bChecked"] = true
+	local szName = StringFindW(player.szName, "@") and player.szName:match("(.+)@") or player.szName
+	local szUrl = string.format("http://jx3auction.duapp.com/verify?uid=%d&user=%s&version=%s", player.dwID, base64(szName), AH_Helper.szVersion)
+	--Output(szUrl)
+	if szDate == AH_Helper.tVerify["szDate"] and AH_Helper.tVerify["bChecked"] then
 		return
 	end
-	if not AH_Helper.tVerify["bChecked"] then
-		local page = Station.Lookup("Lowest/AH_Library/Page_IE")
-		if page then
-			page:Navigate(szUrl)
-			AH_Helper.tVerify["szDate"] = szDate
-			AH_Helper.tVerify["bChecked"] = true
-		end
+	AH_Helper.tVerify["bChecked"] = false
+	local page = Station.Lookup("Lowest/AH_Library/Page_IE")
+	if page then
+		page:Navigate(szUrl)
+		AH_Helper.tVerify["szDate"] = szDate
+		AH_Helper.tVerify["bChecked"] = true
 	end
 end
 
