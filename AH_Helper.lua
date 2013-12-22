@@ -33,6 +33,7 @@ AH_Helper = {
 	bAutoSearch = true,
 	bSaleAlert = false,
 	bSellNotice = false,
+	bFormatMoney = true,
 	nShowTipType = 1,
 
 	tItemFavorite = {},
@@ -41,7 +42,7 @@ AH_Helper = {
 	tItemPrice = {},
 
 	szDataPath = "\\Interface\\AH\\data\\data.AH",
-	szVersion = "2.1.0b2",		--用于版本检测
+	szVersion = "2.1.1",		--用于版本检测
 
 	tVerify = {
 		szDate = "",
@@ -195,13 +196,16 @@ end
 --800,000
 --800,000
 local function FormatBigMoney(nGold)
-	local nLen, szGold = GetIntergerBit(nGold), tostring(nGold)
-	if nLen > 3 then
-		local a = string.sub(szGold, 0, nLen - 3)
-		local b = string.sub(szGold, -3)
-		return string.format("%s,%s", a, b)
+	if AH_Helper.bFormatMoney then
+		local nLen, szGold = GetIntergerBit(nGold), tostring(nGold)
+		if nLen > 3 then
+			local a = string.sub(szGold, 0, nLen - 3)
+			local b = string.sub(szGold, -3)
+			return string.format("%s,%s", a, b)
+		end
+		return szGold
 	end
-	return szGold
+	return nGold
 end
 
 function AH_Helper.UpdateItemList(frame, szDataType, tItemInfo)
@@ -273,7 +277,8 @@ function AH_Helper.UpdateItemList(frame, szDataType, tItemInfo)
 	if szDataType == "Search" then
 		local hEdit = AH_Helper.GetSearchEdit(frame)
 		local szKeyName = hEdit:GetText()
-		if not AH_Helper.IsInHistory(szKeyName) and szKeyName ~= "物品名称" then
+		szKeyName = StringReplaceW(szKeyName, " ", "")
+		if not AH_Helper.IsInHistory(szKeyName) and szKeyName ~= "物品名称" and szKeyName ~= "" then
 			AH_Helper.AddHistory(szKeyName)
 		end
 	end
@@ -632,7 +637,13 @@ end
 function AH_Helper.OnExchangeBoxItem(boxItem, boxDsc, nHandCount, bHand)
 	if boxDsc == AH_Helper.boxDsc and not boxItem:IsEmpty() then
 		local frame = Station.Lookup("Normal/AuctionPanel")
-		AH_Helper.AuctionSellOrg(frame)
+		local tMsg = {
+			szName = "AuctionSell3",
+			szMessage = "点击确定批量寄售，点击取消单个寄售",
+			{szOption = g_tStrings.STR_HOTKEY_SURE, fnAction = function() AH_Helper.AuctionAutoSell(frame) end, },
+			{szOption = g_tStrings.STR_HOTKEY_CANCEL, fnAction = function() AH_Helper.AuctionSellOrg(frame) end,},
+		}
+		MessageBox(tMsg)
 	else
 		AH_Helper.OnExchangeBoxItemOrg(boxItem, boxDsc, nHandCount, bHand)
 		AH_Helper.boxDsc = boxDsc
@@ -926,6 +937,7 @@ function AH_Helper.AddWidget(frame)
 					},
 					{ bDevide = true },
 					{szOption = "启用自动搜索", bCheck = true, bChecked = AH_Helper.bAutoSearch, fnAction = function() AH_Helper.bAutoSearch = not AH_Helper.bAutoSearch end, fnMouseEnter = function() AH_Helper.OutputTip("按住CTRL，鼠标左键点击背包中的物品栏可以快速搜索该物品") end,},
+					{szOption = "大金额千分位", bCheck = true, bChecked = AH_Helper.bFormatMoney, fnAction = function() AH_Helper.bFormatMoney = not AH_Helper.bFormatMoney end, fnMouseEnter = function() AH_Helper.OutputTip("物品价格大于三位数时显示千分位") end,},
 					{szOption = "材料配方提示", bCheck = true, bChecked = AH_Tip.bShowTipEx, fnAction = function() AH_Tip.bShowTipEx = not AH_Tip.bShowTipEx end, fnMouseEnter = function() AH_Helper.OutputTip("按住ALT或SHIFT亦可以显示提示") end,},
 					{ bDevide = true },
 					{szOption = "重置价格数据", fnAction = function() AH_Helper.tItemPrice = {} AH_Helper.Message("数据重置完毕") end,},
@@ -1366,6 +1378,7 @@ function AH_Helper.VerifyVersion()
 	local t = TimeToDate(nTime)
 	local szDate = string.format("%d-%d-%d", t.year, t.month, t.day)
 	local szName = StringFindW(player.szName, "@") and player.szName:match("(.+)@") or player.szName
+	szName = base64(szName)
 	local szUrl = string.format("http://jx3auction.duapp.com/verify?uid=%d&user=%s&version=%s", player.dwID, base64(szName), AH_Helper.szVersion)
 	--Output(szUrl)
 	if szDate == AH_Helper.tVerify["szDate"] and AH_Helper.tVerify["bChecked"] then
