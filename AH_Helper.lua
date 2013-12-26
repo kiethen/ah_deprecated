@@ -482,13 +482,14 @@ function AH_Helper.UpdatePriceInfo(hList, szDataType)
 				if hItem.szBidderName == "" then
 					hTextBid:SetText("单价")
 				elseif player.szName == hItem.szBidderName then
-					hTextBid:SetText("我的单价")
+					hTextBid:SetText("我的出价")
+					hTextBid:SetFontColor(255, 255, 0)
 				else
 					hTextBid:SetText(hItem.szBidderName)	--显示竞拍者
 					hTextBid:SetFontColor(0, 200, 0)
 				end
 			elseif szDataType == "Bid" then
-				hTextBid:SetText("我的单价")
+				hTextBid:SetText("我的出价")
 			elseif szDataType == "Sell" then
 				hTextBid:SetText("单价")
 			end
@@ -722,7 +723,9 @@ end
 function AH_Helper.OnItemLButtonDBClick()
 	local szName = this:GetName()
 	if szName == "Handle_ItemList" and AH_Helper.bDBClickFastBuy then
-		AuctionPanel.AuctionBuy(this, "Search")
+		if MoneyOptCmp(this.tBuyPrice, PRICE_LIMITED) ~= 0 then
+			AuctionPanel.AuctionBuy(this, "Search")
+		end
 	elseif szName == "Handle_AItemList" and AH_Helper.bDBClickFastCancel then
 		AuctionPanel.AuctionCancel(this)
 	else
@@ -738,7 +741,9 @@ function AH_Helper.OnItemLButtonClick()
 		if AH_Helper.bFastBid and IsShiftKeyDown() and IsCtrlKeyDown() then
 			AuctionPanel.AuctionBid(this)
 		elseif AH_Helper.bFastBuy and IsAltKeyDown() and IsCtrlKeyDown() then
-			AuctionPanel.AuctionBuy(this, "Search")
+			if MoneyOptCmp(this.tBuyPrice, PRICE_LIMITED) ~= 0 then
+				AuctionPanel.AuctionBuy(this, "Search")
+			end
 		end
 	elseif szName == "Handle_AItemList" then
 		AuctionPanel.Selected(this)
@@ -907,9 +912,9 @@ function AH_Helper.AddWidget(frame)
 						{szOption = "48小时", bMCheck = true, bChecked = (AH_Helper.szDefaultTime == "48小时"), fnAction = function() AH_Helper.szDefaultTime = "48小时" end,},
 					},
 					{szOption = "启用自动差价", bCheck = true, bChecked = AH_Helper.bLowestPrices, fnAction = function() AH_Helper.bLowestPrices = not AH_Helper.bLowestPrices end, fnMouseEnter = function() AH_Helper.OutputTip("勾选此项后，寄售物品时将自动乘以差价系数或减去差价") end,
-						{szOption = "差价系数", bCheck = true, bChecked = AH_Helper.bPricePercentage, fnDisable = function() return not AH_Helper.bLowestPrices end, fnAction = function() AH_Helper.bPricePercentage = not AH_Helper.bPricePercentage end,
+						{szOption = "折扣价", bCheck = true, bChecked = AH_Helper.bPricePercentage, fnDisable = function() return not AH_Helper.bLowestPrices end, fnAction = function() AH_Helper.bPricePercentage = not AH_Helper.bPricePercentage end,
 							{szOption = "修改 [" .. AH_Helper.nPricePercentage.."]", fnDisable = function() return not AH_Helper.bPricePercentage end, fnAction = function()
-									GetUserInput("输入差价系数：", function(szText)
+									GetUserInput("输入折扣：", function(szText)
 										local n = tonumber(szText)
 										if n > 0 then
 											AH_Helper.nPricePercentage = n
