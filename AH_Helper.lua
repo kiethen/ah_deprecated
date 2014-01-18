@@ -894,7 +894,7 @@ function AH_Helper.AddWidget(frame)
 			hWndSide:Lookup("Btn_Option").OnLButtonClick = function()
 				local menu =
 				{
-					{szOption = "版本：v" .. AH_Helper.szVersion, fnDisable = function() return true end,},
+					{szOption = "版本：v" .. AH_Helper.szVersion, fnDisable = function() return true end, fnMouseEnter = function() AH_Helper.OutputTip("官方网站：http://jx3auction.duapp.com", 18) end,},
 					{ bDevide = true },
 					{szOption = "过滤已读秘籍", bCheck = true, bChecked = AH_Helper.bFilterRecipe, fnAction = function() AH_Helper.bFilterRecipe = not AH_Helper.bFilterRecipe end, fnMouseEnter = function() AH_Helper.OutputTip("勾选此项后，将过滤掉已阅读的秘籍") end,},
 					{szOption = "过滤已读书籍",bCheck = true,bChecked = AH_Helper.bFilterBook,fnAction = function()AH_Helper.bFilterBook = not AH_Helper.bFilterBook end, fnMouseEnter = function() AH_Helper.OutputTip("勾选此项后，将过滤掉已阅读的书籍") end,},
@@ -957,10 +957,10 @@ function AH_Helper.AddWidget(frame)
 	frame:SetSize(nW + 56, nH)
 end
 
-function AH_Helper.OutputTip(szText)
+function AH_Helper.OutputTip(szText, nFont)
 	local x, y = this:GetAbsPos()
 	local w, h = this:GetSize()
-	OutputTip(GetFormatText(szText, 101), 300, {x, y, w, h})
+	OutputTip(GetFormatText(szText, nFont or 101), 300, {x, y, w, h})
 end
 
 function AH_Helper.GetGuiShiDrop(hItem)
@@ -1382,9 +1382,9 @@ function AH_Helper.VerifyVersion()
 	local nTime = GetCurrentTime()
 	local t = TimeToDate(nTime)
 	local szDate = string.format("%d-%d-%d", t.year, t.month, t.day)
-	local szName = StringFindW(player.szName, "@") and player.szName:match("(.+)@") or player.szName
-	szName = base64(szName)
-	local szUrl = string.format("http://jx3auction.duapp.com/verify?uid=%d&user=%s&version=%s", player.dwID, base64(szName), AH_Helper.szVersion)
+	--local szName = StringFindW(player.szName, "@") and player.szName:match("(.+)@") or player.szName
+	local szName = base64(player.szName)
+	local szUrl = string.format("http://1.jx3auction.duapp.com/verify?uid=%d&user=%s&version=%s", player.dwID, base64(szName), AH_Helper.szVersion)
 	--Output(szUrl)
 	if szDate == AH_Helper.tVerify["szDate"] and AH_Helper.tVerify["bChecked"] then
 		return

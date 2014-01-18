@@ -412,6 +412,84 @@ do
 end
 
 -----------------------------------------------
+-- 五彩石数据生成
+-----------------------------------------------
+AH_Library.tColorMagic = {}
+AH_Library.tColorStone = {}
+
+local tAttribute = {
+	Path = "Interface\\AH\\data\\%s.txt",
+	Title = {
+		{f = "s", t = "szAttributeName"},
+		{f = "S", t = "szGeneratedMagic"},
+	},
+}
+
+local tColorStone = {
+	Normal = {
+		Path = "Interface\\AH\\data\\Normal.tab",
+		Title = {
+			{f = "i", t = "dwID"},
+			{f = "s", t = "szName"},
+			{f = "S", t = "szAttributeOne"},
+			{f = "s", t = "szAttributeTwo"},
+			{f = "S", t = "szAttributeThree"},
+		},
+	},
+	Simplify = {
+		Path = "Interface\\AH\\data\\Simplify.tab",
+		Title = {
+			{f = "i", t = "dwID"},
+			{f = "s", t = "szName"},
+			{f = "S", t = "szAttributeOne"},
+			{f = "s", t = "szAttributeTwo"},
+		},
+	}
+}
+
+function AH_Library.ID2MagicTable(szType)
+	local tRes = {}
+	local tTable = KG_Table.Load(string.format(tAttribute.Path, szType), tAttribute.Title, FILE_OPEN_MODE.NORMAL)
+	if tTable then
+		local nRowCount = tTable:GetRowCount()
+		for nRow = 2, nRowCount do
+			local tRow = tTable:GetRow(nRow)
+			--tRes[tRow.szAttributeName] = tRow.szGeneratedMagic
+			tRes[nRow - 1] = {tRow.szAttributeName, tRow.szGeneratedMagic}
+		end
+	end
+	return tRes
+end
+
+function AH_Library.ColorStoneTable(szType)
+	local tRes = {}
+	local tTable = KG_Table.Load(tColorStone[szType].Path, tColorStone[szType].Title, FILE_OPEN_MODE.NORMAL)
+	if tTable then
+		local nRowCount = tTable:GetRowCount()
+		if szType == "Normal" then
+			for nRow = 1, nRowCount do
+				local tRow = tTable:GetRow(nRow)
+				tRes[nRow] = {tRow.dwID, tRow.szName, tRow.szAttributeOne, tRow.szAttributeTwo, tRow.szAttributeThree}
+			end
+		elseif szType == "Simplify" then
+			for nRow = 1, nRowCount do
+				local tRow = tTable:GetRow(nRow)
+				tRes[nRow] = {tRow.dwID, tRow.szName, tRow.szAttributeOne, tRow.szAttributeTwo}
+			end
+
+		end
+	end
+	return tRes
+end
+
+do
+	for k, v in pairs({"Normal", "Simplify"}) do
+		AH_Library.tColorMagic[v] = AH_Library.ID2MagicTable(v)
+		AH_Library.tColorStone[v] = AH_Library.ColorStoneTable(v)
+	end
+end
+
+-----------------------------------------------
 -- 统一所用模块的刷新事件及延迟调用
 -----------------------------------------------
 local tBreatheAction = {}

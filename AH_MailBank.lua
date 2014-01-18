@@ -604,14 +604,14 @@ function AH_MailBank.OnItemLButtonClick()
 							local item2 = mail.GetItem(i)
 							if item2 and item2.nUiId == d.nUiId then
 								n = n + 1
-								AH_Library.DelayCall(0.25 * n + GetPingValue() / 2000, function()
+								AH_Library.DelayCall(0.2 * n + GetPingValue() / 2000, function()
 									AH_MailBank.TakeMailItemToBag(function() mail.TakeItem(i) end, 1)
 								end)	--循环取附件得间隔一定时间，否则无法全部取出，需要加上延迟
 							end
 						end
 					end
 				end
-				AH_Library.DelayCall(1 + 0.25 * n + GetPingValue() / 2000, function()
+				AH_Library.DelayCall(0.5 + 0.2 * n + GetPingValue() / 2000, function()
 					AH_MailBank.LoadMailData(frame, AH_MailBank.szCurRole, AH_MailBank.nCurIndex)
 				end)
 			end
@@ -622,12 +622,12 @@ function AH_MailBank.OnItemLButtonClick()
 				local mail = MailClient.GetMailInfo(v)
 				if mail.bMoneyFlag then
 					n = n + 1
-					AH_Library.DelayCall(0.25 * n + GetPingValue() / 2000, function()
+					AH_Library.DelayCall(0.2 * n + GetPingValue() / 2000, function()
 						AH_MailBank.TakeMailItemToBag(function() mail.TakeMoney() end, 0)
 					end)
 				end
 			end
-			AH_Library.DelayCall(1 + 0.25 * n + GetPingValue() / 2000, function()
+			AH_Library.DelayCall(0.5 + 0.2 * n + GetPingValue() / 2000, function()
 				AH_MailBank.LoadMailData(frame, AH_MailBank.szCurRole, AH_MailBank.nCurIndex)
 			end)
 		end
@@ -663,13 +663,13 @@ function AH_MailBank.OnItemRButtonClick()
 									local item2 = mail.GetItem(i)
 									if item2 and item2.nUiId == d.nUiId then
 										n = n + 1
-										AH_Library.DelayCall(0.25 * n + GetPingValue() / 2000, function()
+										AH_Library.DelayCall(0.2 * n + GetPingValue() / 2000, function()
 											AH_MailBank.TakeMailItemToBag(function() mail.TakeItem(i) end, 1)
 										end)
 									end
 								end
 								Wnd.CloseWindow("PopupMenuPanel")
-								AH_Library.DelayCall(1 + 0.25 * n + GetPingValue() / 2000, function()
+								AH_Library.DelayCall(0.5 + 0.2 * n + GetPingValue() / 2000, function()
 									AH_MailBank.LoadMailData(frame, AH_MailBank.szCurRole, AH_MailBank.nCurIndex)
 								end)
 							end

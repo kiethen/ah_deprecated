@@ -1009,7 +1009,10 @@ function AH_Produce:GenerateMenu(menu, recipe)
 						szOption = "制造 (" .. nSubMakeCount .. ")",
 						fnAction = function()
 							self:OnCastProfessionSkill(nCraftID, nRecipeID, nSubMakeCount)
-						end
+						end,
+						fnMouseEnter = function()
+							AH_Helper.OutputTip("按住SHIFT并点击可以批量制造")
+						end,
 					}
 					table.insert(m0, m_0)
 					table.insert(m0, {bDevide = true})

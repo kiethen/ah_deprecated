@@ -123,6 +123,7 @@ end
 
 function AH_Tip.HookBagItemBox(box)
 	if box and not box.bBag then
+		--Êó±êÐüÍ£
 		if not box.SetObjectMouseOverOrg then
 			box.SetObjectMouseOverOrg = box.SetObjectMouseOver
 		end
@@ -134,6 +135,7 @@ function AH_Tip.HookBagItemBox(box)
 				AH_Tip.szBagItemTip = nil
 			end
 		end
+		--Êó±êµã»÷
 		if not box.SetObjectStaringOrg then
 			box.SetObjectStaringOrg = box.SetObjectStaring
 		end
