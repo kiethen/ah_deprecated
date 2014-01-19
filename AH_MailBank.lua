@@ -611,7 +611,7 @@ function AH_MailBank.OnItemLButtonClick()
 						end
 					end
 				end
-				AH_Library.DelayCall(0.5 + 0.2 * n + GetPingValue() / 2000, function()
+				AH_Library.DelayCall(0.8 + 0.2 * n + GetPingValue() / 2000, function()
 					AH_MailBank.LoadMailData(frame, AH_MailBank.szCurRole, AH_MailBank.nCurIndex)
 				end)
 			end
@@ -627,7 +627,7 @@ function AH_MailBank.OnItemLButtonClick()
 					end)
 				end
 			end
-			AH_Library.DelayCall(0.5 + 0.2 * n + GetPingValue() / 2000, function()
+			AH_Library.DelayCall(0.8 + 0.2 * n + GetPingValue() / 2000, function()
 				AH_MailBank.LoadMailData(frame, AH_MailBank.szCurRole, AH_MailBank.nCurIndex)
 			end)
 		end
@@ -669,7 +669,7 @@ function AH_MailBank.OnItemRButtonClick()
 									end
 								end
 								Wnd.CloseWindow("PopupMenuPanel")
-								AH_Library.DelayCall(0.5 + 0.2 * n + GetPingValue() / 2000, function()
+								AH_Library.DelayCall(0.8 + 0.2 * n + GetPingValue() / 2000, function()
 									AH_MailBank.LoadMailData(frame, AH_MailBank.szCurRole, AH_MailBank.nCurIndex)
 								end)
 							end
@@ -682,7 +682,7 @@ function AH_MailBank.OnItemRButtonClick()
 									szOption = string.format("%s x%d", GetItemNameByItem(item2), nStack),
 									fnAction = function()
 										AH_MailBank.TakeMailItemToBag(function() mail.TakeItem(i) end, 1)
-										AH_Library.DelayCall(0.5, function()
+										AH_Library.DelayCall(0.8, function()
 											AH_MailBank.LoadMailData(frame, AH_MailBank.szCurRole, AH_MailBank.nCurIndex)
 										end)
 									end,
@@ -708,7 +708,7 @@ function AH_MailBank.OnItemRButtonClick()
 							szOption = GetMoneyPureText(FormatMoneyTab(mail.nMoney)),
 							fnAction = function()
 								AH_MailBank.TakeMailItemToBag(function() mail.TakeMoney() end, 0)
-								AH_Library.DelayCall(0.5, function()
+								AH_Library.DelayCall(0.8, function()
 									AH_MailBank.LoadMailData(frame, AH_MailBank.szCurRole, AH_MailBank.nCurIndex)
 								end)
 							end,

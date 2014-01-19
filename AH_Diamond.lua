@@ -91,7 +91,14 @@ function AH_Diamond.PopupDiamondLevel(frame, nIndex)
 	local szType = tDiamondType[nIndex]
 	local menu = Menu.new(hText):GetMenu()
 
-	for k, v in ipairs({"ËÁ", "Îé", "Â½"}) do
+	local tLevel = nil
+	if nIndex == 1 then
+		tLevel = {"Ò¼", "·¡", "Èþ", "ËÁ", "Îé", "Â½"}
+	elseif nIndex == 2 then
+		tLevel = {"ËÁ", "Îé", "Â½"}
+	end
+
+	for k, v in ipairs(tLevel) do
 		local m = {
 			szOption = v,
 			fnAction = function()
@@ -301,6 +308,7 @@ function AH_Diamond.OnItemMouseEnter()
 	local frame, szName = this:GetRoot(), this:GetName()
 	if szName == "Box_Type1Item" or szName == "Box_Type2Item" then
 		if not this:IsEmpty() then
+			this:SetObjectMouseOver(true)
 			local _, dwVer, nTabType, nIndex = this:GetObjectData()
 			local x, y = this:GetAbsPos()
 			local w, h = this:GetSize()
@@ -313,6 +321,7 @@ function AH_Diamond.OnItemMouseLeave()
 	local frame, szName = this:GetRoot(), this:GetName()
 	if szName == "Box_Type1Item" or szName == "Box_Type2Item" then
 		if not this:IsEmpty() then
+			this:SetObjectMouseOver(false)
 			HideTip()
 		end
 	end
