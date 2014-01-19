@@ -415,7 +415,7 @@ end
 -- 五彩石数据生成
 -----------------------------------------------
 AH_Library.tColorMagic = {}
-AH_Library.tColorStone = {}
+AH_Library.tColorDiamond = {}
 
 local tAttribute = {
 	Path = "Interface\\AH\\data\\%s.txt",
@@ -425,7 +425,7 @@ local tAttribute = {
 	},
 }
 
-local tColorStone = {
+local tColorDiamond = {
 	Normal = {
 		Path = "Interface\\AH\\data\\Normal.tab",
 		Title = {
@@ -461,9 +461,9 @@ function AH_Library.ID2MagicTable(szType)
 	return tRes
 end
 
-function AH_Library.ColorStoneTable(szType)
+function AH_Library.ColorDiamondTable(szType)
 	local tRes = {}
-	local tTable = KG_Table.Load(tColorStone[szType].Path, tColorStone[szType].Title, FILE_OPEN_MODE.NORMAL)
+	local tTable = KG_Table.Load(tColorDiamond[szType].Path, tColorDiamond[szType].Title, FILE_OPEN_MODE.NORMAL)
 	if tTable then
 		local nRowCount = tTable:GetRowCount()
 		if szType == "Normal" then
@@ -485,7 +485,7 @@ end
 do
 	for k, v in pairs({"Normal", "Simplify"}) do
 		AH_Library.tColorMagic[v] = AH_Library.ID2MagicTable(v)
-		AH_Library.tColorStone[v] = AH_Library.ColorStoneTable(v)
+		AH_Library.tColorDiamond[v] = AH_Library.ColorDiamondTable(v)
 	end
 end
 

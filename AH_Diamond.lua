@@ -193,12 +193,10 @@ function AH_Diamond.PopupDiamondAttribute(frame, nIndex, nAtr)
 	PopupMenu(menu)
 end
 
-function AH_Diamond.Init(frame)
-	for nIndex = 1, 2 do
-		local hWnd = frame:Lookup(string.format("PageSet_Totle/Page_Type%d/Wnd_Type%d", nIndex, nIndex))
-		hWnd:Lookup(string.format("Btn_Type%dReset", nIndex)):Enable(false)
-		hWnd:Lookup(string.format("Btn_Type%dSearch", nIndex)):Enable(false)
-	end
+function AH_Diamond.Init(frame, nIndex)
+	local hWnd = frame:Lookup(string.format("PageSet_Totle/Page_Type%d/Wnd_Type%d", nIndex, nIndex))
+	hWnd:Lookup(string.format("Btn_Type%dReset", nIndex)):Enable(false)
+	hWnd:Lookup(string.format("Btn_Type%dSearch", nIndex)):Enable(false)
 end
 
 function AH_Diamond.ResetAllOptions(frame, nIndex)
@@ -207,6 +205,7 @@ function AH_Diamond.ResetAllOptions(frame, nIndex)
 	hWnd:Lookup(string.format("Btn_Type%dLevel", nIndex)):Enable(true)
 	handle:Lookup(string.format("Text_Type%dLevelBg", nIndex)):SetText("")
 	handle:Lookup(string.format("Box_Type%dItem", nIndex)):ClearObject()
+	handle:Lookup(string.format("Text_Type%dItem", nIndex)):SetText("")
 
 	for i = 1, 3 do
 		local hBtn = hWnd:Lookup(string.format("Btn_Type%dAttr%d", nIndex, i))
@@ -219,19 +218,25 @@ function AH_Diamond.ResetAllOptions(frame, nIndex)
 		end
 	end
 
-	AH_Diamond.tLastDiamondData = { ["Normal"] = {}, ["Simplify"] = {}}
+	local szType = tDiamondType[nIndex]
+	AH_Diamond.tLastDiamondData[szType] = {}
 end
 
 function AH_Diamond.SearchDiamond(frame, nIndex)
 	local hWnd = frame:Lookup(string.format("PageSet_Totle/Page_Type%d/Wnd_Type%d", nIndex, nIndex))
 	local handle = hWnd:Lookup("", "")
 	local box = handle:Lookup(string.format("Box_Type%dItem", nIndex))
+	local txt = handle:Lookup(string.format("Text_Type%dItem", nIndex))
 
 	local szType = tDiamondType[nIndex]
 	local dwID, szName, _, _ = unpack(AH_Diamond.tLastDiamondData[szType][1])
 
 	local ItemInfo = GetItemInfo(5, dwID)
 	if ItemInfo then
+		txt:SetText(szName)
+		txt:SetFontColor(GetItemFontColorByQuality(ItemInfo.nQuality, false))
+
+		box.szName = szName
 		box:SetObject(UI_OBJECT_ITEM_INFO, ItemInfo.nUiId, GLOBAL.CURRENT_ITEM_VERSION, 5, dwID)
 		box:SetObjectIcon(Table_GetItemIconID(ItemInfo.nUiId))
 		UpdateItemBoxExtend(box, ItemInfo.nGenre, ItemInfo.nQuality, ItemInfo.nStrengthLevel)
@@ -265,10 +270,10 @@ function AH_Diamond.OnLButtonClick()
 		AH_Diamond.PopupDiamondAttribute(frame, 2, 2)
 	elseif szName == "Btn_Type1Reset" then
 		AH_Diamond.ResetAllOptions(frame, 1)
-		AH_Diamond.Init(frame)
+		AH_Diamond.Init(frame, 1)
 	elseif szName == "Btn_Type2Reset" then
 		AH_Diamond.ResetAllOptions(frame, 2)
-		AH_Diamond.Init(frame)
+		AH_Diamond.Init(frame, 2)
 	elseif szName == "Btn_Type1Search" then
 		AH_Diamond.SearchDiamond(frame, 1)
 	elseif szName == "Btn_Type2Search" then
@@ -283,6 +288,7 @@ function AH_Diamond.OnItemLButtonClick()
 			if IsCtrlKeyDown() then
 				local _, dwVer, nTabType, nIndex = this:GetObjectData()
 				EditBox_AppendLinkItemInfo(dwVer, nTabType, nIndex)
+				return
 			end
 			if IsAuctionPanelOpened() then
 				AH_Helper.UpdateList(this.szName, false)
@@ -324,7 +330,9 @@ function AH_Diamond.OpenPanel()
 	local frame = nil
 	if not AH_Diamond.IsPanelOpened()  then
 		frame = Wnd.OpenWindow(szIniFile, "AH_Diamond")
-		AH_Diamond.Init(frame)
+		for nIndex = 1, 2 do
+			AH_Diamond.Init(frame, nIndex)
+		end
 	else
 		AH_Diamond.ClosePanel()
 	end

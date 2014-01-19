@@ -891,6 +891,9 @@ function AH_Helper.AddWidget(frame)
 			hWndSide:Lookup("Btn_Produce").OnLButtonClick = function()
 				AH_Produce.OpenPanel()
 			end
+			hWndSide:Lookup("Btn_Diamond").OnLButtonClick = function()
+				AH_Diamond.OpenPanel()
+			end
 			hWndSide:Lookup("Btn_Option").OnLButtonClick = function()
 				local menu =
 				{
