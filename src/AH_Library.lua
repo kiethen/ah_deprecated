@@ -321,6 +321,8 @@ if not OpenInternetExplorer then
 	end
 end
 
+OutputMessage("MSG_SYS", "------初始化交易行助手数据------\n")
+
 -----------------------------------------------
 -- 生活技艺数据生成函数
 -----------------------------------------------
@@ -404,7 +406,6 @@ function AH_Library.GetAllMaterial()
 	return t
 end
 
-
 AH_Library.tRecipeALL = AH_Library.GetAllRecipe()
 AH_Library.tMaterialALL = AH_Library.GetAllMaterial()
 do
@@ -431,7 +432,7 @@ do
 		end
 	end
 end
-
+OutputMessage("MSG_SYS", "◇生活技艺配方数据载入完毕！\n")
 -----------------------------------------------
 -- 五彩石数据生成
 -----------------------------------------------
@@ -507,7 +508,8 @@ do
 		AH_Library.tColorDiamond[v] = AH_Library.ColorDiamondTable(v)
 	end
 end
-
+OutputMessage("MSG_SYS", "◇五彩石数据载入完毕！\n")
+OutputMessage("MSG_SYS", "----------------------------\n")
 -----------------------------------------------
 -- 统一所用模块的刷新事件及延迟调用
 -----------------------------------------------
