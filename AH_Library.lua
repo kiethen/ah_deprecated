@@ -325,7 +325,6 @@ end
 local tEnchant = {
 	Path = "Interface\\AH\\data\\Enchant.tab",
 	Title = {
-		{f = "i", t = "dwID"},
 		{f = "s", t = "szName"},
 		{f = "s", t = "szDesc"},
 	},
