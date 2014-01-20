@@ -834,10 +834,6 @@ function AH_Helper.AddWidget(frame)
 				menu.y = yT + hT
 				PopupMenu(menu)
 			end
-			hBtnHistory.OnRButtonClick = function ()
-				local menu = AH_Helper.GetHotItem()
-				PopupMenu(menu)
-			end
 		end
 	end
 

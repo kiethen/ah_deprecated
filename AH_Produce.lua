@@ -157,19 +157,10 @@ function AH_Produce:GetRecipeTotalCount(recipe)
 	return nTotalCount
 end
 
-function AH_Produce:GetDescByItemName(szName, nProID)
-	if nProID ~= 0 then
-		local szDesc = AH_Data.EnchantData[nProID][szName]
-		if szDesc then
-			return szDesc
-		end
-	else
-		for k, v in ipairs({4, 5, 6, 7}) do
-			szDesc = AH_Data.EnchantData[v][szName]
-			if szDesc then
-				return szDesc
-			end
-		end
+function AH_Produce:GetDescByItemName(szName)
+	local szDesc = AH_Library.tEnchantData[szName]
+	if szDesc then
+		return szDesc
 	end
 	return ""
 end
@@ -263,7 +254,7 @@ function AH_Produce:UpdateList(frame, bSub, szKey)
 				local nID	= recipe.dwCreateItemIndex1
 				local tItemInfo = GetItemInfo(nType, nID)
 				if self.bIsSearch then
-					local szDesc = self:GetDescByItemName(tItemInfo.szName, nProID)
+					local szDesc = self:GetDescByItemName(tItemInfo.szName)
 					if bSub and tPosionType[tItemInfo.nSub] then
 						szDesc = tPosionType[tItemInfo.nSub] .. "£º" .. szDesc
 					end

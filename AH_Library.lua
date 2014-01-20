@@ -3,6 +3,8 @@
 -- #模块说明：用于非开放API的重构以及生活技艺数据的生成
 ------------------------------------------------------
 
+AH_Library = AH_Library or {}
+
 local ipairs = ipairs
 local pairs = pairs
 -----------------------------------------------
@@ -320,11 +322,17 @@ end
 -----------------------------------------------
 -- 生活技艺数据生成函数
 -----------------------------------------------
-AH_Library = {
-	tRecipeALL = nil,
-	tMaterialALL = nil,
-	tMergeRecipe = {},
+local tEnchant = {
+	Path = "Interface\\AH\\data\\Enchant.tab",
+	Title = {
+		{f = "i", t = "dwID"},
+		{f = "s", t = "szName"},
+		{f = "s", t = "szDesc"},
+	},
 }
+
+AH_Library.tMergeRecipe = {}
+AH_Library.tEnchantData = {}
 
 -- 返回 {nRecipeID, szRecipeName} 数据的表
 function AH_Library.GetCraftRecipe(nCraftID)
@@ -395,6 +403,7 @@ function AH_Library.GetAllMaterial()
 	return t
 end
 
+
 AH_Library.tRecipeALL = AH_Library.GetAllRecipe()
 AH_Library.tMaterialALL = AH_Library.GetAllMaterial()
 do
@@ -408,6 +417,17 @@ do
 	setmetatable(AH_Library.tMergeRecipe, mt)
 	for k, v in ipairs({4, 5, 6, 7}) do
 		AH_Library.tMergeRecipe = AH_Library.tMergeRecipe + AH_Library.tRecipeALL[v]
+	end
+
+	local tTable = KG_Table.Load(tEnchant.Path, tEnchant.Title, FILE_OPEN_MODE.NORMAL)
+	if tTable then
+		local nRowCount = tTable:GetRowCount()
+		for nRow = 1, nRowCount do
+			local tRow = tTable:GetRow(nRow)
+			if not AH_Library.tEnchantData[tRow.szName] then
+				AH_Library.tEnchantData[tRow.szName] = tRow.szDesc
+			end
+		end
 	end
 end
 
@@ -454,7 +474,6 @@ function AH_Library.ID2MagicTable(szType)
 		local nRowCount = tTable:GetRowCount()
 		for nRow = 2, nRowCount do
 			local tRow = tTable:GetRow(nRow)
-			--tRes[tRow.szAttributeName] = tRow.szGeneratedMagic
 			tRes[nRow - 1] = {tRow.szAttributeName, tRow.szGeneratedMagic}
 		end
 	end
@@ -476,7 +495,6 @@ function AH_Library.ColorDiamondTable(szType)
 				local tRow = tTable:GetRow(nRow)
 				tRes[nRow] = {tRow.dwID, tRow.szName, tRow.szAttributeOne, tRow.szAttributeTwo}
 			end
-
 		end
 	end
 	return tRes
