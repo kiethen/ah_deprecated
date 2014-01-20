@@ -6,6 +6,7 @@
 local ipairs = ipairs
 local pairs = pairs
 local tonumber = tonumber
+
 --------------------------------------------------------
 -- ≤Âº˛≈‰÷√
 --------------------------------------------------------
@@ -227,7 +228,7 @@ function AH_Helper.UpdateItemList(frame, szDataType, tItemInfo)
 		szItem = "Handle_AItemList"
 	end
 	if szItem == "Handle_ItemList" or "Handle_AItemList" then
-        INI_FILE_PATH = "interface/AH/AH_AuctionItem.ini"
+        INI_FILE_PATH = "Interface/AH/ui/AH_AuctionItem.ini"
     end
 	hList:Clear()
 	for k, v in pairs(tItemInfo) do
@@ -817,7 +818,7 @@ function AH_Helper.AddWidget(frame)
 	if not frame then return end
 	local page  = frame:Lookup("PageSet_Totle/Page_Business")
 	local hWndSrch = page:Lookup("Wnd_Search")
-	local temp = Wnd.OpenWindow("interface\\AH\\AH_Widget.ini")
+	local temp = Wnd.OpenWindow("Interface\\AH\\ui\AH_Widget.ini")
 	if not hWndSrch:Lookup("Btn_History") then
 		local hBtnHistory = temp:Lookup("Btn_History")
 		if hBtnHistory then

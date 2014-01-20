@@ -7,6 +7,8 @@ AH_Spliter = {
 	tItemHistory = {},
 }
 
+local szIniFile = "Interface/AH/ui/AH_Spliter.ini"
+
 --´æ´¢²ð·Ö·½°¸
 RegisterCustomData("AH_Spliter.tItemHistory")
 
@@ -161,7 +163,7 @@ function AH_Spliter.OnExchangeBoxItem(boxItem, boxDsc, nHandCount, bHand)
 	local frame = Station.Lookup("Normal/AH_Spliter")
 	if not boxItem then
 		if not AH_Spliter.IsPanelOpened() then
-			frame = Wnd.OpenWindow("Interface\\AH\\AH_Spliter.ini", "AH_Spliter")
+			frame = Wnd.OpenWindow(szIniFile, "AH_Spliter")
 		end
 		frame:SetPoint("CENTER", 0, 0, "CENTER", 0, 0)
 		Station.SetActiveFrame(frame)
@@ -222,7 +224,7 @@ end
 function AH_Spliter.OnSplitBoxItem(rect)
 	local frame = nil
 	if not AH_Spliter.IsPanelOpened() then
-		frame = Wnd.OpenWindow("Interface\\AH\\AH_Spliter.ini", "AH_Spliter")
+		frame = Wnd.OpenWindow(szIniFile, "AH_Spliter")
 	end
 	frame:Lookup("Edit_Group"):SetText("1")
 	frame:Lookup("Edit_Num"):SetText("1")

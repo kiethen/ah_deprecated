@@ -264,4 +264,3 @@ end
 
 RegisterEvent("ON_SET_BAG_COMPACT_MODE", function() bBagHooked = false end)
 AH_Library.RegisterBreatheEvent("ON_AH_TIP_UPDATE", AH_Tip.OnUpdate)
---Wnd.OpenWindow("Interface\\AH\\AH_Tip.ini", "AH_Tip")

@@ -7,6 +7,8 @@ AH_Library = AH_Library or {}
 
 local ipairs = ipairs
 local pairs = pairs
+
+local szIniFile = "Interface/AH/ui/AH_Library.ini"
 -----------------------------------------------
 -- 重构非白名单函数
 -----------------------------------------------
@@ -573,7 +575,7 @@ function base64(data)
     end)..({ '', '==', '=' })[#data%3+1])
 end
 
-Wnd.OpenWindow("Interface\\AH\\AH_Library.ini", "AH_Library")
+Wnd.OpenWindow(szIniFile, "AH_Library")
 
 --~ RegisterEvent("CALL_LUA_ERROR", function()
 --~ 	OutputMessage("MSG_SYS", arg0)

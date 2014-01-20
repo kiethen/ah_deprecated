@@ -18,7 +18,7 @@ local ipairs = ipairs
 local pairs = pairs
 local tonumber = tonumber
 
-local szIniFile = "Interface/AH/AH_MailBank.ini"
+local szIniFile = "Interface/AH/ui/AH_MailBank.ini"
 local bMailHooked = false
 local bBagHooked = false
 local tFilterType = {"物品名称", "信件标题", "寄信人", "到期时间"}
@@ -323,7 +323,7 @@ function AH_MailBank.OnUpdate()
 	if frame and frame:IsVisible() then
 		if not bMailHooked then	--邮件界面添加一个按钮
 			local page = frame:Lookup("PageSet_Total/Page_Receive")
-			local temp = Wnd.OpenWindow("interface\\AH\\AH_Widget.ini")
+			local temp = Wnd.OpenWindow("Interface\\AH\\ui\\AH_Widget.ini")
 			if not page:Lookup("Btn_MailBank") then
 				local hBtnMailBank = temp:Lookup("Btn_MailBank")
 				if hBtnMailBank then
@@ -362,7 +362,7 @@ function AH_MailBank.OnUpdate()
 
 	local frame = Station.Lookup("Normal/BigBagPanel")
 	if not bBagHooked and frame and frame:IsVisible() then --背包界面添加一个按钮
-		local temp = Wnd.OpenWindow("interface\\AH\\AH_Widget.ini")
+		local temp = Wnd.OpenWindow("Interface\\AH\\ui\\AH_Widget.ini")
 		if not frame:Lookup("Btn_Mail") then
 			local hBtnMail = temp:Lookup("Btn_Mail")
 			if hBtnMail then

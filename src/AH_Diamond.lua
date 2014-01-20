@@ -14,7 +14,7 @@ local ipairs = ipairs
 local pairs = pairs
 local tonumber = tonumber
 
-local szIniFile = "Interface/AH/AH_Diamond.ini"
+local szIniFile = "Interface/AH/ui/AH_Diamond.ini"
 local tDiamondType = {"Normal", "Simplify"}
 
 --通用下拉菜单生成

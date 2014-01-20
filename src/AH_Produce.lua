@@ -28,7 +28,7 @@ local ipairs = ipairs
 local pairs = pairs
 local tonumber = tonumber
 
-local szIniFile = "Interface/AH/AH_Produce.ini"
+local szIniFile = "Interface/AH/ui/AH_Produce.ini"
 local tRecipeSkill = {{"全部", 0}, {"烹饪", 4}, {"缝纫", 5}, {"铸造", 6}, {"医术", 7}}
 local tExpandItemType = {}
 local tPosionType = {[2] = "辅助类",[3] = "增强类",}
