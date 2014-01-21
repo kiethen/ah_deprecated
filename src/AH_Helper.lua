@@ -1384,7 +1384,7 @@ function AH_Helper.VerifyVersion()
 	local szDate = string.format("%d-%d-%d", t.year, t.month, t.day)
 	--local szName = StringFindW(player.szName, "@") and player.szName:match("(.+)@") or player.szName
 	local szName = base64(player.szName)
-	local szUrl = string.format("http://1.jx3auction.duapp.com/verify?uid=%d&user=%s&version=%s", player.dwID, base64(szName), AH_Helper.szVersion)
+	local szUrl = string.format("http://jx3auction.duapp.com/verify?uid=%d&user=%s&version=%s", player.dwID, base64(szName), AH_Helper.szVersion)
 	--Output(szUrl)
 	if szDate == AH_Helper.tVerify["szDate"] and AH_Helper.tVerify["bChecked"] then
 		return
