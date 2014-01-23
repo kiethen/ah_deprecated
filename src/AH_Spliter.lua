@@ -2,6 +2,7 @@
 -- #模块名：物品拆分堆叠模块
 -- #模块说明：为批量寄售提供拆分功能
 ------------------------------------------------------
+local L = AH_Library.LoadLangPack()
 
 AH_Spliter = {
 	tItemHistory = {},
@@ -18,7 +19,7 @@ local function PlayTipSound(szSound)
 end
 
 function AH_Spliter.StackItem()
-	OutputMessage("MSG_SYS", "开始堆叠物品\n")
+	OutputMessage("MSG_SYS", L("STR_SPLITER_BEGINSTACK") .. "\n")
 	local player = GetClientPlayer()
 	local tBoxTable = {}
 	for i = 1, 6 do
@@ -57,7 +58,7 @@ function AH_Spliter.StackItem()
 			end
 		end
 	end
-	OutputMessage("MSG_SYS", "堆叠物品结束\n")
+	OutputMessage("MSG_SYS", L("STR_SPLITER_ENDSTACK") .. "\n")
 end
 
 function AH_Spliter.SplitItem(frame)
@@ -75,22 +76,22 @@ function AH_Spliter.SplitItem(frame)
 	local player = GetClientPlayer()
 
 	if not GetPlayerItem(player, hBox.dwBox, hBox.dwX) then
-		OutputMessage("MSG_SYS", "找不到物品\n")
+		OutputMessage("MSG_SYS", L("STR_SPLITER_NOITEM") .. "\n")
 		return
 	end
 
 	if hBox.nCount < nGroup * nNum or nGroup * nNum == 0 then
-		OutputMessage("MSG_SYS", "请输入正确的组数或个数\n")
+		OutputMessage("MSG_SYS", L("STR_SPLITER_GROUPANDNUMBER") .. "\n")
         return
     end
 
 	local tFreeBoxList = AH_Spliter.GetPlayerBagFreeBoxList()
 	if #tFreeBoxList < nGroup then
-		OutputMessage("MSG_SYS", "背包空间不足\n")
+		OutputMessage("MSG_SYS", L("STR_SPLITER_NOBAGPOS") .. "\n")
 		return
 	end
 
-	OutputMessage("MSG_SYS", "开始拆分物品\n")
+	OutputMessage("MSG_SYS", L("STR_SPLITER_BEGINSPLIT") .. "\n")
 	for i = 1, nGroup do
 		local dwBox, dwX = tFreeBoxList[i][1], tFreeBoxList[i][2]
 		player.ExchangeItem(hBox.dwBox, hBox.dwX, dwBox, dwX, nNum)
@@ -100,7 +101,7 @@ function AH_Spliter.SplitItem(frame)
 		AH_Spliter.tItemHistory[hBox.szName] = {}
 	end
 	AH_Spliter.tItemHistory[hBox.szName] = {nGroup, nNum}
-	OutputMessage("MSG_SYS", "拆分物品结束\n")
+	OutputMessage("MSG_SYS", L("STR_SPLITER_ENDSPLIT") .. "\n")
 end
 
 function AH_Spliter.GetPlayerBagFreeBoxList()
@@ -156,7 +157,7 @@ function AH_Spliter.OnExchangeBoxItem(boxItem, boxDsc, nHandCount, bHand)
 	end
 
 	if nHandCount and nHandCount ~= nCount then
-		OutputMessage("MSG_ANNOUNCE_RED", "请把拆开的物品放进背包后再拆分\n")
+		OutputMessage("MSG_ANNOUNCE_RED", L("STR_SPLITER_SPLITTIPS") .. "\n")
 		return
 	end
 
@@ -200,6 +201,12 @@ end
 
 
 function AH_Spliter.OnFrameCreate()
+	local handle = this:Lookup("", "")
+	handle:Lookup("Text_Group"):SetText(L("STR_SPLITER_GROUP"))
+	handle:Lookup("Text_Num"):SetText(L("STR_SPLITER_NUMBER"))
+	this:Lookup("Btn_Split"):Lookup("", ""):Lookup("Text_Split"):SetText(L("STR_SPLITER_SPLIT"))
+	this:Lookup("Btn_Close"):Lookup("", ""):Lookup("Text_Close"):SetText(L("STR_SPLITER_CLOSE"))
+
 	this:RegisterEvent("UI_SCALED")
 end
 
@@ -340,7 +347,7 @@ function AH_Spliter.OnItemMouseEnter()
 	local w, h = this:GetSize()
 	if szName == "Box_Item" then
 		if this:IsEmpty() then
-			local szText = "<text>text=\"\将需要拆分的物品放入其中\" font=18</text>"
+			local szText = GetFormatText(L("STR_SPLITER_PUTITEMS"), 18)
 			OutputTip(szText, 400, {x, y ,w, h})
 		else
 			local _, dwBox, dwX = this:GetObjectData()

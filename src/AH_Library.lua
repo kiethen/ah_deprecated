@@ -320,19 +320,88 @@ if not OpenInternetExplorer then
 		return webPage
 	end
 end
-
-OutputMessage("MSG_SYS", "------初始化交易行助手数据------\n")
-
 -----------------------------------------------
--- 生活技艺数据生成函数
+-- 外部数据加载
 -----------------------------------------------
-local tEnchant = {
-	Path = "Interface\\AH\\data\\Enchant.tab",
-	Title = {
-		{f = "s", t = "szName"},
-		{f = "s", t = "szDesc"},
+local _, _, szLang = GetVersion()
+local _FILE = {
+	Enchant = {
+		Path = string.format("Interface\\AH\\data\\%s\\Enchant.tab", szLang),
+		Title = {
+			{f = "s", t = "szName"},
+			{f = "s", t = "szDesc"},
+		},
 	},
+	AtNormal = {
+		Path = string.format("Interface\\AH\\data\\%s\\Normal.txt", szLang),
+		Title = {
+			{f = "s", t = "szAttributeName"},
+			{f = "S", t = "szGeneratedMagic"},
+		},
+	},
+	AtSimplify = {
+		Path = string.format("Interface\\AH\\data\\%s\\Simplify.txt", szLang),
+		Title = {
+			{f = "s", t = "szAttributeName"},
+			{f = "S", t = "szGeneratedMagic"},
+		},
+	},
+	Normal = {
+		Path = string.format("Interface\\AH\\data\\%s\\Normal.tab", szLang),
+		Title = {
+			{f = "i", t = "dwID"},
+			{f = "s", t = "szName"},
+			{f = "S", t = "szAttributeOne"},
+			{f = "s", t = "szAttributeTwo"},
+			{f = "S", t = "szAttributeThree"},
+		},
+	},
+	Simplify = {
+		Path = string.format("Interface\\AH\\data\\%s\\Simplify.tab", szLang),
+		Title = {
+			{f = "i", t = "dwID"},
+			{f = "s", t = "szName"},
+			{f = "S", t = "szAttributeOne"},
+			{f = "s", t = "szAttributeTwo"},
+		},
+	},
+	Lang = {
+		Path = string.format("Interface\\AH\\lang\\%s.tab", szLang),
+		Title = {
+			{f = "s", t = "szKey"},
+			{f = "S", t = "szValue"},
+		},
+	}
 }
+
+-----------------------------------------------
+-- 多语言处理
+-----------------------------------------------
+function AH_Library.LoadLangPack()
+	local tRes = {}
+	local tTable = KG_Table.Load(_FILE.Lang.Path, _FILE.Lang.Title, FILE_OPEN_MODE.NORMAL)
+	if tTable then
+		local nRow = tTable:GetRowCount()
+		for i = 1, nRow do
+			local tRow = tTable:GetRow(i)
+			if not tRes[tRow.szKey] then
+				tRes[tRow.szKey] = tRow.szValue
+			end
+		end
+	end
+	setmetatable(tRes, {
+		__index = function(t, k) return k end,
+		__call = function(t, k, ...) return string.format(t[k], ...) end,
+	})
+	return tRes
+end
+local L = AH_Library.LoadLangPack()
+
+OutputMessage("MSG_SYS", "----------------------------\n")
+
+-----------------------------------------------
+-- 生活技艺数据生成
+-----------------------------------------------
 
 AH_Library.tMergeRecipe = {}
 AH_Library.tEnchantData = {}
@@ -349,9 +418,9 @@ function AH_Library.GetCraftRecipe(nCraftID)
 		},
 		FILE_OPEN_MODE.NORMAL)
 		if tTable then
-			local nRowCount = tTable:GetRowCount()
-			for nRow = 2, nRowCount do
-				local tRow = tTable:GetRow(nRow)
+			local nRow = tTable:GetRowCount()
+			for i = 2, nRow do
+				local tRow = tTable:GetRow(i)
 				table.insert(tRes, {tRow.dwID, tRow.szName})
 			end
 		end
@@ -421,62 +490,32 @@ do
 		AH_Library.tMergeRecipe = AH_Library.tMergeRecipe + AH_Library.tRecipeALL[v]
 	end
 
-	local tTable = KG_Table.Load(tEnchant.Path, tEnchant.Title, FILE_OPEN_MODE.NORMAL)
+	local tTable = KG_Table.Load(_FILE.Enchant.Path, _FILE.Enchant.Title, FILE_OPEN_MODE.NORMAL)
 	if tTable then
-		local nRowCount = tTable:GetRowCount()
-		for nRow = 1, nRowCount do
-			local tRow = tTable:GetRow(nRow)
+		local nRow = tTable:GetRowCount()
+		for i = 1, nRow do
+			local tRow = tTable:GetRow(i)
 			if not AH_Library.tEnchantData[tRow.szName] then
 				AH_Library.tEnchantData[tRow.szName] = tRow.szDesc
 			end
 		end
 	end
 end
-OutputMessage("MSG_SYS", "◇生活技艺配方数据载入完毕！\n")
+OutputMessage("MSG_SYS", L("STR_LIBRARY_RECIPEINIT") .. "\n")
 -----------------------------------------------
 -- 五彩石数据生成
 -----------------------------------------------
 AH_Library.tColorMagic = {}
 AH_Library.tColorDiamond = {}
 
-local tAttribute = {
-	Path = "Interface\\AH\\data\\%s.txt",
-	Title = {
-		{f = "s", t = "szAttributeName"},
-		{f = "S", t = "szGeneratedMagic"},
-	},
-}
-
-local tColorDiamond = {
-	Normal = {
-		Path = "Interface\\AH\\data\\Normal.tab",
-		Title = {
-			{f = "i", t = "dwID"},
-			{f = "s", t = "szName"},
-			{f = "S", t = "szAttributeOne"},
-			{f = "s", t = "szAttributeTwo"},
-			{f = "S", t = "szAttributeThree"},
-		},
-	},
-	Simplify = {
-		Path = "Interface\\AH\\data\\Simplify.tab",
-		Title = {
-			{f = "i", t = "dwID"},
-			{f = "s", t = "szName"},
-			{f = "S", t = "szAttributeOne"},
-			{f = "s", t = "szAttributeTwo"},
-		},
-	}
-}
-
 function AH_Library.ID2MagicTable(szType)
 	local tRes = {}
-	local tTable = KG_Table.Load(string.format(tAttribute.Path, szType), tAttribute.Title, FILE_OPEN_MODE.NORMAL)
+	local tTable = KG_Table.Load(_FILE[szType].Path, _FILE[szType].Title, FILE_OPEN_MODE.NORMAL)
 	if tTable then
-		local nRowCount = tTable:GetRowCount()
-		for nRow = 2, nRowCount do
-			local tRow = tTable:GetRow(nRow)
-			tRes[nRow - 1] = {tRow.szAttributeName, tRow.szGeneratedMagic}
+		local nRow = tTable:GetRowCount()
+		for i = 2, nRow do
+			local tRow = tTable:GetRow(i)
+			tRes[i - 1] = {tRow.szAttributeName, tRow.szGeneratedMagic}
 		end
 	end
 	return tRes
@@ -484,18 +523,18 @@ end
 
 function AH_Library.ColorDiamondTable(szType)
 	local tRes = {}
-	local tTable = KG_Table.Load(tColorDiamond[szType].Path, tColorDiamond[szType].Title, FILE_OPEN_MODE.NORMAL)
+	local tTable = KG_Table.Load(_FILE[szType].Path, _FILE[szType].Title, FILE_OPEN_MODE.NORMAL)
 	if tTable then
-		local nRowCount = tTable:GetRowCount()
+		local nRow = tTable:GetRowCount()
 		if szType == "Normal" then
-			for nRow = 1, nRowCount do
-				local tRow = tTable:GetRow(nRow)
-				tRes[nRow] = {tRow.dwID, tRow.szName, tRow.szAttributeOne, tRow.szAttributeTwo, tRow.szAttributeThree}
+			for i = 1, nRow do
+				local tRow = tTable:GetRow(i)
+				tRes[i] = {tRow.dwID, tRow.szName, tRow.szAttributeOne, tRow.szAttributeTwo, tRow.szAttributeThree}
 			end
 		elseif szType == "Simplify" then
-			for nRow = 1, nRowCount do
-				local tRow = tTable:GetRow(nRow)
-				tRes[nRow] = {tRow.dwID, tRow.szName, tRow.szAttributeOne, tRow.szAttributeTwo}
+			for i = 1, nRow do
+				local tRow = tTable:GetRow(i)
+				tRes[i] = {tRow.dwID, tRow.szName, tRow.szAttributeOne, tRow.szAttributeTwo}
 			end
 		end
 	end
@@ -504,11 +543,11 @@ end
 
 do
 	for k, v in pairs({"Normal", "Simplify"}) do
-		AH_Library.tColorMagic[v] = AH_Library.ID2MagicTable(v)
+		AH_Library.tColorMagic[v] = AH_Library.ID2MagicTable("At"..v)
 		AH_Library.tColorDiamond[v] = AH_Library.ColorDiamondTable(v)
 	end
 end
-OutputMessage("MSG_SYS", "◇五彩石数据载入完毕！\n")
+OutputMessage("MSG_SYS", L("STR_LIBRARY_DIAMONDINIT") .. "\n")
 OutputMessage("MSG_SYS", "----------------------------\n")
 -----------------------------------------------
 -- 统一所用模块的刷新事件及延迟调用
@@ -552,7 +591,7 @@ function AH_Library.OnTitleChanged()
 	if szDoc ~= "" and szDoc > AH_Helper.szVersion then
 		local tVersionInfo = {
 			szName = "AH_HelperVersionInfo",
-			szMessage = "发现交易行助手新版本：" .. szDoc .. "，去下载页面？", {
+			szMessage = L("STR_LIBRARY_NEWVERSION", szDoc), {
 				szOption = g_tStrings.STR_HOTKEY_SURE, fnAction = function()
 					OpenInternetExplorer("http://jx3auction.duapp.com/down", true)
 				end
@@ -579,6 +618,6 @@ end
 
 Wnd.OpenWindow(szIniFile, "AH_Library")
 
---~ RegisterEvent("CALL_LUA_ERROR", function()
---~ 	OutputMessage("MSG_SYS", arg0)
---~ end)
+RegisterEvent("CALL_LUA_ERROR", function()
+	OutputMessage("MSG_SYS", arg0)
+end)

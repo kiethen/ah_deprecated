@@ -7,6 +7,7 @@
 ---------
 
 官方网站：http://jx3auction.duapp.com
+微博：http://weibo.com/nzgeneral
 
 主要功能：
 ---------

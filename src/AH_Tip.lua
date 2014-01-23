@@ -2,6 +2,7 @@
 -- #模块名：鼠标提示模块
 -- #模块说明：用于交易行价格已经材料的配方显示，与其他鼠标提示类插件冲突
 ------------------------------------------------------
+local L = AH_Library.LoadLangPack()
 
 AH_Tip = {
 	szItemTip = nil,
@@ -20,15 +21,20 @@ local MAX_BID_PRICE = PackMoney(800000, 0, 0)
 local bBagHooked = false
 local bTipHooked = false
 local bCompact = nil
-local tRecipeSkill = {{"烹饪", 4}, {"缝纫", 5}, {"铸造", 6}, {"医术", 7}}
+local tRecipeSkill = {
+	{L("STR_TIP_COOKING"), 4},
+	{L("STR_TIP_TAILORING"), 5},
+	{L("STR_TIP_FOUNDING"), 6},
+	{L("STR_TIP_MEDICINE"), 7}
+}
 
 local function FormatTipEx(h, szText, szTip)
 	local i, j = h:GetItemCount(), 0
-	if string.find(szText, "不能拆解") and string.find(szText, "调试用信息") then
+	if string.find(szText, L("STR_TIP_DONOTDISASSEMBLE")) and string.find(szText, L("STR_TIP_DEBUGINFO")) then
 		j = i - 3
-	elseif string.find(szText, "不能拆解") then
+	elseif string.find(szText, L("STR_TIP_DONOTDISASSEMBLE")) then
 		j = i - 1
-	elseif string.find(szText, "调试用信息") then
+	elseif string.find(szText, L("STR_TIP_DEBUGINFO")) then
 		j = i - 2
 	else
 		j = i
@@ -58,14 +64,14 @@ function AH_Tip.OnUpdate()
 				AH_Tip.UpdateNormal(frame)
 			end
 			local hSplit = frame:Lookup("Btn_Split")
-			hSplit:Lookup("","Text_Split"):SetText("拆堆")
+			hSplit:Lookup("","Text_Split"):SetText(L("STR_TIP_STACK"))
 			hSplit.OnRButtonClick = function()
 				AH_Spliter.StackItem()
 			end
 			hSplit.OnMouseEnter = function()
 				local x, y = this:GetAbsPos()
 				local w, h = this:GetSize()
-				local szTip = "<text>text=\"左键拆分，右键堆叠\n或ALT+鼠标左键点击物品拆分。\" font=162</text>"
+				local szTip = GetFormatText(L("STR_TIP_SPLITTIP"), 162)
 				OutputTip(szTip, 400, {x, y, w, h})
 			end
 			bBagHooked = true
@@ -168,8 +174,8 @@ function AH_Tip.GetBagItemTip(box)
 		local nItemCountTotal = player.GetItemAmountInAllPackages(item.dwTabType, item.dwIndex)
 		local nItemCountInBank = nItemCountTotal - nItemCountInPackage
 
-		szTip = szTip .. GetFormatText("物品总数：", 101) .. GetFormatText(nItemCountTotal, 162)
-		szTip = szTip .. GetFormatText("    背包：", 101) .. GetFormatText(nItemCountInPackage, 162) .. GetFormatText("    仓库：", 101) .. GetFormatText(nItemCountInBank, 162)
+		szTip = szTip .. GetFormatText(L("STR_TIP_TOTAL"), 101) .. GetFormatText(nItemCountTotal, 162)
+		szTip = szTip .. GetFormatText(L("STR_TIP_BAG"), 101) .. GetFormatText(nItemCountInPackage, 162) .. GetFormatText(L("STR_TIP_BANk"), 101) .. GetFormatText(nItemCountInBank, 162)
 
 		--配方
 		if item.nGenre == ITEM_GENRE.MATERIAL then
@@ -180,7 +186,7 @@ function AH_Tip.GetBagItemTip(box)
 		local v = AH_Helper.tItemPrice[szName]
 		if v and v[1] then
 			if MoneyOptCmp(v[1], PRICE_LIMITED) ~= 0 then
-				szTip = szTip .. GetFormatText("\n价格：", 157) .. GetMoneyTipText(v[1], 106)
+				szTip = szTip .. GetFormatText("\n" .. L("STR_TIP_PRICE"), 157) .. GetMoneyTipText(v[1], 106)
 			end
 		end
 	end
@@ -212,7 +218,7 @@ function AH_Tip.GetRecipeTip(player, item)
 	local szTip, bFlag = "", false
 	if IsAltKeyDown() or IsShiftKeyDown() or AH_Tip.bShowTipEx then
 		local szItemName = GetItemNameByItem(item)
-		local szOuter, szInner = GetFormatText("\n相关技艺配方<已学习>", 165), ""
+		local szOuter, szInner = GetFormatText("\n" .. L("STR_TIP_RECIPELEARN"), 165), ""
 		for k, v in ipairs(tRecipeSkill) do
 			if player.IsProfessionLearnedByCraftID(v[2]) then
 				local tRecipe = AH_Tip.GetRecipeByItemName(v[2], szItemName)
@@ -231,7 +237,7 @@ function AH_Tip.GetRecipeTip(player, item)
 			end
 		end
 		if bFlag and szInner ~= "" then szTip = szTip .. szOuter .. szInner end
-		szOuter, szInner = GetFormatText("\n相关技艺配方<未学习>", 166), ""
+		szOuter, szInner = GetFormatText("\n" .. L("STR_TIP_RECIPEUNLEARN"), 166), ""
 		for k, v in ipairs(tRecipeSkill) do
 			if player.IsProfessionLearnedByCraftID(v[2]) then
 				local tRecipe = AH_Library.tMaterialALL[v[2]][szItemName]

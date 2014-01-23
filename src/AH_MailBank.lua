@@ -2,6 +2,7 @@
 -- #模块名：邮件仓库模块
 -- #模块说明：增强邮件功能
 ------------------------------------------------------
+local L = AH_Library.LoadLangPack()
 
 AH_MailBank = {
 	tItemCache = {},
@@ -21,7 +22,12 @@ local tonumber = tonumber
 local szIniFile = "Interface/AH/ui/AH_MailBank.ini"
 local bMailHooked = false
 local bBagHooked = false
-local tFilterType = {"物品名称", "信件标题", "寄信人", "到期时间"}
+local tFilterType = {
+	L("STR_MAILBANK_ITEMNAME"),
+	L("STR_MAILBANK_MAILTITLE"),
+	L("STR_MAILBANK_SENDER"),
+	L("STR_MAILBANK_ENDDATE")
+}
 
 -- 将数据分页处理，每页98个数据，返回分页数据和页数
 function AH_MailBank.GetPageMailData(tItemCache)
@@ -63,7 +69,7 @@ function AH_MailBank.LoadMailData(frame, szName, nIndex)
 			img:Show()
 			box:Show()
 			box.szType = "money"
-			box.szName = "金钱"
+			box.szName = L("STR_MAILBANK_MONEY")
 			box.data = v
 			box:SetObject(UI_OBJECT_NOT_NEED_KNOWN, 0)
 			box:SetObjectIcon(582)
@@ -91,7 +97,7 @@ function AH_MailBank.LoadMailData(frame, szName, nIndex)
 				if mail then
 					local nTime = mail.GetLeftTime()
 					if nTime <= 86400 * 2 then
-						box:SetOverText(1, "将过期")
+						box:SetOverText(1, L("STR_MAILBANK_WILLEND"))
 					else
 						box:SetOverText(1, "")
 					end
@@ -143,9 +149,9 @@ function AH_MailBank.LoadMailData(frame, szName, nIndex)
 	frame:Lookup("", ""):Lookup("Text_Filter"):SetText(tFilterType[AH_MailBank.nFilterType])
 	local hType = frame:Lookup("", ""):Lookup("Text_Type")
 	if AH_MailBank.nFilterType == 4 then
-		hType:SetText("少于(天)：")
+		hType:SetText(L("STR_MAILBANK_LESSTHAN"))
 	else
-		hType:SetText("包含字符：")
+		hType:SetText(L("STR_MAILBANK_WITHIN"))
 	end
 	frame:Lookup("Btn_Filter"):Enable(AH_MailBank.bMail)
 	frame:Lookup("Check_NotReturn"):Enable(AH_MailBank.bMail)
@@ -329,6 +335,7 @@ function AH_MailBank.OnUpdate()
 				if hBtnMailBank then
 					hBtnMailBank:ChangeRelation(page, true, true)
 					hBtnMailBank:SetRelPos(600, 8)
+					hBtnMailBank:Lookup("", ""):Lookup("Text_MailBank"):SetText(L("STR_MAILBANK_MAILTIP1"))
 					hBtnMailBank.OnLButtonClick = function()
 						if not AH_MailBank.IsPanelOpened() then
 							AH_MailBank.bMail = true
@@ -379,7 +386,7 @@ function AH_MailBank.OnUpdate()
 				hBtnMail.OnMouseEnter = function()
 					local x, y = this:GetAbsPos()
 					local w, h = this:GetSize()
-					local szTip = GetFormatText("邮件仓库", 163) .. GetFormatText("\n单击这里可以打开离线邮件仓库。", 162)
+					local szTip = GetFormatText(L("STR_MAILBANK_MAILTIP1"), 163) .. GetFormatText("\n" .. L("STR_MAILBANK_MAILTIP2"), 162)
 					OutputTip(szTip, 400, {x, y, w, h})
 				end
 				hBtnMail.OnMouseLeave = function()
@@ -411,15 +418,15 @@ end
 function AH_MailBank.TakeMailItemToBag(fnAction, nCount)
 	local dwID, dwType = Target_GetTargetData()
 	local hNpc = dwType == TARGET.NPC and GetNpc(dwID) or nil
-	if not hNpc or (hNpc and not StringFindW(hNpc.szTitle, "信使")) then
-		OutputMessage("MSG_SYS", "请选中信使再收件\n")
-		OutputWarningMessage("MSG_NOTICE_YELLOW", "请选中信使再收件！", 2)
+	if not hNpc or (hNpc and not StringFindW(hNpc.szTitle, L("STR_MAILBANK_COURIER"))) then
+		OutputMessage("MSG_SYS", L("STR_MAILBANK_TIP1") .. "\n")
+		OutputWarningMessage("MSG_NOTICE_YELLOW", L("STR_MAILBANK_TIP1"), 2)
 		return
 	end
 	local tFreeBoxList = AH_Spliter.GetPlayerBagFreeBoxList()
 	if nCount > #tFreeBoxList then
-		OutputMessage("MSG_SYS", "背包空间不足\n")
-		OutputWarningMessage("MSG_NOTICE_YELLOW", "背包空间不足！", 2)
+		OutputMessage("MSG_SYS", L("STR_MAILBANK_TIP2") .. "n")
+		OutputWarningMessage("MSG_NOTICE_YELLOW", L("STR_MAILBANK_TIP2"), 2)
 		return
 	end
 	fnAction()
@@ -446,6 +453,12 @@ end
 ------------------------------------------------------------
 function AH_MailBank.OnFrameCreate()
 	local handle = this:Lookup("", "")
+	handle:Lookup("Text_Title"):SetText(L("STR_MAILBANK_MAILTIP1"))
+	handle:Lookup("Text_Tips"):SetText(L("STR_MAILBANK_TIP3"))
+	handle:Lookup("Text_NotReturn"):SetText(L("STR_MAILBANK_NORETURN"))
+	this:Lookup("Btn_Prev"):Lookup("", "")Lookup("Text_Prev"):SetText(L("STR_MAILBANK_PREV"))
+	this:Lookup("Btn_Next"):Lookup("", "")Lookup("Text_Next"):SetText(L("STR_MAILBANK_NEXT"))
+
 	local hBg = handle:Lookup("Handle_Bg")
 	local hBox = handle:Lookup("Handle_Box")
 	hBg:Clear()
@@ -543,9 +556,9 @@ function AH_MailBank.OnLButtonClick()
 					AH_MailBank.nFilterType = k
 					local hType = frame:Lookup("", ""):Lookup("Text_Type")
 					if k == 4 then
-						hType:SetText("少于(天)：")
+						hType:SetText(L("STR_MAILBANK_LESSTHAN"))
 					else
-						hType:SetText("包含字符：")
+						hType:SetText(L("STR_MAILBANK_WITHIN"))
 					end
 					AH_MailBank.ReFilter(frame)
 				end
@@ -559,10 +572,9 @@ function AH_MailBank.OnLButtonClick()
 			local m = {
 				szOption = k,
 				{
-					szOption = "删除",
+					szOption = L("STR_MAILBANK_DELETE"),
 					fnAction = function()
 						AH_MailBank.tItemCache[k] = nil
-						--AH_MailBank.LoadMailData(frame, AH_MailBank.szCurRole, AH_MailBank.nCurIndex)
 					end
 				}
 			}
@@ -749,9 +761,9 @@ function AH_MailBank.OnItemMouseEnter()
 						szTip = szTip .. GetFormatText(string.format("\n\n%s", mail.szSenderName), 164)
 						szTip = szTip .. GetFormatText(string.format(" 『%s』\n", mail.szTitle), 163)
 						local szLeft = AH_MailBank.FormatItemLeftTime(mail.GetLeftTime())
-						szTip = szTip .. GetFormatText(string.format("剩余时间：%s", szLeft), 162)
+						szTip = szTip .. GetFormatText(L("STR_MAILBANK_LEFTTIME", szLeft), 162)
 						local nCount = AH_MailBank.GetMailItem(mail)[szName][5]
-						szTip = szTip .. GetFormatText(string.format("  数量：%d", nCount), 162)
+						szTip = szTip .. GetFormatText(L("STR_MAILBANK_NUMBER", nCount), 162)
 					end
 					OutputTip(szTip, 300, {x, y, w, h})
 				else
@@ -767,7 +779,7 @@ function AH_MailBank.OnItemMouseEnter()
 				szTip = szTip .. GetFormatText(string.format("\n\n%s", mail.szSenderName), 164)
 				szTip = szTip .. GetFormatText(string.format(" 『%s』\n", mail.szTitle), 163)
 				local szLeft = AH_MailBank.FormatItemLeftTime(mail.GetLeftTime())
-				szTip = szTip .. GetFormatText(string.format("剩余时间：%s ", szLeft), 162)
+				szTip = szTip .. GetFormatText(L("STR_MAILBANK_LEFTTIME", szLeft), 162)
 				szTip = szTip .. GetFormatText(g_tStrings.STR_MAIL_HAVE_MONEY, 162) .. GetMoneyTipText(mail.nMoney, 106)
 			end
 			OutputTip(szTip, 300, {x, y, w, h})

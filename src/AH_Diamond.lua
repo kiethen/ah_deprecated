@@ -2,6 +2,7 @@
 -- #模块名：五彩石助手模块
 -- #模块说明：五彩石属性筛选
 ------------------------------------------------------
+local L = AH_Library.LoadLangPack()
 
 AH_Diamond = {
 	tLastDiamondData = {
@@ -72,7 +73,16 @@ function AH_Diamond.FiterDiamondMagic(szType, nIndex, szMagic)
 end
 
 function AH_Diamond.IsMagicAttribute(szAttribute)
-	for k, v in ipairs({"内功", "外功", "阴性", "混元", "毒性", "阴阳", "阳性"}) do
+	local t = {
+		L("STR_DIAMOND_MAGIC"),
+		L("STR_DIAMOND_PHYSICS"),
+		L("STR_DIAMOND_LUNAR"),
+		L("STR_DIAMOND_NEUTRAL"),
+		L("STR_DIAMOND_POISON"),
+		L("STR_DIAMOND_SOLARANDLUNAR"),
+		L("STR_DIAMOND_SOLAR")
+	}
+	for k, v in ipairs(t) do
 		if szAttribute == v then
 			return true
 		end
@@ -93,9 +103,14 @@ function AH_Diamond.PopupDiamondLevel(frame, nIndex)
 
 	local tLevel = nil
 	if nIndex == 1 then
-		tLevel = {"壹", "贰", "叁", "肆", "伍", "陆"}
+		tLevel = {
+			L("STR_DIAMOND_ONE"), L("STR_DIAMOND_TWO"), L("STR_DIAMOND_THREE"),
+			L("STR_DIAMOND_FOUR"), L("STR_DIAMOND_FIVE"), L("STR_DIAMOND_SIX")
+		}
 	elseif nIndex == 2 then
-		tLevel = {"肆", "伍", "陆"}
+		tLevel = {
+			L("STR_DIAMOND_FOUR"), L("STR_DIAMOND_FIVE"), L("STR_DIAMOND_SIX")
+		}
 	end
 
 	for k, v in ipairs(tLevel) do
@@ -254,6 +269,22 @@ end
 -- 回调函数
 ------------------------------------------------------------
 function AH_Diamond.OnFrameCreate()
+	local handle = this:Lookup("", "")
+	handle:Lookup("Text_Title"):SetText(L("STR_DIAMOND_DIAMONDHELPER"))
+	handle:Lookup("Text_Tips"):SetText(L("STR_DIAMOND_BOXTIPS"))
+	local pageSet = this:Lookup("PageSet_Totle")
+	pageSet:Lookup("CheckBox_Type1"):Lookup("", ""):Lookup("Text_Type1"):SetText(L("STR_DIAMOND_NORMAL"))
+	pageSet:Lookup("CheckBox_Type2"):Lookup("", ""):Lookup("Text_Type2"):SetText(L("STR_DIAMOND_SIMPLIFY"))
+	local hWnd1 = this:Lookup("PageSet_Totle/Page_Type1/Wnd_Type1")
+	hWnd1:Lookup("", ""):Lookup("Text_Type1Level"):SetText(L("STR_DIAMOND_DIAMONDLEVEL"))
+	hWnd1:Lookup("", ""):Lookup("Text_Type1Attr1"):SetText(L("STR_DIAMOND_ATTRIBUTEONE"))
+	hWnd1:Lookup("", ""):Lookup("Text_Type1Attr2"):SetText(L("STR_DIAMOND_ATTRIBUTETWO"))
+	hWnd1:Lookup("", ""):Lookup("Text_Type1Attr3"):SetText(L("STR_DIAMOND_ATTRIBUTETHREE"))
+	local hWnd2 = this:Lookup("PageSet_Totle/Page_Type2/Wnd_Type2")
+	hWnd2:Lookup("", ""):Lookup("Text_Type2Level"):SetText(L("STR_DIAMOND_DIAMONDLEVEL"))
+	hWnd2:Lookup("", ""):Lookup("Text_Type2Attr1"):SetText(L("STR_DIAMOND_ATTRIBUTEONE"))
+	hWnd2:Lookup("", ""):Lookup("Text_Type2Attr2"):SetText(L("STR_DIAMOND_ATTRIBUTETWO"))
+
 	InitFrameAutoPosInfo(this, 1, nil, nil, function() AH_Diamond.ClosePanel() end)
 end
 
@@ -357,7 +388,7 @@ end
 
 RegisterEvent("LOGIN_GAME", function()
 	TraceButton_AppendAddonMenu({{
-		szOption = "五彩石助手",
+		szOption = L("STR_DIAMOND_DIAMONDHELPER"),
 		fnAction = function()
 			AH_Diamond.OpenPanel()
 		end,

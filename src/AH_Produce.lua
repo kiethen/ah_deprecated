@@ -2,6 +2,7 @@
 -- #模块名：技艺助手模块
 -- #模块说明：增强交易行、生活技艺搜索以及制造功能
 ------------------------------------------------------
+local L = AH_Library.LoadLangPack()
 
 AH_Produce = {
 	nProfessionID = 0,
@@ -29,59 +30,83 @@ local pairs = pairs
 local tonumber = tonumber
 
 local szIniFile = "Interface/AH/ui/AH_Produce.ini"
-local tRecipeSkill = {{"全部", 0}, {"烹饪", 4}, {"缝纫", 5}, {"铸造", 6}, {"医术", 7}}
+
 local tExpandItemType = {}
-local tPosionType = {[2] = "辅助类",[3] = "增强类",}
+local tRecipeSkill = {
+	{L("STR_TIP_ALL"), 0},
+	{L("STR_TIP_COOKING"), 4},
+	{L("STR_TIP_TAILORING"), 5},
+	{L("STR_TIP_FOUNDING"), 6},
+	{L("STR_TIP_MEDICINE"), 7}
+}
+
+local tPosionType = {
+	[2] = L("STR_PRODUCE_AUXILIARY"),
+	[3] = L("STR_PRODUCE_ENHANCED"),
+}
 
 -- 分类，为了生成有序的表得用这种结构
 local tSearchSort = {
 	[1] = {
-		szType = "药品增强",
+		szType = L("STR_PRODUCE_DRUGENHANCED"),
 		nTypeID = 7,
 		tSubSort = {
-			"拆招","防御","威胁值","外功攻击","外功命中","外功会效",
-			"内功攻击","内功伤害","内功命中","内功会心","内功会效","治疗成效",
+			L("STR_PRODUCE_PARRYVALUE"), L("STR_PRODUCE_SHIELD"), L("STR_PRODUCE_THREAT"),
+			L("STR_PRODUCE_PHYSICSATTACK"), L("STR_PRODUCE_PHYSICSHIT"), L("STR_PRODUCE_PHYSICSCRITICALDAMAGE"),
+			L("STR_PRODUCE_MAGICATTACK"), L("STR_PRODUCE_MAGICWEAPONDAMAGE"), L("STR_PRODUCE_MAGICHIT"),
+			L("STR_PRODUCE_MAGICCRITICALSTRIKE"), L("STR_PRODUCE_MAGICCRITICALDAMAGE"), L("STR_PRODUCE_THERAPYPOWER"),
 		},
 	},
 	[2] = {
-		szType = "药品辅助",
+		szType = L("STR_PRODUCE_DRUGAUXILIARY"),
 		nTypeID = 7,
 		tSubSort = {
-			"力道","根骨","元气","身法","属性","体质","拆招",
-			"外功破防","外功会效","内功破防","内功会效","治疗成效",
+			L("STR_PRODUCE_STRENGTH"), L("STR_PRODUCE_SPIRIT"), L("STR_PRODUCE_SPUNK"),
+			L("STR_PRODUCE_AGILITY"), L("STR_PRODUCE_POTENTIAL"), L("STR_PRODUCE_VITALITY"),
+			L("STR_PRODUCE_PARRYVALUE"), L("STR_PRODUCE_PHYSICSOVERCOME"), L("STR_PRODUCE_PHYSICSCRITICALDAMAGE"),
+			L("STR_PRODUCE_MAGICOVERCOME"), L("STR_PRODUCE_MAGICCRITICALDAMAGE"), L("STR_PRODUCE_THERAPYPOWER"),
 		},
 	},
 	[3] = {
-		szType = "烹饪增强",
+		szType = L("STR_PRODUCE_COOKINGENHANCED"),
 		nTypeID = 4,
 		tSubSort = {
-			"命中","闪避","拆招","防御","威胁值",
-			"外功攻击","外功破防","外功会效","内功攻击",
-			"内功伤害","内功破防","内功会效","治疗成效",
+			L("STR_PRODUCE_HIT"), L("STR_PRODUCE_DODGE"), L("STR_PRODUCE_PARRYVALUE"),
+			L("STR_PRODUCE_SHIELD"), L("STR_PRODUCE_THREAT"), L("STR_PRODUCE_PHYSICSATTACK"),
+			L("STR_PRODUCE_PHYSICSOVERCOME"), L("STR_PRODUCE_PHYSICSCRITICALDAMAGE"),
+			L("STR_PRODUCE_MAGICATTACK"), L("STR_PRODUCE_MAGICWEAPONDAMAGE"), L("STR_PRODUCE_MAGICOVERCOME"),
+			L("STR_PRODUCE_MAGICCRITICALDAMAGE"), L("STR_PRODUCE_THERAPYPOWER"),
 		},
 	},
 	[4] = {
-		szType = "烹饪辅助",
+		szType = L("STR_PRODUCE_COOKINGAUXILIARY"),
 		nTypeID = 4,
 		tSubSort = {
-			"力道","根骨","元气","身法","属性","体质",
+			L("STR_PRODUCE_STRENGTH"), L("STR_PRODUCE_SPIRIT"), L("STR_PRODUCE_SPUNK"),
+			L("STR_PRODUCE_AGILITY"), L("STR_PRODUCE_POTENTIAL"), L("STR_PRODUCE_VITALITY"),
 		},
 	},
 	[5] = {
-		szType = "附魔",
+		szType = L("STR_PRODUCE_ENCHANTING"),
 		nTypeID = 8,
 		tSubSort = {
-			"力道","根骨","元气","身法","属性","体质","闪避","招架","拆招","加速",
-			"无双","御劲","化劲","仇恨","移动速度","内功防御","外功防御","治疗成效",
-			"外功攻击","外功命中","外功破防","外功会效","外功会心",
-			"内功攻击","内功命中","内功破防","内功会效","内功会心",
+			L("STR_PRODUCE_STRENGTH"), L("STR_PRODUCE_SPIRIT"), L("STR_PRODUCE_SPUNK"),
+			L("STR_PRODUCE_AGILITY"), L("STR_PRODUCE_POTENTIAL"), L("STR_PRODUCE_VITALITY"),
+			L("STR_PRODUCE_DODGE"), L("STR_PRODUCE_PARRY"), L("STR_PRODUCE_PARRYVALUE"),
+			L("STR_PRODUCE_HASTE"),L("STR_PRODUCE_STRAIN"), L("STR_PRODUCE_TOUGHNESS"),
+			L("STR_PRODUCE_DECRITICALDAMAGE"), L("STR_PRODUCE_HATE"), L("STR_PRODUCE_MOVESPEED"),
+			L("STR_PRODUCE_MAGICSHIELD"), L("STR_PRODUCE_PHYSICSSHIELD"), L("STR_PRODUCE_THERAPYPOWER"),
+			L("STR_PRODUCE_PHYSICSATTACK"), L("STR_PRODUCE_PHYSICSHIT"), L("STR_PRODUCE_PHYSICSOVERCOME"),
+			L("STR_PRODUCE_PHYSICSCRITICALDAMAGE"), L("STR_PRODUCE_PHYSICSCRITICALSTRIKE"),
+			L("STR_PRODUCE_MAGICATTACK"), L("STR_PRODUCE_MAGICHIT"), L("STR_PRODUCE_MAGICOVERCOME"),
+			L("STR_PRODUCE_MAGICCRITICALDAMAGE"), L("STR_PRODUCE_MAGICCRITICALSTRIKE"),
 		},
 	},
 	[6] = {
-		szType = "其他",
+		szType = L("STR_PRODUCE_OTHER"),
 		nTypeID = 0,
 		tSubSort = {
-			"钥匙","精力","体力","好感度",
+			L("STR_PRODUCE_KEY"), L("STR_PRODUCE_ENERGY"), L("STR_PRODUCE_BODYSTRENGTH"), L("STR_PRODUCE_FAVORABILITY"),
 		},
 	},
 }
@@ -90,6 +115,11 @@ local tSearchSort = {
 -- 功能函数
 ------------------------------------------------------------
 function AH_Produce:Init(frame)
+	local handle = frame:Lookup("", "")
+	handle:Lookup("Text_Title"):SetText(L("STR_PRODUCE_PRODUCEHELPER"))
+	handle:Lookup("Text_ComboBox"):SetText(L("STR_TIP_ALL"))
+	handle:Lookup("Text_Filter"):SetText(L("STR_PRODUCE_POSITION"))
+
 	self.nProfessionID = 0
 	self.bIsSearch = false
 	self.bSub = false
@@ -295,7 +325,7 @@ function AH_Produce:UpdateList(frame, bSub, szKey)
 			local szText = hI.szName
 			local szLearn = ""
 			if not player.IsRecipeLearned(hI.nCraftID, hI.nRecipeID) then
-				szLearn = szLearn .. " [未学]"
+				szLearn = szLearn .. " " ..L("STR_PRODUCE_UNLEARNED")
 			end
 			szText = szText .. szLearn
 			if hI.nTotalCount ~= 0 then
@@ -437,7 +467,7 @@ function AH_Produce:UpdateContent(frame)
 		end
 	end
 	--技艺要求
-	local szCraftText = FormatString("需要技艺：<D0> <D1>", szProName, FormatString(g_tStrings.STR_FRIEND_WTHAT_LEVEL1, recipe.dwRequireProfessionLevel))
+	local szCraftText = FormatString(L("STR_PRODUCE_NEEDSKILL"), szProName, FormatString(g_tStrings.STR_FRIEND_WTHAT_LEVEL1, recipe.dwRequireProfessionLevel))
 	local nFont = 162
 	local nMaxLevel    = player.GetProfessionMaxLevel(nCurProID)
     local nLevel       = player.GetProfessionLevel(nCurProID)
@@ -516,7 +546,7 @@ function AH_Produce:UpdateInfo(frame)
 
 		local szLearn = ""
 		if not player.IsRecipeLearned(hItem.nCraftID, hItem.nRecipeID) then
-			szLearn = szLearn .. " [未学]"
+			szLearn = szLearn .. " " .. L("STR_PRODUCE_UNLEARNED")
 		end
 		szText = szText .. szLearn
 		local recipe = GetRecipe(hItem.nCraftID, hItem.nRecipeID)
@@ -777,17 +807,17 @@ end
 
 function AH_Produce:OnSearchType(frame, szType, szSubType)
 	local bSub, szKey = false, szSubType
-	if StringFindW(szType, "增强") then
-		bSub, szKey = true, szKey .. " 增强"
-	elseif StringFindW(szType, "辅助") then
-		bSub, szKey = true, szKey .. " 辅助"
+	if StringFindW(szType, L("STR_PRODUCE_STRENGTHEN")) then
+		bSub, szKey = true, szKey .. " " .. L("STR_PRODUCE_STRENGTHEN")
+	elseif StringFindW(szType, L("STR_PRODUCE_AID")) then
+		bSub, szKey = true, szKey .. " " .. L("STR_PRODUCE_AID")
 	end
-	if StringFindW(szKey, "会效") then
-		szKey = StringReplaceW(szKey, "会效", "会心效果")
-	elseif StringFindW(szKey, "会心") then
-		szKey = StringReplaceW(szKey, "会心", "会心等级")
-	elseif StringFindW(szKey, "治疗") then
-		szKey = StringReplaceW(szKey, "治疗成效", "疗")
+	if StringFindW(szKey, L("STR_PRODUCE_CRITICALPOWER")) then
+		szKey = StringReplaceW(szKey, L("STR_PRODUCE_CRITICALPOWER"), L("STR_PRODUCE_CRITICALDAMAGEPOWERBASE"))
+	elseif StringFindW(szKey, L("STR_PRODUCE_CRITICALSTRIKE")) then
+		szKey = StringReplaceW(szKey, L("STR_PRODUCE_CRITICALSTRIKE"), L("STR_PRODUCE_CRITICALSTRIKELEVEL"))
+	elseif StringFindW(szKey, L("STR_PRODUCE_THERAPY")) then
+		szKey = StringReplaceW(szKey, L("STR_PRODUCE_THERAPYPOWER"), L("STR_PRODUCE_CURE"))
 	end
 	--Output(szKey)
 	self:UpdateList(frame, bSub, szKey)
@@ -883,7 +913,7 @@ function AH_Produce:OnDefaultSearch(frame, bEdit)
 	if bEdit then
 		frame:Lookup("Edit_Search"):ClearText()
 	end
-	frame:Lookup("", ""):Lookup("Text_ComboBox"):SetText("全部")
+	frame:Lookup("", ""):Lookup("Text_ComboBox"):SetText(L("STR_TIP_ALL"))
 end
 
 function AH_Produce:OnSearch(frame)
@@ -919,14 +949,14 @@ function AH_Produce:SelectProfession(frame)
 		table.insert(menu, m)
 	end
 	local m1 = {
-		szOption = "材料",
+		szOption = L("STR_PRODUCE_MATERIAL"),
 		rgb = {255, 128, 0},
 		fnAction = function()
 			self.nProfessionID = -1
 			local text = hEdit:GetText()
 			hEdit:ClearText()
 			hEdit:SetText(text)
-			hText:SetText("材料")
+			hText:SetText(L("STR_PRODUCE_MATERIAL"))
 		end
 	}
 	table.insert(menu, m1)
@@ -941,7 +971,16 @@ end
 function AH_Produce:SelectFilter(frame)
 	local hText = frame:Lookup("", ""):Lookup("Text_Filter")
 	local menu = {}
-	for k, v in ipairs({"帽子", "上衣", "护腕", "腰带", "下装", "鞋子", "武器"}) do
+	local tPos = {
+		L("STR_PRODUCE_HAT"),
+		L("STR_PRODUCE_JACKET"),
+		L("STR_PRODUCE_WRIST"),
+		L("STR_PRODUCE_BELT"),
+		L("STR_PRODUCE_PANTS"),
+		L("STR_PRODUCE_SHOE"),
+		L("STR_PRODUCE_WEAPON")
+	}
+	for k, v in ipairs(tPos) do
 		local m = {
 			szOption = v,
 			fnAction = function()
@@ -997,12 +1036,12 @@ function AH_Produce:GenerateMenu(menu, recipe)
 				local nSubMakeCount = self:GetRecipeTotalCount(recipe)
 				if player.IsRecipeLearned(nCraftID, nRecipeID) then
 					local m_0 = {
-						szOption = "制造 (" .. nSubMakeCount .. ")",
+						szOption = L("STR_PRODUCE_MAKE", nSubMakeCount),
 						fnAction = function()
 							self:OnCastProfessionSkill(nCraftID, nRecipeID, nSubMakeCount)
 						end,
 						fnMouseEnter = function()
-							AH_Helper.OutputTip("按住SHIFT并点击可以批量制造")
+							AH_Helper.OutputTip(L("STR_PRODUCE_MAKETIPS"))
 						end,
 					}
 					table.insert(m0, m_0)
@@ -1193,7 +1232,7 @@ function AH_Produce.OnItemLButtonClick()
 			tExpandItemType.szType = szType
 			AH_Produce.nCurTypeID = this.nTypeID
 			AH_Produce.bIsSearch = true
-			if szType == "附魔" then
+			if szType == L("STR_PRODUCE_ENCHANTING") then
 				AH_Produce:HideAndShowFilter(frame, true)
 			end
 		end
@@ -1205,7 +1244,7 @@ function AH_Produce.OnItemLButtonClick()
 		tExpandItemType.szSubType = szSubType
 		AH_Produce:UpdateItemTypeList(this:GetRoot())
 		AH_Produce:OnSearchType(frame, tExpandItemType.szType, szSubType)
-		frame:Lookup("", ""):Lookup("Text_Filter"):SetText("部位")
+		frame:Lookup("", ""):Lookup("Text_Filter"):SetText(L("STR_PRODUCE_POSITION"))
 	end
 end
 
@@ -1345,7 +1384,7 @@ end
 
 RegisterEvent("LOGIN_GAME", function()
 	TraceButton_AppendAddonMenu({{
-		szOption = "技艺助手",
+		szOption = L("STR_PRODUCE_PRODUCEHELPER"),
 		fnAction = function()
 			AH_Produce.OpenPanel()
 		end,
