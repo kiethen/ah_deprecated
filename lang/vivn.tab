@@ -1,0 +1,233 @@
+﻿szKey	szValue
+STR_LIBRARY_RECIPEINIT	Nạp dữ liệu Công Thức Kỹ năng sống hoàn tất!
+STR_LIBRARY_DIAMONDINIT	Nạp dữ liệu Đá Ngũ Sắc hoàn tất!
+STR_LIBRARY_NEWVERSION	Phát hiện phiên bản hiện tại là：%s, bạn có muốn update?
+STR_TIP_ALL	Tất cả
+STR_TIP_COOKING	Nấu nướng
+STR_TIP_TAILORING	Ma vá
+STR_TIP_FOUNDING	Rèn
+STR_TIP_MEDICINE	Dược
+STR_TIP_DONOTDISASSEMBLE	Không thể tách
+STR_TIP_DEBUGINFO	Debug Info
+STR_TIP_STACK	Gộp
+STR_TIP_SPLITTIP	L_Click để tách, R_Click để gộp\nGiữ phím Alt + L_Click để phân chia
+STR_TIP_TOTAL	Tổng số vật phẩm:
+STR_TIP_BAG	    Túi:
+STR_TIP_BANk	    Kho:
+STR_TIP_PRICE	Giá:
+STR_TIP_RECIPELEARN	<Đã học> Công thức điều chế 
+STR_TIP_RECIPEUNLEARN	<Chưa học> Công thức điều chế 
+STR_PRODUCE_AUXILIARY	Phụ ma
+STR_PRODUCE_ENHANCED	Cường hóa
+STR_PRODUCE_DRUGENHANCED	Thuốc cường hóa
+STR_PRODUCE_DRUGAUXILIARY	Thuốc phụ trợ
+STR_PRODUCE_COOKINGENHANCED	Thức ăn cường hóa
+STR_PRODUCE_COOKINGAUXILIARY	Thức ăn phụ trợ
+STR_PRODUCE_ENCHANTING	Phụ ma
+STR_PRODUCE_OTHER	Khác
+STR_PRODUCE_PARRY	Chống đỡ
+STR_PRODUCE_PARRYVALUE	Phá giải
+STR_PRODUCE_SHIELD	Né Tránh
+STR_PRODUCE_THREAT	Uy hiếp
+STR_PRODUCE_PHYSICSATTACK	Ngoại công
+STR_PRODUCE_PHYSICSHIT	Chính xác ngoại
+STR_PRODUCE_PHYSICSCRITICALSTRIKE	Tỉ lệ bạo kích ngoại
+STR_PRODUCE_PHYSICSCRITICALDAMAGE	Hiệu quả bạo kích ngoại
+STR_PRODUCE_MAGICATTACK	Nội công
+STR_PRODUCE_MAGICWEAPONDAMAGE	Sát thương nội
+STR_PRODUCE_MAGICHIT	Chính xác nội
+STR_PRODUCE_MAGICCRITICALSTRIKE	Tỉ lệ bạo kích nội
+STR_PRODUCE_MAGICCRITICALDAMAGE	Hiệu quả bạo kích nội
+STR_PRODUCE_THERAPYPOWER	Hiệu quả trị liệu
+STR_PRODUCE_STRENGTH	Lực đạo
+STR_PRODUCE_SPIRIT	Căn cốt
+STR_PRODUCE_SPUNK	Nguyên khí
+STR_PRODUCE_AGILITY	Thân pháp
+STR_PRODUCE_POTENTIAL	Thuộc tính
+STR_PRODUCE_VITALITY	Thể chất
+STR_PRODUCE_PHYSICSOVERCOME	Phá phòng ngoại
+STR_PRODUCE_MAGICOVERCOME	Phá phòng nội
+STR_PRODUCE_HIT	Chính xác
+STR_PRODUCE_DODGE	Né tránh
+STR_PRODUCE_HASTE	Tốc độ đánh
+STR_PRODUCE_STRAIN	Vô song
+STR_PRODUCE_TOUGHNESS	Ngự kình
+STR_PRODUCE_DECRITICALDAMAGE	Hóa kình
+STR_PRODUCE_HATE	Cừu hận
+STR_PRODUCE_MOVESPEED	Tốc độ chạy
+STR_PRODUCE_MAGICSHIELD	Phòng thủ nội
+STR_PRODUCE_PHYSICSSHIELD	Phòng thủ ngoại
+STR_PRODUCE_KEY	Chìa khóa
+STR_PRODUCE_ENERGY	Tinh lực
+STR_PRODUCE_BODYSTRENGTH	Thể lực
+STR_PRODUCE_FAVORABILITY	Độ thân mật
+STR_PRODUCE_UNLEARNED	[Chưa học]
+STR_PRODUCE_NEEDSKILL	Yêu cầu：<D0> <D1>
+STR_PRODUCE_STRENGTHEN	Tăng cường
+STR_PRODUCE_AID	Phụ trợ
+STR_PRODUCE_CRITICALPOWER	Hiệu quả bạo kích
+STR_PRODUCE_CRITICALDAMAGEPOWERBASE	Cấp hiệu quả bạo kích
+STR_PRODUCE_CRITICALSTRIKE	Tỉ lệ bạo kích
+STR_PRODUCE_CRITICALSTRIKELEVEL	Cấp tỉ lệ bạo kích
+STR_PRODUCE_THERAPY	Hiệu quả trị liệu
+STR_PRODUCE_CURE	Trị
+STR_PRODUCE_MATERIAL	Nguyên liệu
+STR_PRODUCE_HAT	Mũ
+STR_PRODUCE_JACKET	Áo
+STR_PRODUCE_WRIST	Bao tay
+STR_PRODUCE_BELT	Thắt lưng
+STR_PRODUCE_PANTS	Quần
+STR_PRODUCE_SHOE	Giày
+STR_PRODUCE_WEAPON	Vũ khí
+STR_PRODUCE_MAKE	Chế tạo (%S)
+STR_PRODUCE_MAKETIPS	Giữ SHIFT + R_Click để chế tạo số lượng lớn
+STR_PRODUCE_POSITION	Vị trí
+STR_PRODUCE_PRODUCEHELPER	Craft Helper
+STR_DIAMOND_MAGIC	Nội công
+STR_DIAMOND_PHYSICS	Ngoại công
+STR_DIAMOND_LUNAR	Âm tính
+STR_DIAMOND_NEUTRAL	Hỗn nguyên
+STR_DIAMOND_POISON	Độc tính
+STR_DIAMOND_SOLARANDLUNAR	Âm dương
+STR_DIAMOND_SOLAR	Dương tính
+STR_DIAMOND_ONE	1
+STR_DIAMOND_TWO	2
+STR_DIAMOND_THREE	3
+STR_DIAMOND_FOUR	4
+STR_DIAMOND_FIVE	5
+STR_DIAMOND_SIX	6
+STR_DIAMOND_DIAMONDHELPER	Đá Ngũ Sắc Helper
+STR_DIAMOND_BOXTIPS	R_Click tìm đá giao dịch được, giữ CTRL gửi tới khung chat
+STR_DIAMOND_NORMAL	Bình thường
+STR_DIAMOND_SIMPLIFY	Đơn giản
+STR_DIAMOND_DIAMONDLEVEL	Lựa chọn cấp
+STR_DIAMOND_ATTRIBUTEONE	Lựa chọn thuộc tính 1
+STR_DIAMOND_ATTRIBUTETWO	Lựa chọn thuộc tính 2
+STR_DIAMOND_ATTRIBUTETHREE	Lựa chọn thuộc tính 3
+STR_SPLITER_BEGINSTACK	Gộp vật phẩm
+STR_SPLITER_ENDSTACK	Gộp vật phẩm hoàn tất
+STR_SPLITER_NOITEM	Không tìm được vật phẩm
+STR_SPLITER_GROUPANDNUMBER	Nhập chính xác số nhóm và số lượng
+STR_SPLITER_NOBAGPOS	Không đủ không gian túi
+STR_SPLITER_BEGINSPLIT	Tách vật phẩm
+STR_SPLITER_ENDSPLIT	Tách vật phẩm kết thúc
+STR_SPLITER_SPLITTIPS	Đem vật phẩm bỏ vào túi trước khi phân chia
+STR_SPLITER_PUTITEMS	Bỏ vật phẩm cần tách vào
+STR_SPLITER_GROUP	Số nhóm
+STR_SPLITER_NUMBER	Số lượng
+STR_SPLITER_SPLIT	Tách
+STR_SPLITER_CLOSE	Đóng
+STR_MAILBANK_ITEMNAME	Tên vật phẩm
+STR_MAILBANK_MAILTITLE	Tiêu đề
+STR_MAILBANK_SENDER	Người gửi
+STR_MAILBANK_ENDDATE	Thời gian
+STR_MAILBANK_MONEY	Vàng
+STR_MAILBANK_WILLEND	Hết hạn
+STR_MAILBANK_LESSTHAN	Ít hơn(ngày):
+STR_MAILBANK_WITHIN	Bao gồm ký tự：
+STR_MAILBANK_MAILTIP1	MailBank
+STR_MAILBANK_MAILTIP2	L_Click ở đây có thể mở ra MailBank
+STR_MAILBANK_COURIER	Tín sử
+STR_MAILBANK_TIP1	Chọn thư để nhặt!
+STR_MAILBANK_TIP2	Túi không đủ chỗ trống
+STR_MAILBANK_DELETE	Xóa
+STR_MAILBANK_LEFTTIME	Thời gian còn：%s
+STR_MAILBANK_NUMBER	  Số lượng：%d
+STR_MAILBANK_TIP3	Giữ ALT hiện thị thông tin, L_Click nhặt toàn bộ, R_Click nhặt từng món
+STR_MAILBANK_NORETURN	Không hồi âm
+STR_MAILBANK_PREV	Trang trước
+STR_MAILBANK_NEXT	Trang tiếp
+STR_HELPER_12HOUR	12h
+STR_HELPER_24HOUR	24h
+STR_HELPER_48HOUR	48h
+STR_HELPER_ITEMNAME	Tên vật phẩm
+STR_HELPER_ANYLEVEL	Bất kỳ phẩm chất
+STR_HELPER_ALLSTATE	Tất cả trạng thái
+STR_HELPER_NOBODY	Không ai ra giá
+STR_HELPER_SECOND	%ss
+STR_HELPER_SETTLEMENT	Trung bình
+STR_HELPER_UNITPRICE	Đơn giá
+STR_HELPER_MYPRICE	Giá của tôi
+STR_HELPER_BOOK	Sách
+STR_HELPER_LOWPRICE	Gửi giá hiện tại [Giá thấp nhất]
+STR_HELPER_SYSTEMPRICE	Gửi giá hiện tại [Giá hệ thống]
+STR_HELPER_NOITEMPRICE	Không tìm được giá vật phẩm
+STR_HELPER_TIP1	Gửi bán số lượng lớn：Giữ phím SHIFT + L_Click\nGiữ ALT gửi bán Đá Ngũ Hành hoặc bộ Sách
+STR_HELPER_TIP2	L_Click vào ô Tên vật phẩm mở lịch sử tìm kiếm
+STR_HELPER_MESSAGE1	Chọn gửi bán nhóm/gửi bán đơn
+STR_HELPER_MESSAGE2	        Bạn có chắc bắt đầu gửi bán nhóm
+STR_HELPER_ALERT1	**Trong trang này có vài vật phẩm đã bị AH lược bỏ**
+STR_HELPER_ALERT2	**Trang này đã bị AH lược bỏ**
+STR_HELPER_SEARCHALL	Tìm toàn bộ
+STR_HELPER_CONTACTSELLER	Liên lạc người bán
+STR_HELPER_SHIELDEDSELLER	Blacklist người bán
+STR_HELPER_ADDTOFAVORITES	Thêm vào Yêu thích
+STR_HELPER_USELOWEST	Dùng giá thấp nhất
+STR_HELPER_USESYSTEM	Dùng giá hệ thống
+STR_HELPER_FAVORITES	Yêu thích
+STR_HELPER_SEARCH	Tìm
+STR_HELPER_DELETE	Xóa
+STR_HELPER_BLACKLIST	Blacklist
+STR_HELPER_FAVORITEITEMS	Vật phẩm Yêu thích
+STR_HELPER_DELETEITEMS	Xóa vật phẩm Yêu thích: %s
+STR_HELPER_DELETESELLERS	Xóa người bán xấu: %s
+STR_HELPER_VERSION	Version：v%s
+STR_HELPER_FILTERRECIPE	Lọc Bí kíp đã học
+STR_HELPER_FILTERBOOK	Lọc Sách đã đọc
+STR_HELPER_MAXHISTORY	Lịch sử tối đa
+STR_HELPER_FAVORITEITEMS	Vật phẩm yêu thích
+STR_HELPER_SELLTIME	Thời gian gửi bán
+STR_HELPER_AUTOMATICSPREAD	Tự động định giá
+STR_HELPER_DISCOUNT	Hệ số giảm:
+STR_HELPER_MODIFY	Sửa đổi [%s]
+STR_HELPER_INPUTDISCOUNT	Nhập vào:
+STR_HELPER_COPPER	1 đồng
+STR_HELPER_SLIVER	1 bạc 
+STR_HELPER_GOLD	1 vàng
+STR_HELPER_NOALLPROMPT	Ẩn bảng xác nhận
+STR_HELPER_NOSELLNOTICE	Ẩn bảng xác nhận gửi bán số lượng lớn
+STR_HELPER_DBCTRLSELL	Giữ CTRL và nhấp đôi R_Click để bán nhiều vật phẩm
+STR_HELPER_FASTBID	Đấu giá nhanh
+STR_HELPER_FASTBUY	Mua nhanh
+STR_HELPER_FASTCANCEL	Hủy bán nhanh
+STR_HELPER_DBCLICKTYPE	Cho phép nhấp double chuột
+STR_HELPER_AUTOSEARCH	Cho phép tự động tìm
+STR_HELPER_FORMATMONEY	Đơn vị thanh toán
+STR_HELPER_SHOWTIPEX	Hiện thông tin công thức
+STR_HELPER_RESETPRICE	Tái lập số liệu giá
+STR_HELPER_MAXHISTORYTIPS	Ghi chép lịch sử tìm kiếm vật phẩm
+STR_HELPER_SELLTIMETIPS	Gửi bán vật phẩm trong thời gian bảo quản
+STR_HELPER_FILTERRECIPETIPS	Sau khi chọn mục này, lọc Bí kíp đã đọc
+STR_HELPER_FILTERBOOKTIPS	Sau khi chọn mục này,
+STR_HELPER_AUTOMATICSPREADTIPS	Sau khi chọn mục này, gửi bán vật phẩm sẽ tự động nhân với hệ số chênh lệch
+STR_HELPER_NOALLPROMPTTIPS	Sau khi chọn mục này, tự động ẩn các yêu cầu xác nhận trong Giao dịch
+STR_HELPER_FASTBIDTIPS	Giữ CTRL + SHIFT, L_Click vào vật phẩm để nhanh chóng gửi bán
+STR_HELPER_FASTBUYTIPS	Giữ ALT + CTRL, L_Click vào vật phẩm để nhanh chóng mua
+STR_HELPER_FASTCANCELTIPS	Giữ ALT + CTRL, L_Click vào vật phẩm để nhanh chóng hủy bỏ
+STR_HELPER_AUTOSEARCHTIPS	Giữ CTRL, L_Click vào vật phẩm trong túi để nhanh chóng tim
+STR_HELPER_FORMATMONEYTIPS	Vật phẩm có giá lớn sẽ tự làm tròn
+STR_HELPER_SHOWTIPEXTIPS	Giữ ALT/SHIFT sẽ hiện thông tin bổ sung vật phẩm
+STR_HELPER_RESETPRICETIPS	Tái lập số liệu
+STR_HELPER_ADDITIONALDROP	Mở ra
+STR_HELPER_VIEWDROP	Xem thêm
+STR_HELPER_LOWEST	Thấp nhất
+STR_HELPER_SYSTEM	Hệ thống
+STR_HELPER_SELLERROR	Gửi bán thất bại! Kiểm tra lại vật phẩm gửi bán
+STR_HELPER_COLORDIAMOND	Thái-(.+)-(.+)-(.+)%p(.+)%p
+STR_HELPER_MESSAGETITLE	<AH>%s
+STR_HELPER_SEARCHITEM	Tìm %s: %s
+STR_HELPER_BEADDTOFAVORITES	%s đã được thêm vào Yêu thích
+STR_HELPER_BEADDTOBLACKLIST	%s đã được thêm vào Blacklist
+STR_HELPER_PRICE1	Tổng giá：
+STR_HELPER_PRICE2	Đơn giá：
+STR_HELPER_CLEARHISTORY	Làm trống lịch sử ghi chép
+STR_HELPER_INCOMPATIBLETIPS	Plugin hoạt động không ổn định, đã bị cướng chết ngừng sử dụng
+STR_HELPER_HELPER	AH
+STR_HELPER_SLPITITEM	Tách vật phẩm
+STR_HELPER_STACKITEM	Gộp vật phẩm
+STR_HELPER_TEXTPRICE	Giá vật phẩm
+STR_HELPER_TEXTFAVORITE	Yêu thích
+STR_HELPER_TEXTSPLIT	Split
+STR_HELPER_TEXTPRODUCE	Craft
+STR_HELPER_TEXTDIAMOND	Đá
+STR_HELPER_TEXTOPTION	Option
