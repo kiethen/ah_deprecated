@@ -36,6 +36,7 @@ AH_Helper = {
 	bSaleAlert = false,
 	bSellNotice = false,
 	bFormatMoney = true,
+	bDBCtrlSell = false,
 	nShowTipType = 1,
 
 	tItemFavorite = {},
@@ -78,6 +79,7 @@ RegisterCustomData("AH_Helper.bSellNotice")
 RegisterCustomData("AH_Helper.bFastBid")
 RegisterCustomData("AH_Helper.bFastBuy")
 RegisterCustomData("AH_Helper.bFastCancel")
+RegisterCustomData("AH_Helper.bDBCtrlSell")
 RegisterCustomData("AH_Helper.tItemHistory")
 RegisterCustomData("AH_Helper.tItemFavorite")
 RegisterCustomData("AH_Helper.tBlackList")
@@ -637,13 +639,18 @@ end
 function AH_Helper.OnExchangeBoxItem(boxItem, boxDsc, nHandCount, bHand)
 	if boxDsc == AH_Helper.boxDsc and not boxItem:IsEmpty() then
 		local frame = Station.Lookup("Normal/AuctionPanel")
-		local tMsg = {
-			szName = "AuctionSell3",
-			szMessage = L("STR_HELPER_MESSAGE1"),
-			{szOption = g_tStrings.STR_HOTKEY_SURE, fnAction = function() AH_Helper.AuctionAutoSell(frame) end, },
-			{szOption = g_tStrings.STR_HOTKEY_CANCEL, fnAction = function() AH_Helper.AuctionSellOrg(frame) end,},
-		}
-		MessageBox(tMsg)
+		if AH_Helper.bDBCtrlSell then
+			--[[local tMsg = {
+				szName = "AuctionSell3",
+				szMessage = L("STR_HELPER_MESSAGE1"),
+				{szOption = g_tStrings.STR_HOTKEY_SURE, fnAction = function() AH_Helper.AuctionAutoSell(frame) end, },
+				{szOption = g_tStrings.STR_HOTKEY_CANCEL, fnAction = function() AH_Helper.AuctionSellOrg(frame) end,},
+			}
+			MessageBox(tMsg)]]
+			AH_Helper.AuctionAutoSell(frame)
+		else
+			AH_Helper.AuctionSellOrg(frame)
+		end
 	else
 		AH_Helper.OnExchangeBoxItemOrg(boxItem, boxDsc, nHandCount, bHand)
 		AH_Helper.boxDsc = boxDsc
@@ -944,6 +951,7 @@ function AH_Helper.AddWidget(frame)
 					{ bDevide = true },
 					{szOption = L("STR_HELPER_NOALLPROMPT"), bCheck = true, bChecked = AH_Helper.bNoAllPrompt, fnAction = function() AH_Helper.bNoAllPrompt = not AH_Helper.bNoAllPrompt end, fnMouseEnter = function() AH_Helper.OutputTip(L("STR_HELPER_NOALLPROMPTTIPS")) end,
 						{szOption = L("STR_HELPER_NOSELLNOTICE"), bCheck = true, bChecked = AH_Helper.bSellNotice, fnAction = function() AH_Helper.bSellNotice = not AH_Helper.bSellNotice end,},
+						{szOption = L("STR_HELPER_DBCTRLSELL"), bCheck = true, bChecked = AH_Helper.bDBCtrlSell, fnAction = function() AH_Helper.bDBCtrlSell = not AH_Helper.bDBCtrlSell end,},
 					},
 					{ bDevide = true },
 					{szOption = L("STR_HELPER_FASTBID"), bCheck = true, bChecked = AH_Helper.bFastBid, fnAction = function() AH_Helper.bFastBid = not AH_Helper.bFastBid end, fnMouseEnter = function() AH_Helper.OutputTip(L("STR_HELPER_FASTBIDTIPS")) end,},
