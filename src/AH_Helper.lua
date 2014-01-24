@@ -565,7 +565,7 @@ function AH_Helper.GetItemSellInfo(szItemName)
 			if szItemName == k and MoneyOptCmp(v[1], PRICE_LIMITED) ~= 0 then
 				local u = {szName = k, tBidPrice = 0, tBuyPrice = 0, szTime = AH_Helper.szDefaultTime}
                 if AH_Helper.szDefaultValue == "Btn_Min" then
-                    AH_Helper.Message(L("STR_HELPER_LOWPRICE"))
+                    AH_Library.Message(L("STR_HELPER_LOWPRICE"))
                     u.tBidPrice = v[1]
                     u.tBuyPrice = v[1]
 					if AH_Helper.bLowestPrices then
@@ -586,15 +586,15 @@ function AH_Helper.GetItemSellInfo(szItemName)
                 end
             end
 		end
-        AH_Helper.Message(L("STR_HELPER_NOITEMPRICE"))
+        AH_Library.Message(L("STR_HELPER_NOITEMPRICE"))
 	else
-		AH_Helper.Message(L("STR_HELPER_SYSTEMPRICE"))
+		AH_Library.Message(L("STR_HELPER_SYSTEMPRICE"))
 		for k, v in pairs(AuctionPanel.tItemSellInfoCache) do
 			if v.szName == szItemName then
 				return v
 			end
 		end
-		AH_Helper.Message(L("STR_HELPER_NOITEMPRICE"))
+		AH_Library.Message(L("STR_HELPER_NOITEMPRICE"))
     end
 	return nil
 end
@@ -870,7 +870,7 @@ function AH_Helper.AddWidget(frame)
 					{
 						szOption = k,
 						{szOption = L("STR_HELPER_SEARCH"), fnAction = function() AH_Helper.UpdateList(k, L("STR_HELPER_FAVORITEITEMS")) AH_Helper.szLastSearchKey = nil end,},
-						{szOption = L("STR_HELPER_DELETE"), fnAction = function() local szText = L("STR_HELPER_DELETEITEMS", k) AH_Helper.Message(szText) AH_Helper.tItemFavorite[k] = nil end,},
+						{szOption = L("STR_HELPER_DELETE"), fnAction = function() local szText = L("STR_HELPER_DELETEITEMS", k) AH_Library.Message(szText) AH_Helper.tItemFavorite[k] = nil end,},
 					})
 				end
 				local m_3 = {szOption = L("STR_HELPER_BLACKLIST")}
@@ -878,7 +878,7 @@ function AH_Helper.AddWidget(frame)
 					table.insert(m_3,
 					{
 						szOption = k,
-						{szOption = L("STR_HELPER_DELETE"), fnAction = function() local szText = L("STR_HELPER_DELETESELLERS", k) AH_Helper.Message(szText) AH_Helper.tBlackList[k] = nil AH_Helper.UpdateList() end,},
+						{szOption = L("STR_HELPER_DELETE"), fnAction = function() local szText = L("STR_HELPER_DELETESELLERS", k) AH_Library.Message(szText) AH_Helper.tBlackList[k] = nil AH_Helper.UpdateList() end,},
 					})
 				end
 				table.insert(menu, m_1)
@@ -966,7 +966,7 @@ function AH_Helper.AddWidget(frame)
 					{szOption = L("STR_HELPER_FORMATMONEY"), bCheck = true, bChecked = AH_Helper.bFormatMoney, fnAction = function() AH_Helper.bFormatMoney = not AH_Helper.bFormatMoney end, fnMouseEnter = function() AH_Helper.OutputTip(L("STR_HELPER_FORMATMONEYTIPS")) end,},
 					{szOption = L("STR_HELPER_SHOWTIPEX"), bCheck = true, bChecked = AH_Tip.bShowTipEx, fnAction = function() AH_Tip.bShowTipEx = not AH_Tip.bShowTipEx end, fnMouseEnter = function() AH_Helper.OutputTip(L("STR_HELPER_SHOWTIPEXTIPS")) end,},
 					{ bDevide = true },
-					{szOption = L("STR_HELPER_RESETPRICE"), fnAction = function() AH_Helper.tItemPrice = {} AH_Helper.Message(L("STR_HELPER_RESETPRICETIPS")) end,},
+					{szOption = L("STR_HELPER_RESETPRICE"), fnAction = function() AH_Helper.tItemPrice = {} AH_Library.Message(L("STR_HELPER_RESETPRICETIPS")) end,},
 				}
 				PopupMenu(menu)
 			end
@@ -981,7 +981,7 @@ end
 function AH_Helper.OutputTip(szText, nFont)
 	local x, y = this:GetAbsPos()
 	local w, h = this:GetSize()
-	OutputTip(GetFormatText(szText, nFont or 101), 300, {x, y, w, h})
+	OutputTip(GetFormatText(szText, nFont or 18), 300, {x, y, w, h})
 end
 
 function AH_Helper.GetGuiShiDrop(hItem)
@@ -1153,10 +1153,6 @@ function AH_Helper.AuctionAutoSell2(frame)
 	PlaySound(SOUND.UI_SOUND, g_sound.Trade)
 end
 
-function AH_Helper.Message(szMsg)
-	OutputMessage("MSG_SYS", L("STR_HELPER_MESSAGETITLE", szMsg) .. "\n")
-end
-
 function AH_Helper.UpdateList(szItemName, szType)
 	if not szItemName then
 		szItemName = ""
@@ -1170,7 +1166,7 @@ function AH_Helper.UpdateList(szItemName, szType)
 
 	if szType and szType ~= "" then
 		local szText = L("STR_HELPER_SEARCHITEM", szType, szItemName)
-		AH_Helper.Message(szText)
+		AH_Library.Message(szText)
 	end
 	AuctionPanel.ApplyLookup(frame, "Search", t.nSortType, "", 1, t.bDesc)
 end
@@ -1207,13 +1203,13 @@ end
 function AH_Helper.AddFavorite(szItemName)
     AH_Helper.tItemFavorite[szItemName] = 1
 	local szText = L("STR_HELPER_BEADDTOFAVORITES", szItemName)
-    AH_Helper.Message(szText)
+    AH_Library.Message(szText)
 end
 
 function AH_Helper.AddBlackList(szSellerName)
     AH_Helper.tBlackList[szSellerName] = 1
     local szText = L("STR_HELPER_BEADDTOBLACKLIST", szSellerName)
-	AH_Helper.Message(szText)
+	AH_Library.Message(szText)
 end
 
 function AH_Helper.AddHistory(szKeyName)
@@ -1443,7 +1439,7 @@ RegisterEvent("OPEN_AUCTION", function()
 		bNotExistOtherAddon = true
 	end
 	if bNotExistOtherAddon then
-		AH_Helper.Message(L("STR_HELPER_INCOMPATIBLETIPS"))
+		AH_Library.Message(L("STR_HELPER_INCOMPATIBLETIPS"))
 		AH_Helper.FuncHook()
 	end
 	AH_Helper.SetSellPriceType()

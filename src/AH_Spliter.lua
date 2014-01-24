@@ -19,7 +19,7 @@ local function PlayTipSound(szSound)
 end
 
 function AH_Spliter.StackItem()
-	OutputMessage("MSG_SYS", L("STR_SPLITER_BEGINSTACK") .. "\n")
+	AH_Library.Message(L("STR_SPLITER_BEGINSTACK"))
 	local player = GetClientPlayer()
 	local tBoxTable = {}
 	for i = 1, 6 do
@@ -58,7 +58,7 @@ function AH_Spliter.StackItem()
 			end
 		end
 	end
-	OutputMessage("MSG_SYS", L("STR_SPLITER_ENDSTACK") .. "\n")
+	AH_Library.Message(L("STR_SPLITER_ENDSTACK"))
 end
 
 function AH_Spliter.SplitItem(frame)
@@ -76,22 +76,22 @@ function AH_Spliter.SplitItem(frame)
 	local player = GetClientPlayer()
 
 	if not GetPlayerItem(player, hBox.dwBox, hBox.dwX) then
-		OutputMessage("MSG_SYS", L("STR_SPLITER_NOITEM") .. "\n")
+		AH_Library.Message(L("STR_SPLITER_NOITEM"))
 		return
 	end
 
 	if hBox.nCount < nGroup * nNum or nGroup * nNum == 0 then
-		OutputMessage("MSG_SYS", L("STR_SPLITER_GROUPANDNUMBER") .. "\n")
+		AH_Library.Message(L("STR_SPLITER_GROUPANDNUMBER"))
         return
     end
 
 	local tFreeBoxList = AH_Spliter.GetPlayerBagFreeBoxList()
 	if #tFreeBoxList < nGroup then
-		OutputMessage("MSG_SYS", L("STR_SPLITER_NOBAGPOS") .. "\n")
+		AH_Library.Message(L("STR_SPLITER_NOBAGPOS"))
 		return
 	end
 
-	OutputMessage("MSG_SYS", L("STR_SPLITER_BEGINSPLIT") .. "\n")
+	AH_Library.Message(L("STR_SPLITER_BEGINSPLIT"))
 	for i = 1, nGroup do
 		local dwBox, dwX = tFreeBoxList[i][1], tFreeBoxList[i][2]
 		player.ExchangeItem(hBox.dwBox, hBox.dwX, dwBox, dwX, nNum)
@@ -101,7 +101,7 @@ function AH_Spliter.SplitItem(frame)
 		AH_Spliter.tItemHistory[hBox.szName] = {}
 	end
 	AH_Spliter.tItemHistory[hBox.szName] = {nGroup, nNum}
-	OutputMessage("MSG_SYS", L("STR_SPLITER_ENDSPLIT") .. "\n")
+	AH_Library.Message(L("STR_SPLITER_ENDSPLIT"))
 end
 
 function AH_Spliter.GetPlayerBagFreeBoxList()

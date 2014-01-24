@@ -419,13 +419,13 @@ function AH_MailBank.TakeMailItemToBag(fnAction, nCount)
 	local dwID, dwType = Target_GetTargetData()
 	local hNpc = dwType == TARGET.NPC and GetNpc(dwID) or nil
 	if not hNpc or (hNpc and not StringFindW(hNpc.szTitle, L("STR_MAILBANK_COURIER"))) then
-		OutputMessage("MSG_SYS", L("STR_MAILBANK_TIP1") .. "\n")
+		AH_Library.Message(L("STR_MAILBANK_TIP1"))
 		OutputWarningMessage("MSG_NOTICE_YELLOW", L("STR_MAILBANK_TIP1"), 2)
 		return
 	end
 	local tFreeBoxList = AH_Spliter.GetPlayerBagFreeBoxList()
 	if nCount > #tFreeBoxList then
-		OutputMessage("MSG_SYS", L("STR_MAILBANK_TIP2") .. "n")
+		AH_Library.MessageL(("STR_MAILBANK_TIP2"))
 		OutputWarningMessage("MSG_NOTICE_YELLOW", L("STR_MAILBANK_TIP2"), 2)
 		return
 	end
@@ -456,8 +456,8 @@ function AH_MailBank.OnFrameCreate()
 	handle:Lookup("Text_Title"):SetText(L("STR_MAILBANK_MAILTIP1"))
 	handle:Lookup("Text_Tips"):SetText(L("STR_MAILBANK_TIP3"))
 	handle:Lookup("Text_NotReturn"):SetText(L("STR_MAILBANK_NORETURN"))
-	this:Lookup("Btn_Prev"):Lookup("", "")Lookup("Text_Prev"):SetText(L("STR_MAILBANK_PREV"))
-	this:Lookup("Btn_Next"):Lookup("", "")Lookup("Text_Next"):SetText(L("STR_MAILBANK_NEXT"))
+	this:Lookup("Btn_Prev"):Lookup("", ""):Lookup("Text_Prev"):SetText(L("STR_MAILBANK_PREV"))
+	this:Lookup("Btn_Next"):Lookup("", ""):Lookup("Text_Next"):SetText(L("STR_MAILBANK_NEXT"))
 
 	local hBg = handle:Lookup("Handle_Bg")
 	local hBox = handle:Lookup("Handle_Box")

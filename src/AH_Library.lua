@@ -601,6 +601,10 @@ function AH_Library.OnTitleChanged()
 	end
 end
 
+function AH_Library.Message(szMsg)
+	OutputMessage("MSG_SYS", FormatString("<text>text=\"<AH>\" font=10 r=0 g=196 b=196</text><text>text=\"<D0>\n\" font=10 r=255 g=255 b=255</text>", szMsg), true)
+end
+
 --LUA base64º”√‹
 local b = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
 function base64(data)
