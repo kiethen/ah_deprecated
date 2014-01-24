@@ -156,24 +156,23 @@ function AH_Diamond.PopupDiamondAttribute(frame, nIndex, nAtr)
 	end
 
 	--处理分类
-	local tTemp, i = {}, 1
+	local tTemp = {}
 	for k, v in ipairs(AH_Library.tColorMagic[szType]) do
 		if AH_Diamond.IsMagicInAttribute(szType, v[1], nAtr) then
-			if not tTemp[i] then
-				tTemp[i] = {}
+			if not tTemp[k] then
+				tTemp[k] = {}
 			end
 			local szAtr = string.sub(v[2], 1, 4)
 			if AH_Diamond.IsMagicAttribute(szAtr) then
 				local t = _get(tTemp, szAtr)
 				if not t then
-					tTemp[i][szAtr] = {}
+					tTemp[k][szAtr] = {}
 					t = _get(tTemp, szAtr)
 				end
 				table.insert(t[szAtr], {v[1], v[2]})
 			else
-				table.insert(tTemp[i], {v[1], v[2]})
+				table.insert(tTemp[k], {v[1], v[2]})
 			end
-			i = i + 1
 		end
 	end
 	--生成菜单

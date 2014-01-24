@@ -618,6 +618,6 @@ end
 
 Wnd.OpenWindow(szIniFile, "AH_Library")
 
-RegisterEvent("CALL_LUA_ERROR", function()
-	OutputMessage("MSG_SYS", arg0)
-end)
+--~ RegisterEvent("CALL_LUA_ERROR", function()
+--~ 	OutputMessage("MSG_SYS", arg0)
+--~ end)
