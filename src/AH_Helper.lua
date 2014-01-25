@@ -56,7 +56,7 @@ AH_Helper = {
 local tBidTime = {}
 local bFilterd = false
 local bHooked = false
-local bClickSearch = false
+local bAutoSearch = false
 
 --------------------------------------------------------
 -- 用户数据存储
@@ -344,7 +344,7 @@ function AH_Helper.SetSaleInfo(hItem, szDataType, tItemData)
 			--最低一口
 			if MoneyOptCmp(AH_Helper.tItemPrice[szKey][1], tBuyPrice) == 1 then
 				AH_Helper.tItemPrice[szKey][1] = tBuyPrice
-				if not bClickSearch then
+				if bAutoSearch then
 					local szMoney = GetMoneyText(GoldSilverAndCopperToMoney(UnpackMoney(tBuyPrice)), "font=10")
 					local szColor = GetItemFontColorByQuality(item.nQuality, true)
 					local szItem = MakeItemInfoLink(string.format("[%s]", szKey), string.format("font=10 %s", szColor), item.nVersion, item.dwTabType, item.dwIndex)
@@ -633,7 +633,7 @@ function AH_Helper.OnLButtonClick()
 		szText = string.gsub(szText, "^%s*(.-)%s*$", "%1")
 		szText = string.gsub(szText, "[%[%]]", "")
 		hEdit:SetText(szText)
-		bClickSearch = true
+		bAutoSearch = false
 	end
 	AH_Helper.OnLButtonClickOrg()
 end
@@ -664,13 +664,12 @@ function AH_Helper.OnEditChanged()
 	local szName = this:GetName()
 	if szName == "Edit_ItemName" and AH_Helper.bAutoSearch then
 		local hFocus = Station.GetFocusWindow()
-		local szName = nil
 		if hFocus then
-			szName = hFocus:GetName()
-		end
-		if this:GetTextLength() > 0 and szName == "BigBagPanel" then
-			bClickSearch = false
-			AH_Helper.UpdateList(this:GetText(), "", true)
+			local szName = hFocus:GetName()
+			if this:GetTextLength() > 0 and szName == "BigBagPanel" then
+				bAutoSearch = true
+				AH_Helper.UpdateList(this:GetText(), "", true)
+			end
 		end
 	else
 		AH_Helper.OnEditChangedOrg()
@@ -824,7 +823,7 @@ function AH_Helper.OnItemRButtonClick()
 		local szItemName = this.szItemName
 		local szSellerName = this.szSellerName
 		local menu = {
-			{szOption = L("STR_HELPER_SEARCHALL"), fnAction = function() bClickSearch = false AH_Helper.UpdateList(szItemName) end,},
+			{szOption = L("STR_HELPER_SEARCHALL"), fnAction = function() bAutoSearch = false AH_Helper.UpdateList(szItemName) end,},
 			{szOption = L("STR_HELPER_CONTACTSELLER"), fnAction = function() EditBox_TalkToSomebody(szSellerName) end,},
 			{szOption = L("STR_HELPER_SHIELDEDSELLER"), fnAction = function() AH_Helper.AddBlackList(szSellerName) AH_Helper.UpdateList() end,},
 			{szOption = L("STR_HELPER_ADDTOFAVORITES"), fnAction = function() AH_Helper.AddFavorite(szItemName) end,},
@@ -888,7 +887,7 @@ function AH_Helper.AddWidget(frame)
 					table.insert(m_1,
 					{
 						szOption = k,
-						{szOption = L("STR_HELPER_SEARCH"), fnAction = function() bClickSearch = false AH_Helper.UpdateList(k, L("STR_HELPER_FAVORITEITEMS")) end,},
+						{szOption = L("STR_HELPER_SEARCH"), fnAction = function() bAutoSearch = false AH_Helper.UpdateList(k, L("STR_HELPER_FAVORITEITEMS")) end,},
 						{szOption = L("STR_HELPER_DELETE"), fnAction = function() local szText = L("STR_HELPER_DELETEITEMS", k) AH_Library.Message(szText) AH_Helper.tItemFavorite[k] = nil end,},
 					})
 				end
@@ -1286,7 +1285,7 @@ function AH_Helper.GetHistory()
 		local m = {
 			szOption = AH_Helper.tItemHistory[i].szName,
 			fnAction = function()
-				bClickSearch = false
+				bAutoSearch = false
 				AH_Helper.UpdateList(AH_Helper.tItemHistory[i].szName)
 			end,
 		}
@@ -1432,6 +1431,6 @@ RegisterEvent("OPEN_AUCTION", function()
 end)
 
 Hotkey.AddBinding("AH_Produce_Open", L("STR_PRODUCE_PRODUCEHELPER"), L("STR_HELPER_HELPER"), function() AH_Produce.OpenPanel() end, nil)
-Hotkey.AddBinding("AH_Produce_Open", L("STR_DIAMOND_DIAMONDHELPER"), "", function() AH_Diamond.OpenPanel() end, nil)
+Hotkey.AddBinding("AH_Diamond_Open", L("STR_DIAMOND_DIAMONDHELPER"), "", function() AH_Diamond.OpenPanel() end, nil)
 Hotkey.AddBinding("AH_Spliter_Open", L("STR_HELPER_SLPITITEM"), "", function() AH_Spliter.OnSplitBoxItem() end, nil)
 Hotkey.AddBinding("AH_Spliter_StackItem", L("STR_HELPER_STACKITEM"), "", function() AH_Spliter.StackItem() end, nil)
