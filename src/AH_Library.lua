@@ -248,6 +248,15 @@ if not ALL_CRAFT_TYPE then
 	}
 end
 
+if not MakeItemInfoLink then
+	MakeItemInfoLink = function(szName, szFont, nVersion, dwTabType, dwIndex)
+		local szLink = "<text>text="..EncodeComponentsString(szName)..
+			szFont.."name=\"iteminfolink\" eventid=513 script="..
+				EncodeComponentsString("this.nVersion="..nVersion.."\nthis.dwTabType="..dwTabType.."\nthis.dwIndex="..dwIndex).."</text>"
+		return szLink
+	end
+end
+
 if not OpenInternetExplorer then
 	IsInternetExplorerOpened = function(nIndex)
 		local frame = Station.Lookup("Topmost/IE"..nIndex)
@@ -601,8 +610,13 @@ function AH_Library.OnTitleChanged()
 	end
 end
 
-function AH_Library.Message(szMsg)
-	OutputMessage("MSG_SYS", FormatString("<text>text=\"<AH>\" font=10 r=0 g=196 b=196</text><text>text=\"<D0>\n\" font=10 r=255 g=255 b=255</text>", szMsg), true)
+function AH_Library.Message(szMsg, bMoney)
+	if not bMoney then
+		OutputMessage("MSG_SYS", FormatString("<text>text=\"[AH] \" font=10 r=0 g=196 b=196</text><text>text=\"<D0>\n\" font=10 r=255 g=255 b=255</text>", szMsg), true)
+	else
+		local szItem, szText, szMoney = unpack(szMsg)
+		OutputMessage("MSG_SYS", FormatString("<text>text=\"[AH] \" font=10 r=0 g=196 b=196</text><D0><text>text=\"<D1>\" font=10 r=255 g=255 b=255</text><D2><text>text=\"\n\"</text>", szItem, szText, szMoney), true)
+	end
 end
 
 --LUA base64º”√‹

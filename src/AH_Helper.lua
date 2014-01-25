@@ -14,13 +14,11 @@ local tonumber = tonumber
 AH_Helper = {
 	szDefaultValue = "Btn_Min",
 	szDefaultTime = L("STR_HELPER_24HOUR"),
-	szLastSearchKey = nil,
 
 	nVersion = 0,
 	nPricePercentage = 0.95,
 	nDefaultPrices = 1,
 	nMaxHistory = 10,
-	nShowTipType = 1,
 
 	bFastBid = true,
 	bFastBuy = true,
@@ -33,11 +31,9 @@ AH_Helper = {
 	bFilterRecipe = false,
 	bFilterBook = false,
 	bAutoSearch = true,
-	bSaleAlert = false,
 	bSellNotice = false,
 	bFormatMoney = true,
 	bDBCtrlSell = false,
-	nShowTipType = 1,
 
 	tItemFavorite = {},
 	tBlackList = {},
@@ -60,6 +56,7 @@ AH_Helper = {
 local tBidTime = {}
 local bFilterd = false
 local bHooked = false
+local bClickSearch = false
 
 --------------------------------------------------------
 -- 用户数据存储
@@ -68,7 +65,6 @@ RegisterCustomData("AH_Helper.szDefaultValue")
 RegisterCustomData("AH_Helper.szDefaultTime")
 RegisterCustomData("AH_Helper.nDefaultPrices")
 RegisterCustomData("AH_Helper.nMaxHistory")
-RegisterCustomData("AH_Helper.nShowTipType")
 RegisterCustomData("AH_Helper.nPricePercentage")
 RegisterCustomData("AH_Helper.bFilterRecipe")
 RegisterCustomData("AH_Helper.bFilterBook")
@@ -179,6 +175,7 @@ AH_Helper.OnItemLButtonClickOrg = AuctionPanel.OnItemLButtonClick
 AH_Helper.OnItemLButtonDBClickOrg = AuctionPanel.OnItemLButtonDBClick
 AH_Helper.OnItemMouseEnterOrg = AuctionPanel.OnItemMouseEnter
 AH_Helper.OnItemMouseLeaveOrg = AuctionPanel.OnItemMouseLeave
+AH_Helper.OnEditChangedOrg = AuctionPanel.OnEditChanged
 AH_Helper.InitOrg = AuctionPanel.Init
 AH_Helper.ShowNoticeOrg = AuctionPanel.ShowNotice
 AH_Helper.UpdateSaleInfoOrg = AuctionPanel.UpdateSaleInfo
@@ -347,6 +344,12 @@ function AH_Helper.SetSaleInfo(hItem, szDataType, tItemData)
 			--最低一口
 			if MoneyOptCmp(AH_Helper.tItemPrice[szKey][1], tBuyPrice) == 1 then
 				AH_Helper.tItemPrice[szKey][1] = tBuyPrice
+				if not bClickSearch then
+					local szMoney = GetMoneyText(GoldSilverAndCopperToMoney(UnpackMoney(tBuyPrice)), "font=10")
+					local szColor = GetItemFontColorByQuality(item.nQuality, true)
+					local szItem = MakeItemInfoLink(string.format("[%s]", szKey), string.format("font=10 %s", szColor), item.nVersion, item.dwTabType, item.dwIndex)
+					AH_Library.Message({szItem, "最低价：", szMoney}, true)
+				end
 			end
 		end
 	end
@@ -624,14 +627,13 @@ end
 
 function AH_Helper.OnLButtonClick()
 	local szName  = this:GetName()
-	if szName == "Btn_SearchDefault" then
-		AH_Helper.szLastSearchKey = nil
-	elseif szName == "Btn_Search" then
+	if szName == "Btn_Search" then
 		local hEdit = AH_Helper.GetSearchEdit()
 		local szText = hEdit:GetText()
 		szText = string.gsub(szText, "^%s*(.-)%s*$", "%1")
 		szText = string.gsub(szText, "[%[%]]", "")
 		hEdit:SetText(szText)
+		bClickSearch = true
 	end
 	AH_Helper.OnLButtonClickOrg()
 end
@@ -655,6 +657,23 @@ function AH_Helper.OnExchangeBoxItem(boxItem, boxDsc, nHandCount, bHand)
 		AH_Helper.OnExchangeBoxItemOrg(boxItem, boxDsc, nHandCount, bHand)
 		AH_Helper.boxDsc = boxDsc
 		RemoveUILockItem("Auction")
+	end
+end
+
+function AH_Helper.OnEditChanged()
+	local szName = this:GetName()
+	if szName == "Edit_ItemName" and AH_Helper.bAutoSearch then
+		local hFocus = Station.GetFocusWindow()
+		local szName = nil
+		if hFocus then
+			szName = hFocus:GetName()
+		end
+		if this:GetTextLength() > 0 and szName == "BigBagPanel" then
+			bClickSearch = false
+			AH_Helper.UpdateList(this:GetText(), "", true)
+		end
+	else
+		AH_Helper.OnEditChangedOrg()
 	end
 end
 
@@ -805,7 +824,7 @@ function AH_Helper.OnItemRButtonClick()
 		local szItemName = this.szItemName
 		local szSellerName = this.szSellerName
 		local menu = {
-			{szOption = L("STR_HELPER_SEARCHALL"), fnAction = function() AH_Helper.UpdateList(szItemName) end,},
+			{szOption = L("STR_HELPER_SEARCHALL"), fnAction = function() bClickSearch = false AH_Helper.UpdateList(szItemName) end,},
 			{szOption = L("STR_HELPER_CONTACTSELLER"), fnAction = function() EditBox_TalkToSomebody(szSellerName) end,},
 			{szOption = L("STR_HELPER_SHIELDEDSELLER"), fnAction = function() AH_Helper.AddBlackList(szSellerName) AH_Helper.UpdateList() end,},
 			{szOption = L("STR_HELPER_ADDTOFAVORITES"), fnAction = function() AH_Helper.AddFavorite(szItemName) end,},
@@ -869,7 +888,7 @@ function AH_Helper.AddWidget(frame)
 					table.insert(m_1,
 					{
 						szOption = k,
-						{szOption = L("STR_HELPER_SEARCH"), fnAction = function() AH_Helper.UpdateList(k, L("STR_HELPER_FAVORITEITEMS")) AH_Helper.szLastSearchKey = nil end,},
+						{szOption = L("STR_HELPER_SEARCH"), fnAction = function() bClickSearch = false AH_Helper.UpdateList(k, L("STR_HELPER_FAVORITEITEMS")) end,},
 						{szOption = L("STR_HELPER_DELETE"), fnAction = function() local szText = L("STR_HELPER_DELETEITEMS", k) AH_Library.Message(szText) AH_Helper.tItemFavorite[k] = nil end,},
 					})
 				end
@@ -1153,7 +1172,7 @@ function AH_Helper.AuctionAutoSell2(frame)
 	PlaySound(SOUND.UI_SOUND, g_sound.Trade)
 end
 
-function AH_Helper.UpdateList(szItemName, szType)
+function AH_Helper.UpdateList(szItemName, szType, bNotInit)
 	if not szItemName then
 		szItemName = ""
 	end
@@ -1161,7 +1180,9 @@ function AH_Helper.UpdateList(szItemName, szType)
 	local frame = Station.Lookup("Normal/AuctionPanel")
 	AuctionPanel.tSearch = tSearchInfoDefault
 	AuctionPanel.tSearch["Name"] = szItemName
-	AuctionPanel.InitSearchInfo(frame, AuctionPanel.tSearch)
+	if not bNotInit then
+		AuctionPanel.InitSearchInfo(frame, AuctionPanel.tSearch)
+	end
 	AuctionPanel.SaveSearchInfo(frame)
 
 	if szType and szType ~= "" then
@@ -1265,6 +1286,7 @@ function AH_Helper.GetHistory()
 		local m = {
 			szOption = AH_Helper.tItemHistory[i].szName,
 			fnAction = function()
+				bClickSearch = false
 				AH_Helper.UpdateList(AH_Helper.tItemHistory[i].szName)
 			end,
 		}
@@ -1279,29 +1301,6 @@ function AH_Helper.GetHistory()
 	}
 	table.insert(menu, d)
 
-	return menu
-end
-
-function AH_Helper.GetHotItem()
-	local menu = {}
-	for k1, v1 in pairs(AH_Data.HotItem) do
-		local m_1 = { szOption = k1 }
-		for k2, v2 in pairs(v1) do
-			local m_2 = { szOption = k2 }
-			for k3, v3 in pairs(v2) do
-				local m_3 = {
-					szOption = "  " .. v3[1],
-					rgb = {GetItemFontColorByQuality(v3[2], false)},
-					fnAction = function ()
-						AH_Helper.UpdateList(v3[1])
-					end,
-				}
-				table.insert(m_2, m_3)
-			end
-			table.insert(m_1, m_2)
-		end
-		table.insert(menu, m_1)
-	end
 	return menu
 end
 
@@ -1333,21 +1332,6 @@ function AH_Helper.OnBreathe()
 		return
 	end
 	AH_Helper.UpdateAllBidItemTime(frame)
-
-	if not AH_Helper.bAutoSearch then
-		return
-	end
-	local hEdit = AH_Helper.GetSearchEdit(frame)
-	local szSearchKey = hEdit:GetText()
-	local hFocusEdit = Station.GetFocusWindow()
-	local szName = nil
-	if hFocusEdit then
-		szName = hFocusEdit:GetName()
-	end
-	if szSearchKey ~= L("STR_HELPER_ITEMNAME") and szSearchKey ~= AH_Helper.szLastSearchKey and szName == "BigBagPanel" then
-		AH_Helper.szLastSearchKey = szSearchKey
-		AH_Helper.UpdateList(szSearchKey)
-	end
 end
 
 function AuctionPanel.Init(frame)
@@ -1387,6 +1371,7 @@ function AH_Helper.FuncHook()
 	AuctionPanel.OnItemRButtonClick = AH_Helper.OnItemRButtonClick
 	AuctionPanel.OnItemMouseEnter = AH_Helper.OnItemMouseEnter
 	AuctionPanel.OnItemMouseLeave = AH_Helper.OnItemMouseLeave
+	AuctionPanel.OnEditChanged = AH_Helper.OnEditChanged
 	AuctionPanel.ShowNotice = AH_Helper.ShowNotice
 	AuctionPanel.UpdateSaleInfo = AH_Helper.UpdateSaleInfo
 end
