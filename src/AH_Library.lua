@@ -5,6 +5,11 @@
 
 AH_Library = AH_Library or {}
 
+--------------------------------------
+-- 检查插件版本，遇到游戏报错的手动将 AH_Library.bCheckVersion 改成 false
+AH_Library.bCheckVersion = true
+--------------------------------------
+
 local ipairs = ipairs
 local pairs = pairs
 
@@ -594,19 +599,20 @@ function AH_Library.DelayCall(nTime, fnAction, ...)
 	table.insert(tDelayCall, {GetTickCount() + nTime * 1000, fnAction, {...}})
 end
 
-
-function AH_Library.OnTitleChanged()
-	local szDoc = this:GetDocument()
-	if szDoc ~= "" and szDoc > AH_Helper.szVersion then
-		local tVersionInfo = {
-			szName = "AH_HelperVersionInfo",
-			szMessage = L("STR_LIBRARY_NEWVERSION", szDoc), {
-				szOption = g_tStrings.STR_HOTKEY_SURE, fnAction = function()
-					OpenInternetExplorer("http://jx3auction.duapp.com/down", true)
-				end
-			},{szOption = g_tStrings.STR_HOTKEY_CANCEL,fnAction = function() end},
-		}
-		MessageBox(tVersionInfo)
+if AH_Library.bCheckVersion then
+	function AH_Library.OnTitleChanged()
+		local szDoc = this:GetDocument()
+		if szDoc ~= "" and szDoc > AH_Helper.szVersion then
+			local tVersionInfo = {
+				szName = "AH_HelperVersionInfo",
+				szMessage = L("STR_LIBRARY_NEWVERSION", szDoc), {
+					szOption = g_tStrings.STR_HOTKEY_SURE, fnAction = function()
+						OpenInternetExplorer("http://jx3auction.duapp.com/down", true)
+					end
+				},{szOption = g_tStrings.STR_HOTKEY_CANCEL,fnAction = function() end},
+			}
+			MessageBox(tVersionInfo)
+		end
 	end
 end
 

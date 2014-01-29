@@ -1377,7 +1377,7 @@ end
 
 function AH_Helper.VerifyVersion()
 	local player = GetClientPlayer()
-	if not player then
+	if not player or not AH_Library.bCheckVersion then
 		return
 	end
 	local nTime = GetCurrentTime()
