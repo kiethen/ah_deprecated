@@ -22,6 +22,7 @@ local tonumber = tonumber
 local szIniFile = "Interface/AH/ui/AH_MailBank.ini"
 local bMailHooked = false
 local bBagHooked = false
+local bInitMail = false
 local tFilterType = {
 	L("STR_MAILBANK_ITEMNAME"),
 	L("STR_MAILBANK_MAILTITLE"),
@@ -350,21 +351,34 @@ function AH_MailBank.OnUpdate()
 			Wnd.CloseWindow(temp)
 			bMailHooked = true
 		end
-		if GetLogicFrameCount() % 4 == 0 then
+		--获取邮件
+		if not bInitMail then
 			local MailClient = GetMailClient()
-			local tMail = MailClient.GetMailList("all") or {}
-			for _, dwID in ipairs(tMail) do
-				local mail = MailClient.GetMailInfo(dwID)
-				local target = Station.Lookup("Normal/Target")
-				if target then
-					mail.RequestContent(target.dwID)
+			AH_Library.DelayCall(0.5 + GetPingValue() / 2000, function()
+				local tMail = MailClient.GetMailList("all") or {}
+				--local nIndex, nTol = 0, #tMail
+				local nTol = #tMail
+				for nIndex, dwID in ipairs(tMail) do
+					local mail = MailClient.GetMailInfo(dwID)
+					local target = Station.Lookup("Normal/Target")
+					if target then
+						--300毫秒请求一次服务器，防止邮件过多卡掉线
+						AH_Library.DelayCall(0.3 * nIndex + GetPingValue() / 2000, function()
+							mail.RequestContent(target.dwID)
+							--nIndex = nIndex + 1
+							frame:Lookup("PageSet_Total/Page_Receive", "Text_ReceiveTitle"):SetText(L("STR_MAILBANK_REQUEST", nIndex, nTol))
+						end)
+					end
 				end
-			end
+			end)
+			bInitMail = true
+		end
+		if GetLogicFrameCount() % 4 == 0 then
 			local szName = GetClientPlayer().szName
 			AH_MailBank.tItemCache[szName] = AH_MailBank.SaveItemCache(true)
 		end
 	elseif not frame or not frame:IsVisible() then
-		bMailHooked = false
+		bMailHooked, bInitMail = false, false
 	end
 
 	local frame = Station.Lookup("Normal/BigBagPanel")
