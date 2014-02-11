@@ -41,7 +41,7 @@ AH_Helper = {
 	tItemPrice = {},
 
 	szDataPath = "\\Interface\\AH\\data\\data.AH",
-	szVersion = "2.1.1",		--用于版本检测
+	szVersion = "2.1.3",		--用于版本检测
 
 	tVerify = {
 		szDate = "",
