@@ -159,6 +159,8 @@ STR_HELPER_MESSAGE1	點擊確定批量寄售，點擊取消單個寄售
 STR_HELPER_MESSAGE2	        是否需要開始批量寄售
 STR_HELPER_ALERT1	**此頁部分物品已被【交易行助手】過濾，請點擊下一頁繼續**
 STR_HELPER_ALERT2	**此頁部分物品已被【交易行助手】全部過濾**
+STR_HELPER_ALERT3	當前價格無法設為臨時寄售基準價
+STR_HELPER_SETSELLPRICE	寄售基準價
 STR_HELPER_SEARCHALL	搜索全部
 STR_HELPER_CONTACTSELLER	聯繫賣家
 STR_HELPER_SHIELDEDSELLER	遮罩賣家

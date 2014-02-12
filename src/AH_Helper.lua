@@ -54,6 +54,7 @@ AH_Helper = {
 -- 交易行数据缓存
 --------------------------------------------------------
 local tBidTime = {}
+local tTempSellPrice = {}
 local bFilterd = false
 local bHooked = false
 local bAutoSearch = false
@@ -564,32 +565,36 @@ function AH_Helper.GetItemSellInfo(szItemName)
 	local szText = frame:Lookup("PageSet_Totle/Page_Auction/Wnd_Sale", "Text_ItemName"):GetText()
 	szItemName = (szItemName == L("STR_HELPER_BOOK")) and szText or szItemName	--书籍名字转化
     if AH_Helper.szDefaultValue == "Btn_Min" then
-		for k, v in pairs(AH_Helper.tItemPrice) do
-			if szItemName == k and MoneyOptCmp(v[1], PRICE_LIMITED) ~= 0 then
-				local u = {szName = k, tBidPrice = 0, tBuyPrice = 0, szTime = AH_Helper.szDefaultTime}
-                if AH_Helper.szDefaultValue == "Btn_Min" then
-                    AH_Library.Message(L("STR_HELPER_LOWPRICE"))
-                    u.tBidPrice = v[1]
-                    u.tBuyPrice = v[1]
-					if AH_Helper.bLowestPrices then
-						if AH_Helper.bPricePercentage then
-							u.tBidPrice = MoneyOptMult(u.tBidPrice, AH_Helper.nPricePercentage)
-							u.tBuyPrice = MoneyOptMult(u.tBuyPrice, AH_Helper.nPricePercentage)
-						else
-							--单价判断，防止差价溢出
-							if MoneyOptCmp(u.tBidPrice, AH_Helper.nDefaultPrices) == 1 then
-								u.tBidPrice = MoneyOptSub(u.tBidPrice, AH_Helper.nDefaultPrices)
-							end
-							if MoneyOptCmp(u.tBuyPrice, AH_Helper.nDefaultPrices) == 1 then
-								u.tBuyPrice = MoneyOptSub(u.tBuyPrice, AH_Helper.nDefaultPrices)
-							end
-						end
+		AH_Library.Message(L("STR_HELPER_LOWPRICE"))
+		local function GetSellInfo(szName, tPrice)
+			local u = {szName = szName, tBidPrice = tPrice[1], tBuyPrice = tPrice[1], szTime = AH_Helper.szDefaultTime}
+			if AH_Helper.bLowestPrices then
+				if AH_Helper.bPricePercentage then
+					u.tBidPrice = MoneyOptMult(u.tBidPrice, AH_Helper.nPricePercentage)
+					u.tBuyPrice = MoneyOptMult(u.tBuyPrice, AH_Helper.nPricePercentage)
+				else
+					--单价判断，防止差价溢出
+					if MoneyOptCmp(u.tBidPrice, AH_Helper.nDefaultPrices) == 1 then
+						u.tBidPrice = MoneyOptSub(u.tBidPrice, AH_Helper.nDefaultPrices)
 					end
-					return u
-                end
-            end
+					if MoneyOptCmp(u.tBuyPrice, AH_Helper.nDefaultPrices) == 1 then
+						u.tBuyPrice = MoneyOptSub(u.tBuyPrice, AH_Helper.nDefaultPrices)
+					end
+				end
+			end
+			return u
 		end
-        AH_Library.Message(L("STR_HELPER_NOITEMPRICE"))
+		if tTempSellPrice[szItemName] then
+			local tPrice = {tTempSellPrice[szItemName]}
+			return GetSellInfo(szItemName, tPrice)
+		else
+			for k, v in pairs(AH_Helper.tItemPrice) do
+				if szItemName == k and MoneyOptCmp(v[1], PRICE_LIMITED) ~= 0 then
+					return GetSellInfo(k, v)
+				end
+			end
+		end
+		AH_Library.Message(L("STR_HELPER_NOITEMPRICE"))
 	else
 		AH_Library.Message(L("STR_HELPER_SYSTEMPRICE"))
 		for k, v in pairs(AuctionPanel.tItemSellInfoCache) do
@@ -820,13 +825,13 @@ function AH_Helper.OnItemRButtonClick()
 		end
 	elseif szName == "Handle_ItemList" then
 		AuctionPanel.Selected(this)
-		local szItemName = this.szItemName
-		local szSellerName = this.szSellerName
 		local menu = {
-			{szOption = L("STR_HELPER_SEARCHALL"), fnAction = function() bAutoSearch = false AH_Helper.UpdateList(szItemName) end,},
-			{szOption = L("STR_HELPER_CONTACTSELLER"), fnAction = function() EditBox_TalkToSomebody(szSellerName) end,},
-			{szOption = L("STR_HELPER_SHIELDEDSELLER"), fnAction = function() AH_Helper.AddBlackList(szSellerName) AH_Helper.UpdateList() end,},
-			{szOption = L("STR_HELPER_ADDTOFAVORITES"), fnAction = function() AH_Helper.AddFavorite(szItemName) end,},
+			{szOption = L("STR_HELPER_SETSELLPRICE"), fnAction = function() AH_Helper.SetTempSellPrice(this) end,},
+			{bDevide = true},
+			{szOption = L("STR_HELPER_SEARCHALL"), fnAction = function() bAutoSearch = false AH_Helper.UpdateList(this.szItemName) end,},
+			{szOption = L("STR_HELPER_CONTACTSELLER"), fnAction = function() EditBox_TalkToSomebody(this.szSellerName) end,},
+			{szOption = L("STR_HELPER_SHIELDEDSELLER"), fnAction = function() AH_Helper.AddBlackList(this.szSellerName) AH_Helper.UpdateList() end,},
+			{szOption = L("STR_HELPER_ADDTOFAVORITES"), fnAction = function() AH_Helper.AddFavorite(this.szItemName) end,},
 		}
 		local m = AH_Helper.GetGuiShiDrop(this)
 		if m then
@@ -1220,6 +1225,19 @@ function AH_Helper.IsInHistory(szKeyName)
 	return false
 end
 
+function AH_Helper.SetTempSellPrice(hItem)
+	local szItemName = hItem.szItemName
+	if MoneyOptCmp(hItem.tBuyPrice, PRICE_LIMITED) == 0 then
+		AH_Library.Message(L("STR_HELPER_ALERT3"))
+		return
+	end
+	if not tTempSellPrice[szItemName] then
+		tTempSellPrice[szItemName] = {}
+	end
+	local tBuyPrice = MoneyOptDiv(hItem.tBuyPrice, hItem.nCount)
+	tTempSellPrice[szItemName] = tBuyPrice
+end
+
 function AH_Helper.AddFavorite(szItemName)
     AH_Helper.tItemFavorite[szItemName] = 1
 	local szText = L("STR_HELPER_BEADDTOFAVORITES", szItemName)
@@ -1428,6 +1446,7 @@ RegisterEvent("OPEN_AUCTION", function()
 	end
 	AH_Helper.SetSellPriceType()
 	AH_Helper.VerifyVersion()
+	tTempSellPrice = {}
 end)
 
 Hotkey.AddBinding("AH_Produce_Open", L("STR_PRODUCE_PRODUCEHELPER"), L("STR_HELPER_HELPER"), function() AH_Produce.OpenPanel() end, nil)

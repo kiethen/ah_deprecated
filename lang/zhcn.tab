@@ -159,6 +159,8 @@ STR_HELPER_MESSAGE1	点击确定批量寄售，点击取消单个寄售
 STR_HELPER_MESSAGE2	        是否需要开始批量寄售
 STR_HELPER_ALERT1	**此页部分物品已被【交易行助手】过滤，请点击下一页继续**
 STR_HELPER_ALERT2	**此页部分物品已被【交易行助手】全部过滤**
+STR_HELPER_ALERT3	当前价格无法设为临时寄售基准价
+STR_HELPER_SETSELLPRICE	寄售基准价
 STR_HELPER_SEARCHALL	搜索全部
 STR_HELPER_CONTACTSELLER	联系卖家
 STR_HELPER_SHIELDEDSELLER	屏蔽卖家
