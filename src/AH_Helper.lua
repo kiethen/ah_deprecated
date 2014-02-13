@@ -305,6 +305,11 @@ function AH_Helper.SetSaleInfo(hItem, szDataType, tItemData)
 	hItem.tBidPrice = tItemData["Price"]
 	hItem.tBuyPrice = tItemData["BuyItNowPrice"]
 
+	hItem.nQuality = item.nQuality
+	hItem.nVersion = item.nVersion
+	hItem.dwTabType = item.dwTabType
+	hItem.dwIndex = item.dwIndex
+
 	if MoneyOptCmp(hItem.tBuyPrice, 0) == 0 then
 		hItem.tBuyPrice = PRICE_LIMITED
 	end
@@ -335,8 +340,11 @@ function AH_Helper.SetSaleInfo(hItem, szDataType, tItemData)
 
 	--价格记录
 	if szDataType == "Search" then
-		local szKey = hItem.szItemName	--改nUiId为name可以解决书籍的出价问题
+		--local szKey = hItem.szItemName	--改nUiId为name可以解决书籍的出价问题
 		--local dwID = (item.nGenre == ITEM_GENRE.BOOK) and item.dwID or nil
+
+		local szKey = (item.nGenre == ITEM_GENRE.BOOK) and hItem.szItemName or item.nUiId
+
 		if AH_Helper.tItemPrice[szKey] == nil or AH_Helper.tItemPrice[szKey][2] ~= AH_Helper.nVersion then
 			AH_Helper.tItemPrice[szKey] = {PRICE_LIMITED, AH_Helper.nVersion}
 		end
@@ -346,10 +354,10 @@ function AH_Helper.SetSaleInfo(hItem, szDataType, tItemData)
 			if MoneyOptCmp(AH_Helper.tItemPrice[szKey][1], tBuyPrice) == 1 then
 				AH_Helper.tItemPrice[szKey][1] = tBuyPrice
 				if bAutoSearch then
-					local szMoney = GetMoneyText(GoldSilverAndCopperToMoney(UnpackMoney(tBuyPrice)), "font=10")
+					local szMoney = GetMoneyText((tBuyPrice), "font=10")
 					local szColor = GetItemFontColorByQuality(item.nQuality, true)
 					local szItem = MakeItemInfoLink(string.format("[%s]", szKey), string.format("font=10 %s", szColor), item.nVersion, item.dwTabType, item.dwIndex)
-					AH_Library.Message({szItem, "最低价：", szMoney}, true)
+					AH_Library.Message({szItem, L("STR_HELPER_PRICE3"), szMoney}, true)
 				end
 			end
 		end
@@ -563,7 +571,11 @@ end
 function AH_Helper.GetItemSellInfo(szItemName)
 	local frame = Station.Lookup("Normal/AuctionPanel")
 	local szText = frame:Lookup("PageSet_Totle/Page_Auction/Wnd_Sale", "Text_ItemName"):GetText()
-	szItemName = (szItemName == L("STR_HELPER_BOOK")) and szText or szItemName	--书籍名字转化
+	local box = frame:Lookup("PageSet_Totle/Page_Auction/Wnd_Sale", "Box_Item")
+	local item = GetPlayerItem(GetClientPlayer(), box.dwBox, box.dwX)
+	Output(item.nUiId)
+	--szItemName = (szItemName == L("STR_HELPER_BOOK")) and szText or szItemName	--书籍名字转化
+	local szKey = (szItemName == L("STR_HELPER_BOOK")) and szText or item.nUiId	--书籍名字转化
     if AH_Helper.szDefaultValue == "Btn_Min" then
 		AH_Library.Message(L("STR_HELPER_LOWPRICE"))
 		local function GetSellInfo(szName, tPrice)
@@ -584,13 +596,17 @@ function AH_Helper.GetItemSellInfo(szItemName)
 			end
 			return u
 		end
-		if tTempSellPrice[szItemName] then
-			local tPrice = {tTempSellPrice[szItemName]}
-			return GetSellInfo(szItemName, tPrice)
+		if tTempSellPrice[szKey] then
+			local tPrice = {tTempSellPrice[szKey]}
+			return GetSellInfo(szKey, tPrice)
 		else
 			for k, v in pairs(AH_Helper.tItemPrice) do
-				if szItemName == k and MoneyOptCmp(v[1], PRICE_LIMITED) ~= 0 then
-					return GetSellInfo(k, v)
+				if szKey == k and MoneyOptCmp(v[1], PRICE_LIMITED) ~= 0 then
+					if type(szKey) == "string" then
+						return GetSellInfo(szKey, v)
+					else
+						return GetSellInfo(szItemName, v)
+					end
 				end
 			end
 		end
@@ -825,13 +841,16 @@ function AH_Helper.OnItemRButtonClick()
 		end
 	elseif szName == "Handle_ItemList" then
 		AuctionPanel.Selected(this)
+		local hItem = this
 		local menu = {
-			{szOption = L("STR_HELPER_SETSELLPRICE"), fnAction = function() AH_Helper.SetTempSellPrice(this) end,},
-			{bDevide = true},
-			{szOption = L("STR_HELPER_SEARCHALL"), fnAction = function() bAutoSearch = false AH_Helper.UpdateList(this.szItemName) end,},
-			{szOption = L("STR_HELPER_CONTACTSELLER"), fnAction = function() EditBox_TalkToSomebody(this.szSellerName) end,},
-			{szOption = L("STR_HELPER_SHIELDEDSELLER"), fnAction = function() AH_Helper.AddBlackList(this.szSellerName) AH_Helper.UpdateList() end,},
-			{szOption = L("STR_HELPER_ADDTOFAVORITES"), fnAction = function() AH_Helper.AddFavorite(this.szItemName) end,},
+			{szOption = L("STR_HELPER_SETSELLPRICE"), fnAction = function() AH_Helper.SetTempSellPrice(hItem) end,},
+			--{bDevide = true},
+			{szOption = L("STR_HELPER_SEARCHALL"), fnAction = function() bAutoSearch = false AH_Helper.UpdateList(hItem.szItemName) end,},
+			--{bDevide = true},
+			{szOption = L("STR_HELPER_CONTACTSELLER"), fnAction = function() EditBox_TalkToSomebody(hItem.szSellerName) end,},
+			{szOption = L("STR_HELPER_SHIELDEDSELLER"), fnAction = function() AH_Helper.AddBlackList(hItem.szSellerName) AH_Helper.UpdateList() end,},
+			--{bDevide = true},
+			{szOption = L("STR_HELPER_ADDTOFAVORITES"), fnAction = function() AH_Helper.AddFavorite(hItem.szItemName) end,},
 		}
 		local m = AH_Helper.GetGuiShiDrop(this)
 		if m then
@@ -1231,11 +1250,13 @@ function AH_Helper.SetTempSellPrice(hItem)
 		AH_Library.Message(L("STR_HELPER_ALERT3"))
 		return
 	end
-	if not tTempSellPrice[szItemName] then
-		tTempSellPrice[szItemName] = {}
-	end
+
 	local tBuyPrice = MoneyOptDiv(hItem.tBuyPrice, hItem.nCount)
 	tTempSellPrice[szItemName] = tBuyPrice
+	local szMoney = GetMoneyText(tBuyPrice, "font=10")
+	local szColor = GetItemFontColorByQuality(hItem.nQuality, true)
+	local szItem = MakeItemInfoLink(string.format("[%s]", szItemName), string.format("font=10 %s", szColor), hItem.nVersion, hItem.dwTabType, hItem.dwIndex)
+	AH_Library.Message({szItem, L("STR_HELPER_PRICE4"), szMoney}, true)
 end
 
 function AH_Helper.AddFavorite(szItemName)

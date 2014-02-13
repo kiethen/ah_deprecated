@@ -601,17 +601,20 @@ end
 
 if AH_Library.bCheckVersion then
 	function AH_Library.OnTitleChanged()
-		local szDoc = this:GetDocument()
-		if szDoc ~= "" and szDoc > AH_Helper.szVersion then
-			local tVersionInfo = {
-				szName = "AH_HelperVersionInfo",
-				szMessage = L("STR_LIBRARY_NEWVERSION", szDoc), {
-					szOption = g_tStrings.STR_HOTKEY_SURE, fnAction = function()
-						OpenInternetExplorer("http://jx3auction.duapp.com/down", true)
-					end
-				},{szOption = g_tStrings.STR_HOTKEY_CANCEL,fnAction = function() end},
-			}
-			MessageBox(tVersionInfo)
+		local szUrl, szTitle = this:GetLocationURL(), this:GetLocationName()
+		if szUrl ~= szTitle then
+			local szDoc = this:GetDocument()
+			if szDoc ~= "" and szDoc > AH_Helper.szVersion then
+				local tVersionInfo = {
+					szName = "AH_HelperVersionInfo",
+					szMessage = L("STR_LIBRARY_NEWVERSION", szDoc), {
+						szOption = g_tStrings.STR_HOTKEY_SURE, fnAction = function()
+							OpenInternetExplorer("http://jx3auction.duapp.com/down", true)
+						end
+					},{szOption = g_tStrings.STR_HOTKEY_CANCEL,fnAction = function() end},
+				}
+				MessageBox(tVersionInfo)
+			end
 		end
 	end
 end
