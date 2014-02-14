@@ -344,6 +344,7 @@ function AH_Helper.SetSaleInfo(hItem, szDataType, tItemData)
 		--local dwID = (item.nGenre == ITEM_GENRE.BOOK) and item.dwID or nil
 
 		local szKey = (item.nGenre == ITEM_GENRE.BOOK) and hItem.szItemName or item.nUiId
+		hItem.szKey = szKey
 
 		if AH_Helper.tItemPrice[szKey] == nil or AH_Helper.tItemPrice[szKey][2] ~= AH_Helper.nVersion then
 			AH_Helper.tItemPrice[szKey] = {PRICE_LIMITED, AH_Helper.nVersion}
@@ -1246,13 +1247,14 @@ end
 
 function AH_Helper.SetTempSellPrice(hItem)
 	local szItemName = hItem.szItemName
+	local szKey = hItem.szKey
 	if MoneyOptCmp(hItem.tBuyPrice, PRICE_LIMITED) == 0 then
 		AH_Library.Message(L("STR_HELPER_ALERT3"))
 		return
 	end
 
 	local tBuyPrice = MoneyOptDiv(hItem.tBuyPrice, hItem.nCount)
-	tTempSellPrice[szItemName] = tBuyPrice
+	tTempSellPrice[szKey] = tBuyPrice
 	local szMoney = GetMoneyText(tBuyPrice, "font=10")
 	local szColor = GetItemFontColorByQuality(hItem.nQuality, true)
 	local szItem = MakeItemInfoLink(string.format("[%s]", szItemName), string.format("font=10 %s", szColor), hItem.nVersion, hItem.dwTabType, hItem.dwIndex)
