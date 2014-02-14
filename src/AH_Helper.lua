@@ -340,9 +340,6 @@ function AH_Helper.SetSaleInfo(hItem, szDataType, tItemData)
 
 	--价格记录
 	if szDataType == "Search" then
-		--local szKey = hItem.szItemName	--改nUiId为name可以解决书籍的出价问题
-		--local dwID = (item.nGenre == ITEM_GENRE.BOOK) and item.dwID or nil
-
 		local szKey = (item.nGenre == ITEM_GENRE.BOOK) and hItem.szItemName or item.nUiId
 		hItem.szKey = szKey
 
@@ -574,8 +571,6 @@ function AH_Helper.GetItemSellInfo(szItemName)
 	local szText = frame:Lookup("PageSet_Totle/Page_Auction/Wnd_Sale", "Text_ItemName"):GetText()
 	local box = frame:Lookup("PageSet_Totle/Page_Auction/Wnd_Sale", "Box_Item")
 	local item = GetPlayerItem(GetClientPlayer(), box.dwBox, box.dwX)
-	Output(item.nUiId)
-	--szItemName = (szItemName == L("STR_HELPER_BOOK")) and szText or szItemName	--书籍名字转化
 	local szKey = (szItemName == L("STR_HELPER_BOOK")) and szText or item.nUiId	--书籍名字转化
     if AH_Helper.szDefaultValue == "Btn_Min" then
 		AH_Library.Message(L("STR_HELPER_LOWPRICE"))
@@ -1129,9 +1124,7 @@ local function IsSameSellItem(item1, item2)
 	elseif item1.nGenre == ITEM_GENRE.COLOR_DIAMOND then
 		if item2 and item1.nQuality == item2.nQuality and item1.nGenre == item2.nGenre then
 			local szName1, szName2 = GetItemNameByItem(item1), GetItemNameByItem(item2)
-			local _, _, _, szLevel1 = szName1:match(L("STR_HELPER_COLORDIAMOND"))
-			local _, _, _, szLevel2 = szName2:match(L("STR_HELPER_COLORDIAMOND"))
-			if szLevel1 == szLevel2 then
+			if string.sub(szName1, -3, -2) == string.sub(szName2, -3, -2) then
 				return true
 			end
 			return false
