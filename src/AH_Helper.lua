@@ -1427,6 +1427,19 @@ function AH_Helper.VerifyVersion()
 	AH_Helper.tVerify["bChecked"] = false
 	local page = Station.Lookup("Lowest/AH_Library/Page_IE")
 	if page then
+		AH_Library.tRequest[szUrl] = function(szTitle)
+			if szTitle > AH_Helper.szVersion then
+				local tVersionInfo = {
+					szName = "AH_HelperVersionInfo",
+					szMessage = L("STR_LIBRARY_NEWVERSION", szTitle), {
+						szOption = g_tStrings.STR_HOTKEY_SURE, fnAction = function()
+							OpenInternetExplorer("http://jx3auction.duapp.com/down", true)
+						end
+					},{szOption = g_tStrings.STR_HOTKEY_CANCEL,fnAction = function() end},
+				}
+				MessageBox(tVersionInfo)
+			end
+		end
 		page:Navigate(szUrl)
 		AH_Helper.tVerify["szDate"] = szDate
 		AH_Helper.tVerify["bChecked"] = true

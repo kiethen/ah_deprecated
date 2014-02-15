@@ -5,6 +5,8 @@
 
 AH_Library = AH_Library or {}
 
+AH_Library.tRequest = {}
+
 --------------------------------------
 -- 检查插件版本，遇到游戏报错的手动将 AH_Library.bCheckVersion 改成 false
 AH_Library.bCheckVersion = true
@@ -602,19 +604,10 @@ end
 if AH_Library.bCheckVersion then
 	function AH_Library.OnTitleChanged()
 		local szUrl, szTitle = this:GetLocationURL(), this:GetLocationName()
-		if szUrl ~= szTitle then
-			local szDoc = this:GetDocument()
-			if szDoc ~= "" and szDoc > AH_Helper.szVersion then
-				local tVersionInfo = {
-					szName = "AH_HelperVersionInfo",
-					szMessage = L("STR_LIBRARY_NEWVERSION", szDoc), {
-						szOption = g_tStrings.STR_HOTKEY_SURE, fnAction = function()
-							OpenInternetExplorer("http://jx3auction.duapp.com/down", true)
-						end
-					},{szOption = g_tStrings.STR_HOTKEY_CANCEL,fnAction = function() end},
-				}
-				MessageBox(tVersionInfo)
-			end
+		if szUrl ~= szTitle and AH_Library.tRequest[szUrl] then
+			local fnAction = AH_Library.tRequest[szUrl]
+			fnAction(szTitle)
+			AH_Library.tRequest[szUrl] = nil
 		end
 	end
 end
