@@ -16,6 +16,7 @@ local ipairs = ipairs
 local pairs = pairs
 
 local szIniFile = "Interface/AH/ui/AH_Library.ini"
+
 -----------------------------------------------
 -- 重构非白名单函数
 -----------------------------------------------
@@ -612,12 +613,14 @@ if AH_Library.bCheckVersion then
 	end
 end
 
-function AH_Library.Message(szMsg, bMoney)
-	if not bMoney then
-		OutputMessage("MSG_SYS", FormatString("<text>text=\"[AH] \" font=10 r=0 g=196 b=196</text><text>text=\"<D0>\n\" font=10 r=255 g=255 b=255</text>", szMsg), true)
-	else
+function AH_Library.Message(szMsg, szType)
+	if szType == "MONEY" then
 		local szItem, szText, szMoney = unpack(szMsg)
 		OutputMessage("MSG_SYS", FormatString("<text>text=\"[AH] \" font=10 r=0 g=196 b=196</text><D0><text>text=\"<D1>\" font=10 r=255 g=255 b=255</text><D2><text>text=\"\n\"</text>", szItem, szText, szMoney), true)
+	elseif szType == "ERROR" then
+		OutputMessage("MSG_SYS", FormatString("<text>text=\"[AH] \" font=10 r=0 g=196 b=196</text><text>text=\"<D0>\n\" font=10 r=255 g=0 b=0</text>", szMsg), true)
+	else
+		OutputMessage("MSG_SYS", FormatString("<text>text=\"[AH] \" font=10 r=0 g=196 b=196</text><text>text=\"<D0>\n\" font=10 r=255 g=255 b=255</text>", szMsg), true)
 	end
 end
 
@@ -637,7 +640,3 @@ function base64(data)
 end
 
 Wnd.OpenWindow(szIniFile, "AH_Library")
-
---~ RegisterEvent("CALL_LUA_ERROR", function()
---~ 	OutputMessage("MSG_SYS", arg0)
---~ end)

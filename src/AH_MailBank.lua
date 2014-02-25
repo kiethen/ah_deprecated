@@ -13,6 +13,7 @@ AH_MailBank = {
 	nFilterType = 1,
 	bShowNoReturn = false,
 	bMail = true,
+	dwMailNpcID = nil,
 }
 
 local ipairs = ipairs
@@ -236,10 +237,7 @@ function AH_MailBank.SaveItemCache(bAll)
 		if mail.bGotContentFlag then
 			mail.Read()
 		else
-			local target = Station.Lookup("Normal/Target")
-			if target then
-				mail.RequestContent(target.dwID)
-			end
+			mail.RequestContent(AH_MailBank.dwMailNpcID)
 		end
 		if bAll or (not bAll and not (mail.GetType() == MAIL_TYPE.PLAYER and (mail.bMoneyFlag or mail.bItemFlag))) then
 			local tItem = AH_MailBank.GetMailItem(mail)
@@ -348,6 +346,8 @@ function AH_MailBank.OnUpdate()
 					end
 				end
 			end
+			AH_MailBank.dwMailNpcID = Station.Lookup("Normal/Target").dwID
+
 			Wnd.CloseWindow(temp)
 			bMailHooked = true
 		end
@@ -359,16 +359,12 @@ function AH_MailBank.OnUpdate()
 				--local nIndex, nTol = 0, #tMail
 				local nTol = #tMail
 				for nIndex, dwID in ipairs(tMail) do
-					local mail = MailClient.GetMailInfo(dwID)
-					local target = Station.Lookup("Normal/Target")
-					if target then
-						--300毫秒请求一次服务器，防止邮件过多卡掉线
-						AH_Library.DelayCall(0.3 * nIndex + GetPingValue() / 2000, function()
-							mail.RequestContent(target.dwID)
-							--nIndex = nIndex + 1
-							frame:Lookup("PageSet_Total/Page_Receive", "Text_ReceiveTitle"):SetText(L("STR_MAILBANK_REQUEST", nIndex, nTol))
-						end)
-					end
+					--300毫秒请求一次服务器，防止邮件过多卡掉线
+					AH_Library.DelayCall(0.3 * nIndex + GetPingValue() / 2000, function()
+						local mail = MailClient.GetMailInfo(dwID)
+						mail.RequestContent(AH_MailBank.dwMailNpcID)
+						frame:Lookup("PageSet_Total/Page_Receive", "Text_ReceiveTitle"):SetText(L("STR_MAILBANK_REQUEST", nIndex, nTol))
+					end)
 				end
 			end)
 			bInitMail = true
@@ -430,13 +426,13 @@ end
 
 -- 取附件
 function AH_MailBank.TakeMailItemToBag(fnAction, nCount)
-	local dwID, dwType = Target_GetTargetData()
+	--[[local dwID, dwType = Target_GetTargetData()
 	local hNpc = dwType == TARGET.NPC and GetNpc(dwID) or nil
 	if not hNpc or (hNpc and not StringFindW(hNpc.szTitle, L("STR_MAILBANK_COURIER"))) then
 		AH_Library.Message(L("STR_MAILBANK_TIP1"))
 		OutputWarningMessage("MSG_NOTICE_YELLOW", L("STR_MAILBANK_TIP1"), 2)
 		return
-	end
+	end]]
 	local tFreeBoxList = AH_Spliter.GetPlayerBagFreeBoxList()
 	if nCount > #tFreeBoxList then
 		AH_Library.MessageL(("STR_MAILBANK_TIP2"))

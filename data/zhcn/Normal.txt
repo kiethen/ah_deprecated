@@ -41,7 +41,7 @@ atNeutralHitValue	混元内功命中
 atNeutralOvercomeBase	混元内功破防
 atPoisonAttackPowerBase	毒性内功攻击
 atPoisonCriticalDamagePowerBase	毒性内功会效
-atPoisonCriticalStrike	毒性内功攻击
+atPoisonCriticalStrike	毒性内功会心
 atPoisonHitValue	毒性内功命中
 atPoisonOvercomeBase	毒性内功破防
 atSolarAndLunarAttackPowerBase	阴阳内功攻击

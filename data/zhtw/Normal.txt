@@ -1,5 +1,5 @@
 ﻿ID	GeneratedMagic
-atInvalid	
+atInvalid
 atSpiritBase	根骨
 atAgilityBase	身法
 atSpunkBase	元氣
@@ -41,7 +41,7 @@ atNeutralHitValue	混元內功命中
 atNeutralOvercomeBase	混元內功破防
 atPoisonAttackPowerBase	毒性內功攻擊
 atPoisonCriticalDamagePowerBase	毒性內功會效
-atPoisonCriticalStrike	毒性內功攻擊
+atPoisonCriticalStrike	毒性內功會心
 atPoisonHitValue	毒性內功命中
 atPoisonOvercomeBase	毒性內功破防
 atSolarAndLunarAttackPowerBase	陰陽內功攻擊
