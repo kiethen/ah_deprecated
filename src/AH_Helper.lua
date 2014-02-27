@@ -42,7 +42,7 @@ AH_Helper = {
 	tItemPrice = {},
 
 	szDataPath = "\\Interface\\AH\\data\\data.AH",
-	szVersion = "2.1.4",		--用于版本检测
+	szVersion = "2.1.5",		--用于版本检测
 
 	tVerify = {
 		szDate = "",
@@ -59,7 +59,7 @@ local tTempSellPrice = {}
 local bFilterd = false
 local bHooked = false
 local bAutoSearch = false
-
+local szSellerSearch = nil
 --------------------------------------------------------
 -- 用户数据存储
 --------------------------------------------------------
@@ -653,6 +653,9 @@ function AH_Helper.OnLButtonClick()
 		szText = string.gsub(szText, "[%[%]]", "")
 		hEdit:SetText(szText)
 		bAutoSearch = false
+		szSellerSearch = nil
+	elseif szName == "Btn_SearchDefault" then
+		szSellerSearch = nil
 	end
 	AH_Helper.OnLButtonClickOrg()
 end
@@ -752,6 +755,9 @@ function AH_Helper.ApplyLookup(frame, szType, nSortType, szKey, nStart, bDesc, s
     if szType == "Search" and nStart == 1 then
        AH_Helper.nVersion = GetCurrentTime()
     end
+	if szSellerSearch and szSellerSearch ~= "" then
+		szSellerName = szSellerSearch
+	end
     return AH_Helper.ApplyLookupOrg(frame, szType, nSortType, szKey, nStart, bDesc, szSellerName)
 end
 
@@ -845,7 +851,7 @@ function AH_Helper.OnItemRButtonClick()
 			{bDevide = true},
 			{szOption = L("STR_HELPER_SEARCHALL"), fnAction = function() bAutoSearch = false AH_Helper.UpdateList(hItem.szItemName) end,},
 			{bDevide = true},
-			{szOption = L("STR_HELPER_SEARCHSELLER", hItem.szSellerName), fnAction = function() AH_Helper.UpdateList(nil, nil, false, hItem.szSellerName) end,},
+			{szOption = L("STR_HELPER_SEARCHSELLER", hItem.szSellerName), fnAction = function() szSellerSearch = hItem.szSellerName AH_Helper.UpdateList(nil, nil, false, hItem.szSellerName) end,},
 			{szOption = L("STR_HELPER_CONTACTSELLER", hItem.szSellerName), fnAction = function() EditBox_TalkToSomebody(hItem.szSellerName) end,},
 			{szOption = L("STR_HELPER_ADDSELLER", hItem.szSellerName), fnAction = function() AH_Helper.AddSeller(hItem.szSellerName) end,},
 			{szOption = L("STR_HELPER_SHIELDEDSELLER", hItem.szSellerName), fnAction = function() AH_Helper.AddBlackList(hItem.szSellerName) AH_Helper.UpdateList() end,},
@@ -1208,11 +1214,15 @@ function AH_Helper.UpdateList(szItemName, szType, bNotInit, szSellerName)
 	if not szItemName then
 		szItemName = ""
 	end
+	if not szSellerName then
+		szSellerSearch = nil
+	end
 	local t = tItemDataInfo["Search"]
 	local frame = Station.Lookup("Normal/AuctionPanel")
 	AuctionPanel.tSearch = tSearchInfoDefault
 	AuctionPanel.tSearch["Name"] = szItemName
 	if szSellerName and szSellerName ~= "" then
+		AuctionPanel.tSearch["Name"] = L("STR_HELPER_ITEMNAME")
 		AuctionPanel.tSearch["Seller"] = szSellerName
 	end
 	if not bNotInit then
@@ -1488,6 +1498,12 @@ end)
 RegisterEvent("PLAYER_EXIT_GAME", function()
 	SaveLUAData(AH_Helper.szDataPath, AH_Helper.tItemPrice)
 end)
+
+
+
+--~ RegisterEvent("BAG_ITEM_UPDATE", function()
+--~ 	Output(arg0, arg1)	--1, 0
+--~ end)
 
 Hotkey.AddBinding("AH_Produce_Open", L("STR_PRODUCE_PRODUCEHELPER"), L("STR_HELPER_HELPER"), function() AH_Produce.OpenPanel() end, nil)
 Hotkey.AddBinding("AH_Diamond_Open", L("STR_DIAMOND_DIAMONDHELPER"), "", function() AH_Diamond.OpenPanel() end, nil)

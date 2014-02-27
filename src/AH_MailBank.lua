@@ -6,14 +6,17 @@ local L = AH_Library.LoadLangPack()
 
 AH_MailBank = {
 	tItemCache = {},
+	tSendCache = {},
 	szDataPath = "\\Interface\\AH\\data\\mail.AH",
 	szCurRole = nil,
 	nCurIndex = 1,
 	szCurKey = "",
 	nFilterType = 1,
 	bShowNoReturn = false,
+	bAutoExange = false,
 	bMail = true,
 	dwMailNpcID = nil,
+	szReceiver = nil,
 }
 
 local ipairs = ipairs
@@ -30,6 +33,8 @@ local tFilterType = {
 	L("STR_MAILBANK_SENDER"),
 	L("STR_MAILBANK_ENDDATE")
 }
+
+local bExtra = false
 
 -- 将数据分页处理，每页98个数据，返回分页数据和页数
 function AH_MailBank.GetPageMailData(tItemCache)
@@ -346,6 +351,44 @@ function AH_MailBank.OnUpdate()
 					end
 				end
 			end
+			if bExtra then
+				page = frame:Lookup("PageSet_Total/Page_Send")
+				if not page:Lookup("Check_AutoExange") then	--添加选择框
+					local hCheck = temp:Lookup("Check_AutoExange")
+					if hCheck then
+						hCheck:ChangeRelation(page, true, true)
+						hCheck:SetRelPos(400, 480)
+						hCheck:Lookup("", ""):Lookup("Text_AutoExange"):SetText(L("STR_MAILBANK_AUTOEXANGE"))
+						hCheck.OnCheckBoxCheck = function()
+							AH_MailBank.bAutoExange = true
+						end
+						hCheck.OnCheckBoxUncheck = function()
+							AH_MailBank.bAutoExange = false
+						end
+					end
+				end
+				local hBtnSend = page:Lookup("Btn_Deliver") --Hook发送按钮
+				hBtnSend.OnLButtonDown = function()
+					AH_MailBank.tSendCache = {}
+					if AH_MailBank.bAutoExange then
+						local szReceiver = page:Lookup("Edit_Name"):GetText()
+						if szReceiver and szReceiver ~= AH_MailBank.szReceiver then
+							AH_MailBank.szReceiver = szReceiver
+						end
+						local handle = page:Lookup("", "Handle_Write")
+						for i = 0, 7, 1 do
+							local box = handle:Lookup("Box_Item"..i)
+							if not box:IsEmpty() then
+								local nUiId, dwBox, dwX = box:GetObjectData()
+								local nCount = box:GetOverText(0)
+								nCount = (nCount == "") and 1 or tonumber(nCount)
+								table.insert(AH_MailBank.tSendCache, {nUiId, nCount})
+							end
+						end
+					end
+				end
+			end
+
 			AH_MailBank.dwMailNpcID = Station.Lookup("Normal/Target").dwID
 
 			Wnd.CloseWindow(temp)
@@ -458,6 +501,78 @@ function AH_MailBank.CheckCurRole(frame)
 	frame:Lookup("Check_NotReturn"):Enable(bTrue)
 end
 
+local function GetItemBox(tCache)
+	local player = GetClientPlayer()
+	for nIndex = 6, 1, -1 do
+		local dwBox = INVENTORY_INDEX.PACKAGE + nIndex - 1
+		local dwSize = player.GetBoxSize(dwBox)
+		if dwSize > 0 then
+			for dwX = dwSize, 1, -1 do
+				local box = GetUIItemBox(dwBox, dwX - 1, true)
+				if box and box:IsObjectEnable() then
+					local item = player.GetItem(dwBox, dwX - 1)
+					if item and item.nUiId == tCache[1] then
+						if not item.bCanStack or (item.bCanStack and item.nStackNum == tCache[2]) then
+							local i, j = dwBox, dwX - 1
+							return i, j
+						end
+					end
+				end
+			end
+		end
+	end
+end
+
+local function UpdateItemLock(handle)
+	RemoveUILockItem("mail")
+	if handle then
+		for i = 0, 7, 1 do
+			local box = handle:Lookup("Box_Item"..i)
+			if not box:IsEmpty() then
+				AddUILockItem("mail", box.nBag, box.nIndex)
+			end
+		end
+	end
+end
+
+-- 自动放置上一次寄件的物品
+function AH_MailBank.OnExchangeItem()
+	local page = Station.Lookup("Normal/MailPanel/PageSet_Total/Page_Send")
+	if not page then
+		return
+	end
+	local handle = page:Lookup("", "Handle_Write")
+	if not handle then
+		return
+	end
+
+	--从记录中读取nUiId
+	for nIndex, tCache in ipairs(AH_MailBank.tSendCache) do
+		local dwBox, dwX = GetItemBox(tCache)
+		local item = GetPlayerItem(GetClientPlayer(), dwBox, dwX)
+		if item and not item.bBind then
+			local box = handle:Lookup("Box_Item" .. nIndex - 1)
+			if not box.bDisable and box:IsEmpty() then
+				box:SetObject(UI_OBJECT_ITEM, item.nUiId, dwBox, dwX, item.nVersion, item.dwTabType, item.dwIndex)
+				box:SetObjectIcon(Table_GetItemIconID(item.nUiId))
+				UpdateItemBoxExtend(box, item)
+				box.nBag = dwBox
+				box.nIndex = dwX
+				if item and item.bCanStack and item.nStackNum > 1 then
+					box:SetOverText(0, item.nStackNum)
+				else
+					box:SetOverText(0, "")
+				end
+				UpdateItemLock(handle)
+				local edit = page:Lookup("Edit_Title")
+				if edit:GetText() == "" then
+					edit:SetText(GetItemNameByItem(item))
+				end
+				page:Lookup("Edit_Name"):SetText(AH_MailBank.szReceiver)
+			end
+		end
+	end
+end
 ------------------------------------------------------------
 -- 回调函数
 ------------------------------------------------------------
@@ -850,6 +965,17 @@ end)
 
 RegisterEvent("PLAYER_EXIT_GAME", function()
 	SaveLUAData(AH_MailBank.szDataPath, AH_MailBank.tItemCache)
+end)
+
+RegisterEvent("SEND_MAIL_RESULT", function()
+	--Output(arg1)
+	if bExtra and AH_MailBank.bAutoExange and arg1 == MAIL_RESPOND_CODE.SUCCEED then
+		AH_Library.DelayCall(0.05 + GetPingValue() / 2000, AH_MailBank.OnExchangeItem)	--需要延迟几秒放置
+	end
+end)
+
+AppendCommand("ahvip", function(nCode)
+	bExtra = (base64(tostring(nCode)) == "MjU5MTAzOTI5") and true or false
 end)
 
 AH_Library.RegisterBreatheEvent("ON_AH_MAILBANK_UPDATE", AH_MailBank.OnUpdate)

@@ -256,6 +256,13 @@ if not ALL_CRAFT_TYPE then
 	}
 end
 
+if not MAIL_RESPOND_CODE then
+	MAIL_RESPOND_CODE = {
+		SUCCEED = 0,
+		FAILED = 1,
+	}
+end
+
 if not MakeItemInfoLink then
 	MakeItemInfoLink = function(szName, szFont, nVersion, dwTabType, dwIndex)
 		local szLink = "<text>text="..EncodeComponentsString(szName)..
