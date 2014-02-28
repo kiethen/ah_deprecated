@@ -59,7 +59,7 @@ local tTempSellPrice = {}
 local bFilterd = false
 local bHooked = false
 local bAutoSearch = false
-local szSellerSearch = nil
+local szSellerSearch = ""
 --------------------------------------------------------
 -- 用户数据存储
 --------------------------------------------------------
@@ -653,9 +653,9 @@ function AH_Helper.OnLButtonClick()
 		szText = string.gsub(szText, "[%[%]]", "")
 		hEdit:SetText(szText)
 		bAutoSearch = false
-		szSellerSearch = nil
+		szSellerSearch = ""
 	elseif szName == "Btn_SearchDefault" then
-		szSellerSearch = nil
+		szSellerSearch = ""
 	end
 	AH_Helper.OnLButtonClickOrg()
 end
@@ -664,13 +664,6 @@ function AH_Helper.OnExchangeBoxItem(boxItem, boxDsc, nHandCount, bHand)
 	if boxDsc == AH_Helper.boxDsc and not boxItem:IsEmpty() then
 		local frame = Station.Lookup("Normal/AuctionPanel")
 		if AH_Helper.bDBCtrlSell then
-			--[[local tMsg = {
-				szName = "AuctionSell3",
-				szMessage = L("STR_HELPER_MESSAGE1"),
-				{szOption = g_tStrings.STR_HOTKEY_SURE, fnAction = function() AH_Helper.AuctionAutoSell(frame) end, },
-				{szOption = g_tStrings.STR_HOTKEY_CANCEL, fnAction = function() AH_Helper.AuctionSellOrg(frame) end,},
-			}
-			MessageBox(tMsg)]]
 			AH_Helper.AuctionAutoSell(frame)
 		else
 			AH_Helper.AuctionSellOrg(frame)
@@ -718,12 +711,12 @@ function AH_Helper.AuctionSell(frame)
 			{
 				szName = "AuctionSell2",
 				szMessage = L("STR_HELPER_MESSAGE2"),
-				{szOption = g_tStrings.STR_HOTKEY_SURE, fnAction = function() AH_Helper.AuctionAutoSell2(frame) end, },
+				{szOption = g_tStrings.STR_HOTKEY_SURE, fnAction = function() AH_Helper.AuctionSimilarAutoSell(frame) end, },
 				{szOption = g_tStrings.STR_HOTKEY_CANCEL, },
 			}
 			MessageBox(tMsg)
 		else
-			AH_Helper.AuctionAutoSell2(frame)
+			AH_Helper.AuctionSimilarAutoSell(frame)
 		end
 	else
 		AH_Helper.AuctionSellOrg(frame)
@@ -755,7 +748,7 @@ function AH_Helper.ApplyLookup(frame, szType, nSortType, szKey, nStart, bDesc, s
     if szType == "Search" and nStart == 1 then
        AH_Helper.nVersion = GetCurrentTime()
     end
-	if szSellerSearch and szSellerSearch ~= "" then
+	if szSellerSearch ~= "" then
 		szSellerName = szSellerSearch
 	end
     return AH_Helper.ApplyLookupOrg(frame, szType, nSortType, szKey, nStart, bDesc, szSellerName)
@@ -851,7 +844,7 @@ function AH_Helper.OnItemRButtonClick()
 			{bDevide = true},
 			{szOption = L("STR_HELPER_SEARCHALL"), fnAction = function() bAutoSearch = false AH_Helper.UpdateList(hItem.szItemName) end,},
 			{bDevide = true},
-			{szOption = L("STR_HELPER_SEARCHSELLER", hItem.szSellerName), fnAction = function() szSellerSearch = hItem.szSellerName AH_Helper.UpdateList(nil, nil, false, hItem.szSellerName) end,},
+			{szOption = L("STR_HELPER_SEARCHSELLER", hItem.szSellerName), fnAction = function() AH_Helper.UpdateList(nil, nil, false, hItem.szSellerName) end,},
 			{szOption = L("STR_HELPER_CONTACTSELLER", hItem.szSellerName), fnAction = function() EditBox_TalkToSomebody(hItem.szSellerName) end,},
 			{szOption = L("STR_HELPER_ADDSELLER", hItem.szSellerName), fnAction = function() AH_Helper.AddSeller(hItem.szSellerName) end,},
 			{szOption = L("STR_HELPER_SHIELDEDSELLER", hItem.szSellerName), fnAction = function() AH_Helper.AddBlackList(hItem.szSellerName) AH_Helper.UpdateList() end,},
@@ -1155,7 +1148,7 @@ local function IsSameSellItem(item1, item2)
 	return false
 end
 
-function AH_Helper.AuctionAutoSell2(frame)
+function AH_Helper.AuctionSimilarAutoSell(frame)
 	local hWndSale  = frame:Lookup("PageSet_Totle/Page_Auction/Wnd_Sale")
 	local handle    = hWndSale:Lookup("", "")
 	local box       = handle:Lookup("Box_Item")
@@ -1214,9 +1207,7 @@ function AH_Helper.UpdateList(szItemName, szType, bNotInit, szSellerName)
 	if not szItemName then
 		szItemName = ""
 	end
-	if not szSellerName then
-		szSellerSearch = nil
-	end
+	szSellerSearch = szSellerName or ""
 	local t = tItemDataInfo["Search"]
 	local frame = Station.Lookup("Normal/AuctionPanel")
 	AuctionPanel.tSearch = tSearchInfoDefault
@@ -1458,8 +1449,8 @@ function AH_Helper.VerifyVersion()
 	local nTime = GetCurrentTime()
 	local t = TimeToDate(nTime)
 	local szDate = string.format("%d-%d-%d", t.year, t.month, t.day)
-	local szName = base64(player.szName)
-	local szUrl = string.format("http://jx3auction.duapp.com/verify?uid=%d&user=%s&version=%s", player.dwID, base64(szName), AH_Helper.szVersion)
+	--local szName = base64(player.szName)
+	local szUrl = string.format("http://jx3auction.duapp.com/verify?uid=%d&version=%s", player.dwID, AH_Helper.szVersion)
 	if szDate == AH_Helper.tVerify["szDate"] and AH_Helper.tVerify["bChecked"] then
 		return
 	end
@@ -1498,12 +1489,6 @@ end)
 RegisterEvent("PLAYER_EXIT_GAME", function()
 	SaveLUAData(AH_Helper.szDataPath, AH_Helper.tItemPrice)
 end)
-
-
-
---~ RegisterEvent("BAG_ITEM_UPDATE", function()
---~ 	Output(arg0, arg1)	--1, 0
---~ end)
 
 Hotkey.AddBinding("AH_Produce_Open", L("STR_PRODUCE_PRODUCEHELPER"), L("STR_HELPER_HELPER"), function() AH_Produce.OpenPanel() end, nil)
 Hotkey.AddBinding("AH_Diamond_Open", L("STR_DIAMOND_DIAMONDHELPER"), "", function() AH_Diamond.OpenPanel() end, nil)

@@ -7,6 +7,7 @@ local L = AH_Library.LoadLangPack()
 AH_MailBank = {
 	tItemCache = {},
 	tSendCache = {},
+	tMoneyCache = {},
 	szDataPath = "\\Interface\\AH\\data\\mail.AH",
 	szCurRole = nil,
 	nCurIndex = 1,
@@ -371,10 +372,12 @@ function AH_MailBank.OnUpdate()
 				hBtnSend.OnLButtonDown = function()
 					AH_MailBank.tSendCache = {}
 					if AH_MailBank.bAutoExange then
+						--收信人
 						local szReceiver = page:Lookup("Edit_Name"):GetText()
 						if szReceiver and szReceiver ~= AH_MailBank.szReceiver then
 							AH_MailBank.szReceiver = szReceiver
 						end
+						--物品
 						local handle = page:Lookup("", "Handle_Write")
 						for i = 0, 7, 1 do
 							local box = handle:Lookup("Box_Item"..i)
@@ -385,6 +388,15 @@ function AH_MailBank.OnUpdate()
 								table.insert(AH_MailBank.tSendCache, {nUiId, nCount})
 							end
 						end
+						--金钱
+						local szGold = page:Lookup("Edit_Gold"):GetText()
+						local szSilver = page:Lookup("Edit_Silver"):GetText()
+						local szCopper = page:Lookup("Edit_Copper"):GetText()
+						AH_MailBank.tMoneyCache = {
+							nGold = (szGold ~= "") and tonumber(szGold) or 0,
+							nSilver = (szSilver~= "") and tonumber(szSilver) or 0,
+							nCopper = (szCopper ~= "") and tonumber(szCopper) or 0,
+						}
 					end
 				end
 			end
@@ -469,13 +481,6 @@ end
 
 -- 取附件
 function AH_MailBank.TakeMailItemToBag(fnAction, nCount)
-	--[[local dwID, dwType = Target_GetTargetData()
-	local hNpc = dwType == TARGET.NPC and GetNpc(dwID) or nil
-	if not hNpc or (hNpc and not StringFindW(hNpc.szTitle, L("STR_MAILBANK_COURIER"))) then
-		AH_Library.Message(L("STR_MAILBANK_TIP1"))
-		OutputWarningMessage("MSG_NOTICE_YELLOW", L("STR_MAILBANK_TIP1"), 2)
-		return
-	end]]
 	local tFreeBoxList = AH_Spliter.GetPlayerBagFreeBoxList()
 	if nCount > #tFreeBoxList then
 		AH_Library.MessageL(("STR_MAILBANK_TIP2"))
@@ -546,7 +551,7 @@ function AH_MailBank.OnExchangeItem()
 		return
 	end
 
-	--从记录中读取nUiId
+	--放置物品
 	for nIndex, tCache in ipairs(AH_MailBank.tSendCache) do
 		local dwBox, dwX = GetItemBox(tCache)
 		local item = GetPlayerItem(GetClientPlayer(), dwBox, dwX)
@@ -571,6 +576,11 @@ function AH_MailBank.OnExchangeItem()
 				page:Lookup("Edit_Name"):SetText(AH_MailBank.szReceiver)
 			end
 		end
+	end
+	--放置金钱
+	for k, v in ipairs({"Edit_Gold", "Edit_Silver", "Edit_Copper"}) do
+		local szKey = string.format("n%s", v:match("Edit_(%a+)"))
+		page:Lookup(v):SetText(AH_MailBank.tMoneyCache[szKey])
 	end
 end
 ------------------------------------------------------------
