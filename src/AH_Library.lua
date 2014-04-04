@@ -356,6 +356,14 @@ local _FILE = {
 			{f = "s", t = "szDesc"},
 		},
 	},
+	Prediction = {
+		Path = string.format("Interface\\AH\\data\\%s\\Prediction.tab", szLang),
+		Title = {
+			{f = "i", t = "nIndex"},
+			{f = "i", t = "nUiId"},
+			{f = "s", t = "szName"},
+		},
+	},
 	AtNormal = {
 		Path = string.format("Interface\\AH\\data\\%s\\Normal.txt", szLang),
 		Title = {
@@ -572,6 +580,43 @@ do
 	end
 end
 OutputMessage("MSG_SYS", L("STR_LIBRARY_DIAMONDINIT") .. "\n")
+
+-----------------------------------------------
+-- 瑰石数据生成
+-----------------------------------------------
+AH_Library.tPrediction = {}
+function AH_Library.PredictionTable()
+	local tRes = {}
+	local tTable = KG_Table.Load(_FILE.Prediction.Path, _FILE.Prediction.Title, FILE_OPEN_MODE.NORMAL)
+	if tTable then
+		local nRow = tTable:GetRowCount()
+		for i = 1, nRow do
+			local tRow = tTable:GetRow(i)
+			local szName = string.sub(tRow.szName, -4, -1)
+			local szDesc = Table_GetItemDesc(tRow.nUiId)
+
+			if szDesc and szDesc ~= "" then
+				local szMap = string.match(szDesc, L("STR_LIBRARY_USEIN"))
+				local index, _ = string.find(szDesc, L("STR_HELPER_ADDITIONALDROP"))
+				local szBoss = string.sub(string.match(szDesc, "，(.+)" .. L("STR_HELPER_ADDITIONALDROP")), 5, index - 1)
+
+				tRes[szMap] = tRes[szMap] or {}
+				tRes[szMap][szBoss] = tRes[szMap][szBoss] or {}
+				tRes[szMap][szBoss][szName] = tRes[szMap][szBoss][szName] or {}
+
+				string.gsub(szDesc, "this\.dwTabType\=(%d+) this.dwIndex=(%d+) ", function(k, v)
+					table.insert(tRes[szMap][szBoss][szName], {k, v})
+				end)
+				tRes[szMap][szBoss][szName].nIndex = tRow.nIndex
+				tRes[szMap][szBoss][szName].nUiId = tRow.nUiId
+			end
+		end
+	end
+	return tRes
+end
+AH_Library.tPrediction = AH_Library.PredictionTable()
+
+OutputMessage("MSG_SYS", L("STR_LIBRARY_PREDICTIONINIT") .. "\n")
 OutputMessage("MSG_SYS", "----------------------------\n")
 -----------------------------------------------
 -- 统一所用模块的刷新事件及延迟调用
@@ -600,7 +645,7 @@ function AH_Library.OnFrameBreathe()
 	end
 end
 
-function AH_Library.RegisterBreatheEvent(szKey, fnAction)
+function AH_Library.BreatheCall(szKey, fnAction)
 	assert(type(szKey) == "string")
 	tBreatheAction[szKey] = fnAction
 end

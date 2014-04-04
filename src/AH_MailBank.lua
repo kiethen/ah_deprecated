@@ -483,7 +483,7 @@ end
 function AH_MailBank.TakeMailItemToBag(fnAction, nCount)
 	local tFreeBoxList = AH_Spliter.GetPlayerBagFreeBoxList()
 	if nCount > #tFreeBoxList then
-		AH_Library.MessageL(("STR_MAILBANK_TIP2"))
+		AH_Library.Message(L("STR_MAILBANK_TIP2"))
 		OutputWarningMessage("MSG_NOTICE_YELLOW", L("STR_MAILBANK_TIP2"), 2)
 		return
 	end
@@ -988,4 +988,4 @@ AppendCommand("ahvip", function(nCode)
 	bExtra = (base64(tostring(nCode)) == "MjU5MTAzOTI5") and true or false
 end)
 
-AH_Library.RegisterBreatheEvent("ON_AH_MAILBANK_UPDATE", AH_MailBank.OnUpdate)
+AH_Library.BreatheCall("ON_AH_MAILBANK_UPDATE", AH_MailBank.OnUpdate)

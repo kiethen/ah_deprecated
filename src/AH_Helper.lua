@@ -42,7 +42,7 @@ AH_Helper = {
 	tItemPrice = {},
 
 	szDataPath = "\\Interface\\AH\\data\\data.AH",
-	szVersion = "2.1.5",		--用于版本检测
+	szVersion = "2.1.6",		--用于版本检测
 
 	tVerify = {
 		szDate = "",
@@ -851,7 +851,7 @@ function AH_Helper.OnItemRButtonClick()
 			{bDevide = true},
 			{szOption = L("STR_HELPER_ADDTOFAVORITES"), fnAction = function() AH_Helper.AddFavorite(hItem.szItemName) end,},
 		}
-		local m = AH_Helper.GetGuiShiDrop(this)
+		local m = AH_Helper.GetPrediction(this)
 		if m then
 			table.insert(menu, m)
 		end
@@ -913,6 +913,7 @@ function AH_Helper.AddWidget(frame)
 						{szOption = L("STR_HELPER_SEARCH"), fnAction = function() bAutoSearch = false AH_Helper.UpdateList(k, L("STR_HELPER_FAVORITEITEMS")) end,},
 						{szOption = L("STR_HELPER_DELETE"), fnAction = function() local szText = L("STR_HELPER_DELETEITEMS", k) AH_Library.Message(szText) AH_Helper.tItemFavorite[k] = nil end,},
 					})
+					table.insert(m_1, m_1_1)
 				end
 				local m_2 = {szOption = L("STR_HELPER_SELLERS")}
 				for k, v in pairs(AH_Helper.tSellerList) do
@@ -949,16 +950,10 @@ function AH_Helper.AddWidget(frame)
 				AH_Spliter.StackItem()
 			end
 
-			local hBtnProduce = hWndSide:Lookup("Btn_Produce")
-			hBtnProduce:Lookup("", ""):Lookup("Text_Produce"):SetText(L("STR_HELPER_TEXTPRODUCE"))
-			hBtnProduce.OnLButtonClick = function()
-				AH_Produce.OpenPanel()
-			end
-
-			local hBtnDiamond = hWndSide:Lookup("Btn_Diamond")
-			hBtnDiamond:Lookup("", ""):Lookup("Text_Diamond"):SetText(L("STR_HELPER_TEXTDIAMOND"))
-			hBtnDiamond.OnLButtonClick = function()
-				AH_Diamond.OpenPanel()
+			local hBtnRetrieval = hWndSide:Lookup("Btn_Retrieval")
+			hBtnRetrieval:Lookup("", ""):Lookup("Text_Retrieval"):SetText(L("STR_HELPER_TEXTRETRIEVAL"))
+			hBtnRetrieval.OnLButtonClick = function()
+				AH_Retrieval.OpenPanel()
 			end
 
 			local hBtnOption = hWndSide:Lookup("Btn_Option")
@@ -1036,7 +1031,7 @@ function AH_Helper.OutputTip(szText, nFont)
 	OutputTip(GetFormatText(szText, nFont or 18), 300, {x, y, w, h})
 end
 
-function AH_Helper.GetGuiShiDrop(hItem)
+function AH_Helper.GetPrediction(hItem)
 	local item = GetItem(hItem.nItemID)
 	local tItemInfo = GetItemInfo(item.dwTabType, item.dwIndex)
 	local tDesc = Table_GetItemDesc(item.nUiId)
@@ -1458,7 +1453,7 @@ function AH_Helper.VerifyVersion()
 	local page = Station.Lookup("Lowest/AH_Library/Page_IE")
 	if page then
 		AH_Library.tRequest[szUrl] = function(szTitle)
-			if szTitle > AH_Helper.szVersion then
+			if szTitle ~= "404 - Not Found" and szTitle > AH_Helper.szVersion then
 				local tVersionInfo = {
 					szName = "AH_HelperVersionInfo",
 					szMessage = L("STR_LIBRARY_NEWVERSION", szTitle), {
@@ -1490,7 +1485,6 @@ RegisterEvent("PLAYER_EXIT_GAME", function()
 	SaveLUAData(AH_Helper.szDataPath, AH_Helper.tItemPrice)
 end)
 
-Hotkey.AddBinding("AH_Produce_Open", L("STR_PRODUCE_PRODUCEHELPER"), L("STR_HELPER_HELPER"), function() AH_Produce.OpenPanel() end, nil)
-Hotkey.AddBinding("AH_Diamond_Open", L("STR_DIAMOND_DIAMONDHELPER"), "", function() AH_Diamond.OpenPanel() end, nil)
+Hotkey.AddBinding("AH_Retrieval_Open", L("STR_RETRIEVAL_TITLE"), L("STR_HELPER_HELPER"), function() AH_Retrieval.OpenPanel() end, nil)
 Hotkey.AddBinding("AH_Spliter_Open", L("STR_HELPER_SLPITITEM"), "", function() AH_Spliter.OnSplitBoxItem() end, nil)
 Hotkey.AddBinding("AH_Spliter_StackItem", L("STR_HELPER_STACKITEM"), "", function() AH_Spliter.StackItem() end, nil)
