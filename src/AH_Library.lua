@@ -632,7 +632,7 @@ function AH_Library.OnFrameBreathe()
 			local f = v[2]
 			table.remove(tDelayCall, i)
 			if v[3] then
-				f(unpack(v[3]))
+				pcall(f, unpack(v[3]))  -- may cause f: not a function error
 			else
 				f()
 			end
