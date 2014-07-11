@@ -231,7 +231,7 @@ function AuctionPanel.UpdateItemList(frame, szDataType, tItemInfo)
 		szItem = "Handle_AItemList"
 	end
 	if szItem == "Handle_ItemList" or "Handle_AItemList" then
-        INI_FILE_PATH = "Interface/AH/AH_Helper/AH_AuctionItem.ini"
+        INI_FILE_PATH = "Interface/AH/ui/AH_AuctionItem.ini"
     end
 	hList:Clear()
 	for k, v in pairs(tItemInfo) do
