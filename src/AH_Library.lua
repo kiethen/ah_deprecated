@@ -632,16 +632,16 @@ function AH_Library.OnFrameBreathe()
 			local f = v[2]
 			table.remove(tDelayCall, i)
 			if v[3] then
-				pcall(f, unpack(v[3]))  -- may cause f: not a function error
+				pcall(f, unpack(v[3]))
 			else
-				f()
+				pcall(f)
 			end
 		end
 	end
 
 	for szKey, fnAction in pairs(tBreatheAction) do
 		assert(fnAction)
-		fnAction()
+		pcall(fnAction)
 	end
 end
 
